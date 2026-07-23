@@ -4,10 +4,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.youlai</groupId>
-    <artifactId>youlai-boot</artifactId>
+    <groupId>com.wms</groupId>
+    <artifactId>wms-server</artifactId>
     <version>4.3.3</version>
-    <description>基于 Java 17 + SpringBoot 4 + Spring Security 构建的权限管理系统。</description>
+    <name>wms-server</name>
+    <description>WMS 仓储管理系统后端</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>

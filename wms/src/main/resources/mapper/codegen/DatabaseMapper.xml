@@ -1,12 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!--suppress ALL -->
-<mapper namespace="com.youlai.boot.codegen.mapper.DatabaseMapper">
+<mapper namespace="com.wms.codegen.mapper.DatabaseMapper">
 
     <!-- 查询数据库表分页（PostgreSQL 版本）-->
-    <select id="getTablePage" resultType="com.youlai.boot.codegen.model.vo.TablePageVO">
+    <select id="getTablePage" resultType="com.wms.codegen.model.vo.TablePageVO">
         SELECT
             t1.table_name AS table_name,
             obj_description(('"' || t1.table_schema || '"."' || t1.table_name || '"')::regclass) AS table_comment,
@@ -35,7 +35,7 @@
     </select>
 
     <!-- 查询数据库表元数据（PostgreSQL 版本）-->
-    <select id="getTableMetadata" resultType="com.youlai.boot.codegen.model.vo.TableMetaVO">
+    <select id="getTableMetadata" resultType="com.wms.codegen.model.vo.TableMetaVO">
         SELECT
             t1.table_name AS table_name,
             obj_description(('"' || t1.table_schema || '"."' || t1.table_name || '"')::regclass) AS table_comment,
@@ -50,7 +50,7 @@
     </select>
 
     <!-- 获取数据库表字段元数据（PostgreSQL 版本）-->
-    <select id="getTableColumns" resultType="com.youlai.boot.codegen.model.vo.ColumnMetaVO">
+    <select id="getTableColumns" resultType="com.wms.codegen.model.vo.ColumnMetaVO">
         SELECT
             a.attname AS column_name,
             CASE t.typname

@@ -1,12 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!--suppress ALL -->
-<mapper namespace="com.youlai.boot.system.mapper.LogMapper">
+<mapper namespace="com.wms.system.mapper.LogMapper">
 
     <!-- 日志分页列表 -->
-    <select id="getLogPage" resultType="com.youlai.boot.system.model.vo.LogPageVO">
+    <select id="getLogPage" resultType="com.wms.system.model.vo.LogPageVO">
         SELECT
             t1.id,
             t1.module,
@@ -56,7 +56,7 @@
     </select>
 
     <!-- 获取访问量日统计列表  -->
-    <select id="getPvCounts" resultType="com.youlai.boot.system.model.dto.VisitCountDTO">
+    <select id="getPvCounts" resultType="com.wms.system.model.dto.VisitCountDTO">
         SELECT
             COUNT(1) AS count,
             TO_CHAR(create_time, 'YYYY-MM-DD') AS date
@@ -69,7 +69,7 @@
     </select>
 
     <!-- 获取IP日统计列表-->
-    <select id="getIpCounts" resultType="com.youlai.boot.system.model.dto.VisitCountDTO">
+    <select id="getIpCounts" resultType="com.wms.system.model.dto.VisitCountDTO">
         SELECT
             COUNT(DISTINCT ip) AS count,
             TO_CHAR(create_time, 'YYYY-MM-DD') AS date
@@ -82,7 +82,7 @@
     </select>
 
     <!-- 获取访问量(PV)统计数据 -->
-    <select id="getPvStats" resultType="com.youlai.boot.system.model.vo.VisitOverviewVO">
+    <select id="getPvStats" resultType="com.wms.system.model.vo.VisitOverviewVO">
         SELECT
             COUNT(CASE WHEN DATE(create_time) = CURRENT_DATE THEN 1 END) AS todayPvCount,
             COUNT(*) AS totalPvCount,
@@ -100,7 +100,7 @@
     </select>
 
     <!-- 获取IP统计数据 -->
-    <select id="getUvStats" resultType="com.youlai.boot.system.model.vo.VisitOverviewVO">
+    <select id="getUvStats" resultType="com.wms.system.model.vo.VisitOverviewVO">
             SELECT
                 COUNT(DISTINCT CASE WHEN DATE(create_time) = CURRENT_DATE THEN ip END) AS todayUvCount,
                 COUNT(DISTINCT ip) AS totalUvCount,
