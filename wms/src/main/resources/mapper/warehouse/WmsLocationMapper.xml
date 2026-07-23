@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.youlai.boot.warehouse.mapper.WmsLocationMapper">
+
+    <resultMap id="WmsLocationVOResultMap" type="com.youlai.boot.warehouse.model.vo.WmsLocationVO">
+        <id property="id" column="id"/>
+        <result property="plantCode" column="plant_code"/>
+        <result property="locationCode" column="location_code"/>
+        <result property="locationName" column="location_name"/>
+        <result property="locationType" column="location_type"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="floor" column="floor"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="createdByName" column="created_by_name"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedByName" column="updated_by_name"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+
+    <select id="getWmsLocationPage" resultMap="WmsLocationVOResultMap">
+        SELECT
+            l.id,
+            l.plant_code,
+            l.location_code,
+            l.location_name,
+            l.location_type,
+            l.parent_id,
+            l.floor,
+            l.sort_order,
+            l.status,
+            l.remark,
+            su1.nickname AS created_by_name,
+            l.created_time,
+            su2.nickname AS updated_by_name,
+            l.updated_time
+        FROM wms_location l
+        LEFT JOIN sys_user su1 ON l.created_by = su1.id
+        LEFT JOIN sys_user su2 ON l.updated_by = su2.id
+        <where>
+            <if test="queryParams.plantCode != null and queryParams.plantCode != ''">
+                AND l.plant_code LIKE '%' || #{queryParams.plantCode} || '%'
+            </if>
+            <if test="queryParams.locationCode != null and queryParams.locationCode != ''">
+                AND l.location_code LIKE '%' || #{queryParams.locationCode} || '%'
+            </if>
+            <if test="queryParams.floor != null and queryParams.floor != ''">
+                AND l.floor LIKE '%' || #{queryParams.floor} || '%'
+            </if>
+            <if test="queryParams.updatedBy != null and queryParams.updatedBy != ''">
+                AND su2.nickname LIKE '%' || #{queryParams.updatedBy} || '%'
+            </if>
+            <if test="queryParams.status != null">
+                AND l.status = #{queryParams.status}
+            </if>
+        </where>
+        ORDER BY l.sort_order ASC, l.id ASC
+    </select>
+
+    <select id="getUpdatedByNames" resultType="string">
+        SELECT DISTINCT u.nickname
+        FROM sys_user u
+        WHERE u.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY u.nickname
+    </select>
+
+</mapper>

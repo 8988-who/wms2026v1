@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCS-2000 V4.3 接口梳理 — WMS对接指南</title>
+    <style>
+        :root {
+            --bg: #f8f9fb;
+            --card-bg: #ffffff;
+            --primary: #1a56db;
+            --primary-light: #e8effc;
+            --text: #1f2937;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --success: #16a34a;
+            --success-light: #f0fdf4;
+            --warning: #d97706;
+            --warning-light: #fffbeb;
+            --danger: #dc2626;
+            --danger-light: #fef2f2;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --tag-api: #3b82f6;
+            --tag-spi: #8b5cf6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 15px;
+        }
+        /* Navigation */
+        .sidebar {
+            position: fixed; left: 0; top: 0; width: 280px; height: 100vh;
+            background: var(--card-bg); border-right: 1px solid var(--border);
+            overflow-y: auto; padding: 24px 0; z-index: 100;
+        }
+        .sidebar-title {
+            font-size: 18px; font-weight: 700; padding: 0 24px 16px;
+            border-bottom: 1px solid var(--border); margin-bottom: 12px;
+            color: var(--primary);
+        }
+        .sidebar-section { padding: 0 12px; margin-bottom: 8px; }
+        .sidebar-section-title {
+            font-size: 12px; font-weight: 600; text-transform: uppercase;
+            color: var(--text-secondary); padding: 8px 12px; letter-spacing: 0.05em;
+        }
+        .sidebar a {
+            display: block; padding: 6px 12px; color: var(--text-secondary);
+            text-decoration: none; border-radius: 6px; font-size: 14px;
+            transition: all 0.15s;
+        }
+        .sidebar a:hover { background: var(--primary-light); color: var(--primary); }
+        .main { margin-left: 280px; padding: 48px; max-width: 1100px; }
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #1a56db 0%, #7c3aed 100%);
+            color: white; padding: 48px; border-radius: 16px; margin-bottom: 40px;
+        }
+        .hero h1 { font-size: 32px; margin-bottom: 8px; }
+        .hero p { opacity: 0.9; font-size: 16px; }
+        .hero-badges { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+        .hero-badge {
+            background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px;
+            font-size: 13px; backdrop-filter: blur(10px);
+        }
+        /* Sections */
+        section { margin-bottom: 48px; scroll-margin-top: 24px; }
+        h2 {
+            font-size: 26px; font-weight: 700; margin-bottom: 16px;
+            padding-bottom: 12px; border-bottom: 2px solid var(--primary);
+            display: flex; align-items: center; gap: 10px;
+        }
+        h3 {
+            font-size: 20px; font-weight: 600; margin-bottom: 12px; margin-top: 32px;
+            color: var(--text);
+        }
+        h4 { font-size: 16px; font-weight: 600; margin-bottom: 8px; margin-top: 16px; }
+        p { margin-bottom: 12px; }
+        /* Tags */
+        .tag {
+            display: inline-block; padding: 2px 10px; border-radius: 4px;
+            font-size: 12px; font-weight: 600; margin-left: 8px;
+        }
+        .tag-api { background: #dbeafe; color: #1e40af; }
+        .tag-spi { background: #ede9fe; color: #6d28d9; }
+        .tag-gb { background: #fef3c7; color: #92400e; }
+        .tag-method { background: #d1fae5; color: #065f46; }
+        /* Interface Card */
+        .interface-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 12px; padding: 24px; margin-bottom: 24px;
+            transition: box-shadow 0.2s;
+        }
+        .interface-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+        .interface-header {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
+        }
+        .interface-title { font-size: 18px; font-weight: 600; }
+        .interface-path {
+            font-family: "Cascadia Code", "Fira Code", monospace; font-size: 13px;
+            background: var(--code-bg); color: #93c5fd; padding: 4px 12px;
+            border-radius: 6px; display: inline-block; margin-top: 4px;
+        }
+        .interface-method {
+            font-family: monospace; font-weight: 700; font-size: 12px;
+            padding: 3px 10px; border-radius: 4px; background: var(--success-light);
+            color: var(--success);
+        }
+        .interface-desc {
+            color: var(--text-secondary); font-size: 14px; margin-bottom: 16px;
+            padding: 12px 16px; background: #f3f4f6; border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        /* Table */
+        table {
+            width: 100%; border-collapse: collapse; margin-bottom: 16px;
+            font-size: 14px;
+        }
+        th {
+            background: #f9fafb; padding: 10px 14px; text-align: left;
+            font-weight: 600; border-bottom: 2px solid var(--border);
+            font-size: 13px; color: var(--text-secondary);
+        }
+        td {
+            padding: 10px 14px; border-bottom: 1px solid var(--border);
+        }
+        td code { font-family: monospace; font-size: 13px; color: var(--primary); }
+        .col-required { color: var(--danger); font-weight: 600; }
+        .col-optional { color: var(--text-secondary); }
+        /* Code Block */
+        .code-block {
+            background: var(--code-bg); color: var(--code-text);
+            padding: 20px; border-radius: 8px; overflow-x: auto;
+            font-family: "Cascadia Code", "Fira Code", monospace; font-size: 13px;
+            line-height: 1.6; margin-bottom: 16px;
+        }
+        .code-label {
+            font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .code-block .kw { color: #c084fc; }
+        .code-block .str { color: #86efac; }
+        .code-block .num { color: #fbbf24; }
+        .code-block .comment { color: #64748b; }
+        /* Info Box */
+        .info-box {
+            padding: 16px 20px; border-radius: 8px; margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .info-box.tip { background: var(--success-light); border-left: 4px solid var(--success); }
+        .info-box.warn { background: var(--warning-light); border-left: 4px solid var(--warning); }
+        .info-box.danger { background: var(--danger-light); border-left: 4px solid var(--danger); }
+        .info-box strong { display: block; margin-bottom: 4px; }
+        /* Summary Grid */
+        .summary-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .summary-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px;
+        }
+        .summary-card h4 { color: var(--primary); margin-bottom: 4px; }
+        .summary-card p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+        /* Flow Steps */
+        .flow-steps { counter-reset: step; margin-bottom: 24px; }
+        .flow-step {
+            position: relative; padding-left: 48px; margin-bottom: 20px;
+        }
+        .flow-step::before {
+            counter-increment: step; content: counter(step);
+            position: absolute; left: 0; top: 0; width: 32px; height: 32px;
+            background: var(--primary); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px;
+        }
+        .flow-step::after {
+            content: ''; position: absolute; left: 15px; top: 32px;
+            width: 2px; height: calc(100% + 8px); background: var(--border);
+        }
+        .flow-step:last-child::after { display: none; }
+        .flow-step h4 { margin-bottom: 4px; }
+        .flow-step p { font-size: 14px; color: var(--text-secondary); margin-bottom: 0; }
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+    <div class="sidebar-title">RCS-2000 V4.3 接口文档</div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">概览</div>
+        <a href="#overview">文档总览</a>
+        <a href="#protocol">通信协议</a>
+        <a href="#architecture">对接架构</a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">API 接口 (WMS→RCS)</div>
+        <a href="#api-task-group">任务组接口</a>
+        <a href="#api-task-submit">任务下发接口</a>
+        <a href="#api-task-continue">任务继续执行</a>
+        <a href="#api-task-cancel">任务取消</a>
+        <a href="#api-task-priority">优先级设置</a>
+        <a href="#api-zone-pause">区域暂停恢复</a>
+        <a href="#api-zone-homing">区域归巢</a>
+        <a href="#api-zone-banish">区域驱离</a>
+        <a href="#api-zone-blockade">区域封锁</a>
+        <a href="#api-carrier-bind">载具绑定站点</a>
+        <a href="#api-carrier-unbind">载具解绑站点</a>
+        <a href="#api-site-bind">存储对象绑定</a>
+        <a href="#api-carrier-lock">载具禁用启用</a>
+        <a href="#api-site-lock">站点禁用启用</a>
+        <a href="#api-eqpt-notify">外设执行通知</a>
+        <a href="#api-pretask">预调度任务</a>
+        <a href="#api-task-query">查询任务状态</a>
+        <a href="#api-robot-query">查询机器人状态</a>
+        <a href="#api-carrier-query">查询载具状态</a>
+        <a href="#api-matlabel-bind">物料绑定</a>
+        <a href="#api-matlabel-unbind">物料解绑</a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">SPI 回调 (RCS→WMS)</div>
+        <a href="#spi-task-report">任务执行回馈</a>
+        <a href="#spi-resource">请求资源</a>
+        <a href="#spi-eqpt">请求外设</a>
+        <a href="#spi-homing-report">归巢完成回馈</a>
+        <a href="#spi-banish-report">驱离完成回馈</a>
+        <a href="#spi-robot-warning">机器人告警</a>
+        <a href="#spi-task-warning">任务告警</a>
+        <a href="#spi-bind-notify">绑定解绑通知</a>
+        <a href="#spi-ctu-check">CTU料箱校验</a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">实战指南</div>
+        <a href="#flows">任务下发流程示例</a>
+        <a href="#wms-guide">WMS对接最佳实践</a>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main">
+
+<!-- Hero -->
+<div class="hero">
+    <h1>RCS-2000 V4.3 接口梳理</h1>
+    <p>海康机器人厂内物流机器人控制系统 — WMS系统对接完整指南</p>
+    <div class="hero-badges">
+        <span class="hero-badge">22 个 API 接口</span>
+        <span class="hero-badge">9 个 SPI 回调</span>
+        <span class="hero-badge">11 种车型流程</span>
+        <span class="hero-badge">HMAC-SHA256 签名</span>
+    </div>
+</div>
+
+<!-- Overview -->
+<section id="overview">
+    <h2>📋 文档总览</h2>
+    <p>本文档梳理了海康RCS-2000 V4.3机器人调度系统的全部对外接口，供WMS系统对接使用。接口分为两大类：</p>
+    
+    <div class="summary-grid">
+        <div class="summary-card">
+            <h4>🔵 API 接口（WMS → RCS）</h4>
+            <p>WMS主动调用RCS的接口，用于下发任务、查询状态、控制区域等。共22个接口，路径前缀 <code>/rcs/rtas</code></p>
+        </div>
+        <div class="summary-card">
+            <h4>🟣 SPI 回调接口（RCS → WMS）</h4>
+            <p>RCS主动推送消息到WMS的回调接口，用于任务状态反馈、资源申请、告警上报等。共9个接口，路径可自定义</p>
+        </div>
+    </div>
+
+    <div class="info-box tip">
+        <strong>💡 接口方向说明</strong>
+        API接口：WMS作为HTTP客户端，向RCS发送POST请求。<br>
+        SPI接口：RCS作为HTTP客户端，向WMS发送POST请求，WMS需要实现这些接口作为服务端。
+    </div>
+</section>
+
+<!-- Protocol -->
+<section id="protocol">
+    <h2>🔧 通信协议</h2>
+    
+    <h3>请求首部字段</h3>
+    <table>
+        <thead>
+            <tr><th>字段名</th><th>数据类型</th><th>必须</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>Authorization</code></td><td>字符串</td><td class="col-optional">否</td><td>固定格式: nonce="xxx",method="HMAC-SHA256",timestamp="2021-01-01T00:00:00+08:00"</td></tr>
+            <tr><td><code>Content-Type</code></td><td>字符串</td><td class="col-optional">否</td><td>固定: application/json;charset=UTF-8</td></tr>
+            <tr><td><code>X-lr-appkey</code></td><td>字符串</td><td class="col-optional">否</td><td>调度系统颁发给业务系统的唯一标识</td></tr>
+            <tr><td><code>X-lr-request-id</code></td><td>字符串</td><td class="col-required">是</td><td>业务请求唯一标识</td></tr>
+            <tr><td><code>X-lr-version</code></td><td>字符串</td><td class="col-optional">否</td><td>API接口版本，保证向下兼容</td></tr>
+            <tr><td><code>X-lr-trace-id</code></td><td>字符串</td><td class="col-optional">否</td><td>全链路追踪标识，响应中需原样返回</td></tr>
+            <tr><td><code>X-lr-source</code></td><td>字符串</td><td class="col-optional">否</td><td>指令来源，便于调试</td></tr>
+        </tbody>
+    </table>
+
+    <h3>加密签名</h3>
+    <p>如开启加密，需对请求进行签名。签名 = <code>MD5(HMAC-SHA256(appSecret, 请求报文拼接原串))</code></p>
+    <p>参与签名的首部字段（按顺序）：AUTHORIZATION → HOST → X-LR-APPKEY → X-LR-REQUEST-ID → X-LR-SOURCE → X-LR-TRACE-ID → X-LR-VERSION</p>
+    <p>签名携带在查询参数 <code>?sign=xxx</code> 中</p>
+
+    <h3>响应格式</h3>
+    <table>
+        <thead><tr><th>字段</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+        <tbody>
+            <tr><td><code>code</code></td><td>字符串</td><td class="col-required">是</td><td>消息码，SUCCESS表示成功</td></tr>
+            <tr><td><code>message</code></td><td>字符串</td><td class="col-optional">否</td><td>异常描述</td></tr>
+            <tr><td><code>data</code></td><td>JSON对象</td><td class="col-optional">否</td><td>业务数据</td></tr>
+        </tbody>
+    </table>
+
+    <h3>HTTP状态码</h3>
+    <table>
+        <thead><tr><th>状态码</th><th>说明</th></tr></thead>
+        <tbody>
+            <tr><td>200</td><td>处理成功，但仍需检查响应体code判断业务是否异常</td></tr>
+            <tr><td>401</td><td>签名认证失败（签名无效/过期/appKey失效）</td></tr>
+            <tr><td>403</td><td>权限不足</td></tr>
+            <tr><td>400</td><td>客户端请求错误，不可通过重试解决</td></tr>
+            <tr><td>500</td><td>服务端异常，可通过重试解决</td></tr>
+        </tbody>
+    </table>
+
+    <h3>通用响应Code</h3>
+    <table>
+        <thead><tr><th>Code</th><th>含义</th></tr></thead>
+        <tbody>
+            <tr><td><code>SUCCESS</code></td><td>成功</td></tr>
+            <tr><td><code>Err_Internal</code></td><td>内部未知错误</td></tr>
+            <tr><td><code>Err_DataValidationFailed</code></td><td>数据格式验证失败</td></tr>
+            <tr><td><code>Err_RequestDuplicate</code></td><td>请求重复</td></tr>
+            <tr><td><code>Err_InvalidVersion</code></td><td>请求版本不合法</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Architecture -->
+<section id="architecture">
+    <h2>🏗️ 对接架构</h2>
+    <div class="code-block">
+<span class="comment">┌─────────────────┐         API (WMS→RCS)          ┌─────────────────┐</span>
+<span class="comment">│                 │  ──────────────────────────▶  │                 │</span>
+<span class="comment">│   WMS 系统      │    任务下发/查询/控制          │   RCS-2000      │</span>
+<span class="comment">│   (业务系统)    │                                │   调度系统      │</span>
+<span class="comment">│                 │  ◀──────────────────────────  │                 │</span>
+<span class="comment">│                 │       SPI (RCS→WMS)           │                 │</span>
+<span class="comment">│                 │    状态回馈/资源申请/告警      │                 │</span>
+<span class="comment">└─────────────────┘                                └─────────────────┘</span>
+                                                          <span class="comment">│</span>
+                                                 <span class="comment">┌─────────────────┐</span>
+                                                 <span class="comment">│   AMR/CTU/叉车  │</span>
+                                                 <span class="comment">│   (执行机器人)  │</span>
+                                                 <span class="comment">└─────────────────┘</span>
+    </div>
+</section>
+
+<!-- ============ API INTERFACES ============ -->
+<section id="api-interfaces">
+    <h2>🔵 API 接口（WMS → RCS）</h2>
+    <p>以下接口由WMS主动调用RCS，路径前缀统一为 <code>/rcs/rtas</code></p>
+
+    <!-- 1. 任务组接口 -->
+    <div class="interface-card" id="api-task-group">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">任务组接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/task/group</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>任务组是任务的集合，当任务间有相互关系时，需要先调用此接口描述任务组策略。任务策略包括按组顺序出库策略、按组分配策略、载具整理策略。顺序出库时按 groupSeq 从小到大下发。
+        </div>
+        <h4>请求参数</h4>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>groupCode</code></td><td>字符串</td><td class="col-required">是</td><td>任务组编号，全局唯一</td></tr>
+                <tr><td><code>strategy</code></td><td>字符串</td><td class="col-required">是</td><td>执行策略: GROUP_SEQ(顺序出库) / GROUP_ASSIGN(按组分配) / GROUP_CARRIER_ADJUST(载具整理)</td></tr>
+                <tr><td><code>strategyValue</code></td><td>字符串</td><td class="col-optional">否</td><td>策略值。GROUP_SEQ时: 0=组间组内无序, 1=组间组内有序, 2=组间有序组内无序, 3=组间无序组内有序</td></tr>
+                <tr><td><code>groupSeq</code></td><td>整数</td><td class="col-optional">否</td><td>组顺序号(1~9999999999)</td></tr>
+                <tr><td><code>targetRoute</code></td><td>JSON对象</td><td class="col-optional">否</td><td>执行任务的下一个目标位置，控制同一工作台的顺序</td></tr>
+                <tr><td><code>data</code></td><td>JSON数组</td><td class="col-required">是</td><td>任务数据数组，包含 robotTaskCode 和 sequence</td></tr>
+            </tbody>
+        </table>
+        <div class="code-label">请求示例</div>
+        <div class="code-block">{
+  <span class="str">"groupCode"</span>: <span class="str">"2e0d1ae0481f48b78b6a217ac2b54eb4"</span>,
+  <span class="str">"strategy"</span>: <span class="str">"GROUP_SEQ"</span>,
+  <span class="str">"strategyValue"</span>: <span class="str">"1"</span>,
+  <span class="str">"groupSeq"</span>: <span class="num">10</span>,
+  <span class="str">"targetRoute"</span>: { <span class="str">"type"</span>: <span class="str">"ZONE"</span>, <span class="str">"code"</span>: <span class="str">"A2"</span> },
+  <span class="str">"data"</span>: [
+    { <span class="str">"robotTaskCode"</span>: <span class="str">"0a17e361eb52..."</span>, <span class="str">"sequence"</span>: <span class="num">1</span> },
+    { <span class="str">"robotTaskCode"</span>: <span class="str">"1b30143f3291..."</span>, <span class="str">"sequence"</span>: <span class="num">2</span> }
+  ]
+}</div>
+    </div>
+
+    <!-- 2. 任务下发接口 -->
+    <div class="interface-card" id="api-task-submit">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">任务下发接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/task/submit</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>WMS发送任务请求，RCS生成任务执行单并下发执行。这是最核心的接口，所有搬运任务都通过此接口下发。taskType决定任务流程类型（潜伏车/叉车/CTU/滚筒车等）。
+        </div>
+        <h4>请求参数</h4>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>taskType</code></td><td>字符串</td><td class="col-required">是</td><td>任务类型。预制值: PF-LMR-COMMON(潜伏车搬运), PF-FMR-COMMON(叉车搬运), PF-CTU-COMMON(CTU搬运), PF-CMR-COMMON(滚筒车搬运), PF-LMR-INIT-CARRIER(潜伏车指定载具初始化), PF-DETECT-CARRIER(探测载具搬运), PF-CTU-LOADER-IN(CTU工作站入库), PF-CTU-CONVEYOR-IN(CTU输送线入库), WMS-PF-CTU-ALLOC-WALL-OUT(CTU缓存架出库), WMS-PF-CTU-ALLOC-WALL-IN(CTU缓存架入库)</td></tr>
+                <tr><td><code>targetRoute</code></td><td>对象数组</td><td class="col-required">是</td><td>执行步骤集合。每个步骤含 type(目标类型)、code(目标编号)、operation(操作: COLLECT取货/DELIVERY送货/ROTATE旋转)</td></tr>
+                <tr><td><code>initPriority</code></td><td>整数</td><td class="col-optional">否</td><td>初始优先级(1~120)，数值越大优先级越高</td></tr>
+                <tr><td><code>deadline</code></td><td>时间</td><td class="col-optional">否</td><td>任务截止时间，如 2021-04-04T12:23:55Z</td></tr>
+                <tr><td><code>robotType</code></td><td>字符串</td><td class="col-optional">否</td><td>机器人选择范围: GROUPS(资源组) / ROBOTS(指定车号)</td></tr>
+                <tr><td><code>robotCode</code></td><td>字符串数组</td><td class="col-optional">否</td><td>与robotType匹配的资源标识</td></tr>
+                <tr><td><code>interrupt</code></td><td>整数</td><td class="col-optional">否</td><td>能否打断: 1=可打断, 0=不可打断(默认)</td></tr>
+                <tr><td><code>robotTaskCode</code></td><td>字符串</td><td class="col-optional">否</td><td>外部任务唯一编号，为空则系统生成</td></tr>
+                <tr><td><code>groupCode</code></td><td>字符串</td><td class="col-optional">否</td><td>任务组编号</td></tr>
+                <tr><td><code>extra</code></td><td>JSON对象</td><td class="col-optional">否</td><td>扩展字段，可含 angleInfo(角度)、carrierInfo(载具信息)、crossVisionDoor(视觉门)、pickStationCode(拣选站)</td></tr>
+            </tbody>
+        </table>
+        <div class="info-box tip">
+            <strong>💡 targetRoute.type 目标类型枚举</strong>
+            ZONE(区域), SITE(站点), STORAGE(仓位), MAT_LABEL(物料标签), CARRIER(载具), STACK(巷道), EQPT(外部设备), PTL_WALL(CTU缓存架), CARRIER_TYPE(载具类型), BIN_TYPE(仓位类型), AREA_STATION(区域工作台)
+        </div>
+        <div class="code-label">潜伏车搬运示例</div>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-LMR-COMMON"</span>,
+  <span class="str">"targetRoute"</span>: [
+    { <span class="str">"type"</span>: <span class="str">"CARRIER"</span>, <span class="str">"code"</span>: <span class="str">"P00001"</span> },
+    { <span class="str">"type"</span>: <span class="str">"SITE"</span>, <span class="str">"code"</span>: <span class="str">"WS001"</span>, <span class="str">"operation"</span>: <span class="str">"DELIVERY"</span> }
+  ],
+  <span class="str">"initPriority"</span>: <span class="num">50</span>
+}</div>
+        <div class="code-label">CTU工作站入库示例</div>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-CTU-LOADER-IN"</span>,
+  <span class="str">"targetRoute"</span>: [{ <span class="str">"type"</span>: <span class="str">"EQPT"</span>, <span class="str">"code"</span>: <span class="str">"222"</span> }],
+  <span class="str">"extra"</span>: {
+    <span class="str">"carrierInfo"</span>: [
+      { <span class="str">"carrierType"</span>: <span class="str">"3"</span>, <span class="str">"carrierCode"</span>: <span class="str">"jieb1"</span>, <span class="str">"layer"</span>: <span class="num">0</span> },
+      { <span class="str">"carrierType"</span>: <span class="str">"3"</span>, <span class="str">"carrierCode"</span>: <span class="str">"jieb2"</span>, <span class="str">"layer"</span>: <span class="num">1</span> }
+    ]
+  }
+}</div>
+    </div>
+
+    <!-- 3. 任务继续执行 -->
+    <div class="interface-card" id="api-task-continue">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">任务继续执行接口</div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/task/extend/continue</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>一个任务包含多个步骤时，每个步骤完成后需要WMS通过此接口驱动下一个阶段执行。第一个步骤也需要通过此接口启动。如果步骤设置为自动开始则非必须调用。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>triggerType</code></td><td>字符串</td><td class="col-required">是</td><td>触发类型: SITE(站点) / CARRIER(载具) / ROBOT(车号) / TASK(任务链编号)</td></tr>
+                <tr><td><code>triggerCode</code></td><td>字符串</td><td class="col-required">是</td><td>与triggerType对应的触发编号</td></tr>
+                <tr><td><code>targetRoute</code></td><td>对象</td><td class="col-optional">否</td><td>下一个目标位置（含type, code, operation）</td></tr>
+                <tr><td><code>extra</code></td><td>对象</td><td class="col-optional">否</td><td>扩展参数</td></tr>
+            </tbody>
+        </table>
+        <div class="code-label">请求示例</div>
+        <div class="code-block">{
+  <span class="str">"triggerType"</span>: <span class="str">"TASK"</span>,
+  <span class="str">"triggerCode"</span>: <span class="str">"1a17e361eb5248bfab0508e4709f085f5"</span>,
+  <span class="str">"targetRoute"</span>: {
+    <span class="str">"type"</span>: <span class="str">"ZONE"</span>,
+    <span class="str">"code"</span>: <span class="str">"D1"</span>,
+    <span class="str">"operation"</span>: <span class="str">"COLLECT"</span>
+  }
+}</div>
+    </div>
+
+    <!-- 4. 任务取消 -->
+    <div class="interface-card" id="api-task-cancel">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">任务取消接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/task/cancel</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>取消当前任务并返回结果。支持在取消时同时下发新任务。V4.2.8+支持按车号robotCode或载具号carrierCode批量取消。取消类型：CANCEL(软取消，生成回库任务) / DROP(人工介入，硬取消)。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>robotTaskCode</code></td><td>字符串</td><td class="col-optional">否</td><td>任务号（批量取消时可不传）</td></tr>
+                <tr><td><code>cancelType</code></td><td>字符串</td><td class="col-required">是</td><td>CANCEL(软取消) / DROP(人工介入硬取消)</td></tr>
+                <tr><td><code>carrierCode</code></td><td>字符串</td><td class="col-optional">否</td><td>回库载具编号</td></tr>
+                <tr><td><code>robotCode</code></td><td>字符串</td><td class="col-optional">否</td><td>机器人编号（批量取消用）</td></tr>
+                <tr><td><code>reason</code></td><td>字符串</td><td class="col-optional">否</td><td>取消原因</td></tr>
+                <tr><td><code>returnTaskType</code></td><td>字符串</td><td class="col-optional">否</td><td>软取消回库任务类型，默认 PF-TASK-CANCEL-RETURN</td></tr>
+                <tr><td><code>targetRoute</code></td><td>JSON对象</td><td class="col-optional">否</td><td>新任务目标位置</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 5. 任务优先级设置 -->
+    <div class="interface-card" id="api-task-priority">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">任务优先级设置接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/task/priority</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>任务创建后、结束前，随时调整任务优先级参数（初始优先级和截止时间）。调度系统会根据繁忙程度、工作状态等综合判定实际优先级。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>robotTaskCode</code></td><td>字符串</td><td class="col-required">是</td><td>任务号</td></tr>
+                <tr><td><code>initPriority</code></td><td>整数</td><td class="col-required">是</td><td>优先级(1~120)</td></tr>
+                <tr><td><code>deadline</code></td><td>时间</td><td class="col-optional">否</td><td>截止时间</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 6. 区域暂停与恢复 -->
+    <div class="interface-card" id="api-zone-pause">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">区域暂停与恢复机器人接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/zone/pause</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>让指定区域内的机器人暂停（FREEZE运行急停）或恢复（RUN）运行。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>zoneCode</code></td><td>字符串</td><td class="col-required">是</td><td>调度管控区区域编号</td></tr>
+                <tr><td><code>mapCode</code></td><td>字符串</td><td class="col-optional">否</td><td>地图编号（临时区域时需要）</td></tr>
+                <tr><td><code>invoke</code></td><td>字符串</td><td class="col-required">是</td><td>FREEZE(运行急停) / RUN(恢复)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 7. 区域归巢 -->
+    <div class="interface-card" id="api-zone-homing">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">区域归巢机器人接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/zone/homing</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>让指定区域内的机器人前往预定的停放区域。支持归巢后自动关机，并预设开机时间点，适应工厂长时间休假场景。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>mapCode</code></td><td>字符串</td><td class="col-optional">否</td><td>地图编号（只传地图则整个地图的车归巢）</td></tr>
+                <tr><td><code>zoneCode</code></td><td>字符串</td><td class="col-optional">否</td><td>需归巢的区域编号</td></tr>
+                <tr><td><code>zoneCodes</code></td><td>字符串数组</td><td class="col-optional">否</td><td>区域编号集合（须同一地图）</td></tr>
+                <tr><td><code>autoShutdown</code></td><td>字符串</td><td class="col-required">是</td><td>YES(关机) / NO(不关机)</td></tr>
+                <tr><td><code>bootTime</code></td><td>时间</td><td class="col-optional">否</td><td>预设开机时间（分钟精度），autoShutdown=YES时生效</td></tr>
+                <tr><td><code>expireTime</code></td><td>时间</td><td class="col-optional">否</td><td>归巢超时时间（秒精度），默认10分钟</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 8. 区域驱离 -->
+    <div class="interface-card" id="api-zone-banish">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">区域驱离机器人接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/zone/banish</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>将区域内的机器人驱离，并禁止其他机器人通过该区域。支持驱离后暂停、通知上层系统、指定目标区域。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>zoneCode</code></td><td>字符串</td><td class="col-optional">否</td><td>需驱离的区域编号</td></tr>
+                <tr><td><code>zoneCodes</code></td><td>字符串数组</td><td class="col-optional">否</td><td>区域集合</td></tr>
+                <tr><td><code>targetZoneCode</code></td><td>字符串</td><td class="col-optional">否</td><td>机器人前往的目标区域</td></tr>
+                <tr><td><code>controlMode</code></td><td>字符串</td><td class="col-optional">否</td><td>0=调度到区域外, 1=暂驻区, 2=指定区域</td></tr>
+                <tr><td><code>pause</code></td><td>字符串</td><td class="col-optional">否</td><td>完成后是否暂停: 0=不暂停, 1=暂停</td></tr>
+                <tr><td><code>report</code></td><td>字符串</td><td class="col-optional">否</td><td>完成后是否通知: 0=不通知, 1=通知</td></tr>
+                <tr><td><code>invoke</code></td><td>字符串</td><td class="col-optional">否</td><td>BANISH(驱离) / RUN(恢复)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 9. 区域封锁 -->
+    <div class="interface-card" id="api-zone-blockade">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">区域封锁与恢复接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/zone/blockade</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>封锁指定区域，区域外的机器人不能进入（但区域内的机器人不需要离开）。解除封锁后限制取消。与驱离的区别：驱离要求区域内机器人离开，封锁只阻止外部进入。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>zoneCode</code></td><td>字符串</td><td class="col-required">是</td><td>需封锁的区域编号</td></tr>
+                <tr><td><code>invoke</code></td><td>字符串</td><td class="col-required">是</td><td>BLOCKADE(封锁) / OPENUP(解封)</td></tr>
+                <tr><td><code>pause</code></td><td>字符串</td><td class="col-optional">否</td><td>封锁后是否暂停区域内机器人</td></tr>
+                <tr><td><code>report</code></td><td>字符串</td><td class="col-optional">否</td><td>完成后是否上报</td></tr>
+                <tr><td><code>disableSite</code></td><td>数字</td><td class="col-optional">否</td><td>是否禁用点位: 0=否, 1=是(默认)</td></tr>
+                <tr><td><code>enableSite</code></td><td>数字</td><td class="col-optional">否</td><td>是否启用点位: 0=否, 1=是(默认)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 10. 载具与站点绑定 -->
+    <div class="interface-card" id="api-carrier-bind">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">载具与站点绑定接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/carrier/bind</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>将载具绑定到站点，代表载具放置在该站点上。前提：载具与站点均未被任务占用。<strong>需在调度系统中录入载具才能使用。</strong>
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>carrierCode</code></td><td>字符串</td><td class="col-required">是</td><td>载具编号/别名</td></tr>
+                <tr><td><code>siteCode</code></td><td>字符串</td><td class="col-required">是</td><td>站点编号/别名</td></tr>
+                <tr><td><code>carrierDir</code></td><td>整数</td><td class="col-optional">否</td><td>货架方向: [0, 90, 180, -90, 360]</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 11. 载具与站点解绑 -->
+    <div class="interface-card" id="api-carrier-unbind">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">载具与站点解绑接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/carrier/unbind</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>解除载具与站点的绑定关系。载具或站点编号至少传一个。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>carrierCode</code></td><td>字符串</td><td class="col-optional">否</td><td>载具编号</td></tr>
+                <tr><td><code>siteCode</code></td><td>字符串</td><td class="col-optional">否</td><td>站点编号</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 12. 存储对象与搬运对象绑定 -->
+    <div class="interface-card" id="api-site-bind">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">存储对象与搬运对象绑定解绑接口</div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/site/bind</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>存储对象（站点/仓位）与搬运对象（货架/托盘/料箱）的绑定与解绑。比载具绑定接口更通用，支持仓位绑定和堆叠场景。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>slotCategory</code></td><td>字符串</td><td class="col-optional">否</td><td>存储对象种类: SITE(站点) / BIN(仓位)</td></tr>
+                <tr><td><code>slotCode</code></td><td>字符串</td><td class="col-optional">否</td><td>存储对象编号</td></tr>
+                <tr><td><code>carrierCategory</code></td><td>字符串</td><td class="col-optional">否</td><td>搬运对象种类: POD(货架) / PALLET(托盘) / BOX(料箱)</td></tr>
+                <tr><td><code>carrierCode</code></td><td>字符串</td><td class="col-optional">否</td><td>载具编号</td></tr>
+                <tr><td><code>carrierDir</code></td><td>整数</td><td class="col-optional">否</td><td>货架方向: [0, 90, -90, 180, 360]</td></tr>
+                <tr><td><code>invoke</code></td><td>字符串</td><td class="col-required">是</td><td>BIND(绑定) / UNBIND(解绑)</td></tr>
+                <tr><td><code>colCount</code></td><td>整数</td><td class="col-optional">否</td><td>堆叠层号</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 13. 载具禁用启用 -->
+    <div class="interface-card" id="api-carrier-lock">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">载具禁用与启用接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/carrier/lock</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>禁用载具后，该载具和所处站点不会被任务分配（已分配任务需执行完成）。启用为逆操作。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>carrierCode</code></td><td>字符串</td><td class="col-required">是</td><td>载具编号</td></tr>
+                <tr><td><code>invoke</code></td><td>字符串</td><td class="col-required">是</td><td>LOCK(禁用) / UNLOCK(启用)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 14. 站点禁用启用 -->
+    <div class="interface-card" id="api-site-lock">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">站点禁用与启用接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/site/lock</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>禁用站点后，该站点和站点载具不会被任务分配（已分配任务需执行完成）。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>siteCode</code></td><td>字符串</td><td class="col-required">是</td><td>站点编号/别名</td></tr>
+                <tr><td><code>invoke</code></td><td>字符串</td><td class="col-required">是</td><td>LOCK(禁用) / UNLOCK(启用)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 15. 外设执行通知 -->
+    <div class="interface-card" id="api-eqpt-notify">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">外设执行通知接口【返回0】</div>
+                <div class="interface-path">POST /rcs/rtas/spi/wcs/robot/eqpt/notify</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>外设执行完成后通知RCS，与SPI请求外设接口对应。用于电梯到位、自动门开关、装卸机取放货等外设协同场景。此版本返回码为"0"。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>eqptCode</code></td><td>字符串</td><td class="col-required">是</td><td>设备编号</td></tr>
+                <tr><td><code>taskCode</code></td><td>字符串</td><td class="col-required">是</td><td>任务号(UUID)</td></tr>
+                <tr><td><code>actionStatus</code></td><td>字符串</td><td class="col-required">是</td><td>执行状态: "1"自动门开门到位, "2"关门到位, "3"电梯开门到位, "4"物料到达楼层, "5"取货, "6"放货, "7"到达</td></tr>
+                <tr><td><code>siteCode</code></td><td>字符串</td><td class="col-required">是</td><td>分配的站点编号</td></tr>
+            </tbody>
+        </table>
+        <div class="info-box warn">
+            <strong>⚠️ 注意</strong>
+            另有一个V4.2.8版本的外设通知接口 <code>/spi/wcs/robot/eqpt/notifyGbt</code>，功能相同，但返回码改为 SUCCESS。建议WMS对接时确认RCS使用哪个版本。
+        </div>
+    </div>
+
+    <!-- 16. 预调度任务 -->
+    <div class="interface-card" id="api-pretask">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">预调度任务下发接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/task/pretask</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>提前调度机器人到达指定位置。WMS预知即将有任务，提前让机器人到达待命点，减少任务等待时间。nextTaskTime=0时清空该点位所有预调度任务。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>siteCode</code></td><td>字符串</td><td class="col-required">是</td><td>站点编号</td></tr>
+                <tr><td><code>nextTaskTime</code></td><td>字符串</td><td class="col-required">是</td><td>预调度时间(0~3600秒)，0=清空预调度</td></tr>
+                <tr><td><code>robotType</code></td><td>字符串</td><td class="col-optional">否</td><td>机器人类型</td></tr>
+                <tr><td><code>priority</code></td><td>整数</td><td class="col-optional">否</td><td>优先级(1~120)</td></tr>
+                <tr><td><code>taskCount</code></td><td>整数</td><td class="col-optional">否</td><td>预调度任务数，默认1</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 17. 查询任务状态 -->
+    <div class="interface-card" id="api-task-query">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">查询任务状态接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/task/query</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>根据任务号查询单条任务当前执行状态。返回任务状态、步骤信息、机器人编号、告警信息等。
+        </div>
+        <table>
+            <thead><tr><th>请求参数</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>robotTaskCode</code></td><td>字符串</td><td class="col-required">是</td><td>任务号</td></tr>
+            </tbody>
+        </table>
+        <h4>响应关键字段</h4>
+        <table>
+            <thead><tr><th>字段名</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>taskStatus</code></td><td>任务状态: QUEUE(队列中), WAIT(等待步骤执行), EXECUTING(步骤运行中), MANUALED(人工完成), FINISHED(已完成), CANCELLED(已取消)</td></tr>
+                <tr><td><code>singleRobotCode</code></td><td>执行任务的机器人编号</td></tr>
+                <tr><td><code>currentSeq</code></td><td>当前执行步骤序号</td></tr>
+                <tr><td><code>waring</code></td><td>正在发生的告警信息</td></tr>
+                <tr><td><code>targetRoute</code></td><td>执行步骤集合（含每步的autoStart、operation等）</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 18. 查询机器人状态 -->
+    <div class="interface-card" id="api-robot-query">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">查询机器人状态接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/robot/query</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>根据机器人编号查询单台机器人的当前状态，包括位置、电量、速度、状态等。
+        </div>
+        <table>
+            <thead><tr><th>请求参数</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>singleRobotCode</code></td><td>字符串</td><td class="col-required">是</td><td>机器人编号</td></tr>
+            </tbody>
+        </table>
+        <h4>响应关键字段</h4>
+        <table>
+            <thead><tr><th>字段名</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>battery</code></td><td>机器人电量(0-100)</td></tr>
+                <tr><td><code>x / y</code></td><td>当前位置坐标</td></tr>
+                <tr><td><code>robotDir</code></td><td>机器人方向[0, 360)</td></tr>
+                <tr><td><code>speed</code></td><td>当前速度(mm/s)</td></tr>
+                <tr><td><code>robotStatus.abnormal</code></td><td>异常状态: YES/NO</td></tr>
+                <tr><td><code>robotStatus.charging</code></td><td>充电状态: YES/NO</td></tr>
+                <tr><td><code>robotStatus.network</code></td><td>网络状态: ONLINE/OFFLINE</td></tr>
+                <tr><td><code>robotStatus.taskable</code></td><td>任务状态: IDLE(空闲)/WORKING(执行中)/PAUSE(暂停)</td></tr>
+                <tr><td><code>carrierCode</code></td><td>机器人携带的载具编号</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 19. 查询载具状态 -->
+    <div class="interface-card" id="api-carrier-query">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">查询载具状态接口 <span class="tag tag-gb">国标</span></div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/carrier/query</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>查询载具当前状态，包括绑定站点、任务编号、坐标、载具状态等。V4.3.4新增仓位编号和车号返回。
+        </div>
+        <table>
+            <thead><tr><th>请求参数</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>carrierCode</code></td><td>字符串</td><td class="col-required">是</td><td>载具编号</td></tr>
+            </tbody>
+        </table>
+        <h4>响应关键字段</h4>
+        <table>
+            <thead><tr><th>字段名</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>robotTaskCode</code></td><td>载具当前任务编号</td></tr>
+                <tr><td><code>siteCode</code></td><td>绑定站点编号</td></tr>
+                <tr><td><code>carrierStatus</code></td><td>NORMAL(正常) / LOCKED(禁用)</td></tr>
+                <tr><td><code>binCode</code></td><td>仓位编号（V4.3.4）</td></tr>
+                <tr><td><code>robotCode</code></td><td>CTU编号（载具在CTU上时）</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 20. 物料绑定 -->
+    <div class="interface-card" id="api-matlabel-bind">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">物料绑定接口</div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/matlabel/bind</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>将物料标签绑定到载具（货架）上。只支持货架绑定物料，且空闲状态的货架才能绑定。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>carrierCode</code></td><td>字符串</td><td class="col-required">是</td><td>载具编号</td></tr>
+                <tr><td><code>matLabel</code></td><td>字符串</td><td class="col-required">是</td><td>物料标签</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 21. 物料解绑 -->
+    <div class="interface-card" id="api-matlabel-unbind">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">物料解绑接口</div>
+                <div class="interface-path">POST /rcs/rtas/api/robot/controller/matlabel/unbind</div>
+            </div>
+            <span class="interface-method">幂等</span>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>将载具上的物料解绑。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>carrierCode</code></td><td>字符串</td><td class="col-required">是</td><td>载具编号</td></tr>
+                <tr><td><code>matLabel</code></td><td>字符串</td><td class="col-required">是</td><td>物料标签</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ============ SPI INTERFACES ============ -->
+<section id="spi-interfaces">
+    <h2>🟣 SPI 回调接口（RCS → WMS）</h2>
+    <div class="info-box tip">
+        <strong>💡 重要提示</strong>
+        SPI接口由RCS主动调用WMS，WMS需要实现这些接口作为HTTP服务端。接口地址可在RCS系统设置-扩展管理-数据同步权限-业务通知中自定义配置。
+    </div>
+
+    <!-- 1. 任务执行过程回馈 -->
+    <div class="interface-card" id="spi-task-report">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">任务执行过程回馈接口 <span class="tag tag-gb">国标</span> <span class="tag tag-spi">SPI</span></div>
+                <div class="interface-path">POST /api/robot/reporter/task</div>
+            </div>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>RCS将任务执行过程中的消息反馈给WMS，包括任务开始、载具搬出储位、任务完成等关键节点。这是WMS跟踪任务进度的核心回调。
+        </div>
+        <h4>请求参数（RCS发给WMS）</h4>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>robotTaskCode</code></td><td>字符串</td><td class="col-required">是</td><td>任务号</td></tr>
+                <tr><td><code>singleRobotCode</code></td><td>字符串</td><td class="col-required">是</td><td>执行任务的机器人编号</td></tr>
+                <tr><td><code>extra.values.method</code></td><td>字符串</td><td class="col-required">是</td><td>消息方法: start(任务开始), outbin(走出储位), end(任务完成)</td></tr>
+                <tr><td><code>extra.values.carrierCode</code></td><td>字符串</td><td class="col-required">是</td><td>载具编号</td></tr>
+                <tr><td><code>extra.values.slotCode</code></td><td>字符串</td><td class="col-optional">否</td><td>当前站点编号（走出储位时为起点，任务完成时为目标点）</td></tr>
+            </tbody>
+        </table>
+        <div class="info-box tip">
+            <strong>💡 WMS响应</strong>
+            WMS收到回馈后需返回 <code>{"code":"SUCCESS","message":"成功","data":{"robotTaskCode":"任务号"}}</code>
+        </div>
+    </div>
+
+    <!-- 2. 请求资源 -->
+    <div class="interface-card" id="spi-resource">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">请求资源接口 <span class="tag tag-spi">SPI</span></div>
+                <div class="interface-path">POST /api/robot/reporter/resource</div>
+            </div>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>RCS向WMS请求资源分配。典型场景：机器人需要搬运货架到目的地，但目的地未指定，RCS向WMS申请一个站点。WMS需在响应中返回分配的资源。
+        </div>
+        <h4>请求参数（RCS发给WMS）</h4>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>robotTaskCode</code></td><td>字符串</td><td class="col-required">是</td><td>任务号</td></tr>
+                <tr><td><code>applyType</code></td><td>字符串</td><td class="col-required">是</td><td>申请类型: APPLY_SITE(存储位置), APPLY_BIN(仓位), APPLY_PTL_BIN(分播位), APPLY_CARRIER(载具)</td></tr>
+                <tr><td><code>resourceType</code></td><td>字符串</td><td class="col-required">是</td><td>资源类型: CARRIER/SITE/ZONE</td></tr>
+                <tr><td><code>resourceCode</code></td><td>字符串</td><td class="col-required">是</td><td>资源编号</td></tr>
+            </tbody>
+        </table>
+        <h4>WMS响应（需返回分配的资源）</h4>
+        <div class="code-block">{
+  <span class="str">"code"</span>: <span class="str">"SUCCESS"</span>,
+  <span class="str">"message"</span>: <span class="str">"成功"</span>,
+  <span class="str">"data"</span>: {
+    <span class="str">"type"</span>: <span class="str">"SITE"</span>,
+    <span class="str">"code"</span>: <span class="str">"WS001"</span>
+  }
+}</div>
+    </div>
+
+    <!-- 3. 请求外设 -->
+    <div class="interface-card" id="spi-eqpt">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">请求外设接口 <span class="tag tag-spi">SPI</span></div>
+                <div class="interface-path">POST /api/robot/reporter/eqpt</div>
+            </div>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>RCS向WCS（或WMS）请求外设控制。典型场景：机器人需要使用电梯，RCS向WCS申请电梯资源。WCS控制电梯到位后，再通过外设执行通知接口告知RCS。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>eqptCode</code></td><td>字符串</td><td class="col-required">是</td><td>设备编号</td></tr>
+                <tr><td><code>eqptName</code></td><td>字符串</td><td class="col-required">是</td><td>设备名称</td></tr>
+                <tr><td><code>taskCode</code></td><td>字符串</td><td class="col-required">是</td><td>任务号</td></tr>
+                <tr><td><code>method</code></td><td>字符串</td><td class="col-required">是</td><td>执行方法: CANCEL(取消), APPLY_TO_AGV(接料), APPLY_FROM_AGV(送料), ARRIVED(到达), RELEASE(离开), APPLY_LOCK(门开), RELEASE_EQPT(释放门), APPLY_RESOURCE(电梯申请), EXECUTE_TASK(电梯执行), RELEASE_RESOURCE(释放电梯)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 4. 归巢完成回馈 -->
+    <div class="interface-card" id="spi-homing-report">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">机器人归巢完成回馈接口 <span class="tag tag-gb">国标</span> <span class="tag tag-spi">SPI</span></div>
+                <div class="interface-path">POST /api/robot/reporter/zone/homing</div>
+            </div>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>机器人归巢完成后反馈给WMS。需在RCS系统设置中开启 ZONE_HOMING 业务通知。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>homingCode</code></td><td>字符串</td><td class="col-required">是</td><td>归巢指令编号</td></tr>
+                <tr><td><code>workRobotCode</code></td><td>字符串数组</td><td class="col-optional">否</td><td>仍在工作的机器人编号</td></tr>
+                <tr><td><code>status</code></td><td>-</td><td class="col-required">是</td><td>归巢执行状态</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 5. 驱离完成回馈 -->
+    <div class="interface-card" id="spi-banish-report">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">区域驱离完成回馈接口 <span class="tag tag-gb">国标</span> <span class="tag tag-spi">SPI</span></div>
+                <div class="interface-path">POST /api/robot/reporter/zone/banish</div>
+            </div>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>所有机器人全部驱离成功，或到达超时时间仍未全部完成时反馈给WMS。需开启 ZONE_BANISH 业务通知。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>banishCode</code></td><td>字符串</td><td class="col-required">是</td><td>驱离指令编号</td></tr>
+                <tr><td><code>stayRobotCode</code></td><td>字符串数组</td><td class="col-optional">否</td><td>仍停留在区域内的机器人编号</td></tr>
+                <tr><td><code>status</code></td><td>字符串</td><td class="col-required">是</td><td>SUCCESS(全部成功) / FAIL(超时未完成)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 6. 机器人告警 -->
+    <div class="interface-card" id="spi-robot-warning">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">机器人异常告警上报接口 <span class="tag tag-gb">国标</span> <span class="tag tag-spi">SPI</span></div>
+                <div class="interface-path">POST /api/robot/reporter/robot/warning</div>
+            </div>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>RCS将导致机器人停止运行的严重告警推送给WMS。只推送一次。需开启 AMR_ALARM 业务通知。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>singleRobotCode</code></td><td>字符串</td><td class="col-required">是</td><td>异常机器人编号</td></tr>
+                <tr><td><code>taskWarnCode</code></td><td>字符串</td><td class="col-required">是</td><td>告警单号</td></tr>
+                <tr><td><code>startTime</code></td><td>时间</td><td class="col-required">是</td><td>初次出现故障时间</td></tr>
+                <tr><td><code>robotTaskCode</code></td><td>字符串</td><td class="col-optional">否</td><td>正在执行的任务编号</td></tr>
+                <tr><td><code>x / y</code></td><td>字符串</td><td class="col-required">是</td><td>机器人位置坐标</td></tr>
+                <tr><td><code>errorCode</code></td><td>字符串</td><td class="col-required">是</td><td>故障码</td></tr>
+                <tr><td><code>errorMsg</code></td><td>字符串</td><td class="col-optional">否</td><td>故障消息</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 7. 任务告警 -->
+    <div class="interface-card" id="spi-task-warning">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">任务异常告警上报接口 <span class="tag tag-gb">国标</span> <span class="tag tag-spi">SPI</span></div>
+                <div class="interface-path">POST /api/robot/reporter/task/warning</div>
+            </div>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>RCS将任务运行中的严重告警推送给WMS。只推送一次。需开启 TASK_ALARM 业务通知。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>robotTaskCode</code></td><td>字符串</td><td class="col-required">是</td><td>异常任务编号</td></tr>
+                <tr><td><code>taskWarnCode</code></td><td>字符串</td><td class="col-required">是</td><td>告警单号</td></tr>
+                <tr><td><code>singleRobotCode</code></td><td>字符串</td><td class="col-optional">否</td><td>执行任务的机器人编号</td></tr>
+                <tr><td><code>errorCode</code></td><td>字符串</td><td class="col-required">是</td><td>故障码</td></tr>
+                <tr><td><code>errorMsg</code></td><td>字符串</td><td class="col-optional">否</td><td>故障消息</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 8. 绑定解绑通知 -->
+    <div class="interface-card" id="spi-bind-notify">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">绑定解绑通知接口 <span class="tag tag-spi">SPI</span></div>
+                <div class="interface-path">POST /api/robot/reporter/bind</div>
+            </div>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>RCS执行绑定/解绑操作时通知WMS，保持双方数据同步。需开启 BIND 业务通知。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>slotCategory</code></td><td>字符串</td><td class="col-required">是</td><td>SITE(站点) / BIN(仓位)</td></tr>
+                <tr><td><code>slotCode</code></td><td>字符串</td><td class="col-required">是</td><td>存储对象编号</td></tr>
+                <tr><td><code>carrierCategory</code></td><td>字符串</td><td class="col-required">是</td><td>POD(货架) / PALLET(托盘) / BOX(料箱) / MAT(物料)</td></tr>
+                <tr><td><code>carrierCode</code></td><td>字符串</td><td class="col-optional">否</td><td>载具编号</td></tr>
+                <tr><td><code>invoke</code></td><td>字符串</td><td class="col-required">是</td><td>BIND(绑定) / UNBIND(解绑)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 9. CTU料箱校验 -->
+    <div class="interface-card" id="spi-ctu-check">
+        <div class="interface-header">
+            <div>
+                <div class="interface-title">CTU梳齿工作站料箱入库校验 <span class="tag tag-spi">SPI</span></div>
+                <div class="interface-path">POST /api/robot/reporter/applyReturnForValid</div>
+            </div>
+        </div>
+        <div class="interface-desc">
+            <strong>功能：</strong>料箱流进CTU梳齿工作站时，RCS调用WMS校验料箱号是否合法。WMS返回成功即代表可入库。配置项编号 WORKSTATION_CHECK_CARRIER。
+        </div>
+        <table>
+            <thead><tr><th>参数名</th><th>类型</th><th>必须</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>robotTaskCode</code></td><td>字符串</td><td class="col-required">是</td><td>任务编号</td></tr>
+                <tr><td><code>type</code></td><td>字符串</td><td class="col-required">是</td><td>校验类型: CARRIER(载具)</td></tr>
+                <tr><td><code>code</code></td><td>字符串</td><td class="col-required">是</td><td>资源编号</td></tr>
+                <tr><td><code>label</code></td><td>字符串</td><td class="col-optional">否</td><td>相关标注（梳齿工作站对应的站点编号）</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ============ FLOWS ============ -->
+<section id="flows">
+    <h2>🔄 任务下发流程示例</h2>
+    <p>不同车型和场景使用不同的 taskType，以下是11种典型流程：</p>
+
+    <div class="interface-card">
+        <h3>3.1 潜伏车通用流程 (PF-LMR-COMMON)</h3>
+        <p>最常见的搬运场景：机器人到货架位置顶起货架，搬运到目标站点。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-LMR-COMMON"</span>,
+  <span class="str">"targetRoute"</span>: [
+    { <span class="str">"type"</span>: <span class="str">"CARRIER"</span>, <span class="str">"code"</span>: <span class="str">"P00001"</span> },
+    { <span class="str">"type"</span>: <span class="str">"SITE"</span>, <span class="str">"code"</span>: <span class="str">"WS001"</span> }
+  ],
+  <span class="str">"initPriority"</span>: <span class="num">1</span>
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.2 潜伏车指定载具初始化流程 (PF-LMR-INIT-CARRIER)</h3>
+        <p>起点不需要绑定载具，直接指定载具编号初始化搬运。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-LMR-INIT-CARRIER"</span>,
+  <span class="str">"targetRoute"</span>: [
+    { <span class="str">"type"</span>: <span class="str">"SITE"</span>, <span class="str">"code"</span>: <span class="str">"XXXXXXX"</span> },
+    { <span class="str">"type"</span>: <span class="str">"ZONE"</span>, <span class="str">"code"</span>: <span class="str">"SL2"</span>, <span class="str">"extra"</span>: { <span class="str">"angleInfo"</span>: { <span class="str">"code"</span>: <span class="str">"90"</span> } } }
+  ],
+  <span class="str">"extra"</span>: { <span class="str">"carrierInfo"</span>: [{ <span class="str">"carrierType"</span>: <span class="str">"5"</span>, <span class="str">"carrierCode"</span>: <span class="str">"P00001"</span> }] },
+  <span class="str">"interrupt"</span>: <span class="num">0</span>
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.3 探测载具搬运流程 (PF-DETECT-CARRIER)</h3>
+        <p>机器人到站点探测载具后搬运，用于不确定载具是否在位的情况。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-DETECT-CARRIER"</span>,
+  <span class="str">"targetRoute"</span>: [
+    { <span class="str">"type"</span>: <span class="str">"SITE"</span>, <span class="str">"code"</span>: <span class="str">"站点1"</span> },
+    { <span class="str">"type"</span>: <span class="str">"SITE"</span>, <span class="str">"code"</span>: <span class="str">"站点2"</span> }
+  ],
+  <span class="str">"extra"</span>: { <span class="str">"carrierInfo"</span>: [{ <span class="str">"carrierType"</span>: <span class="str">"66"</span> }] }
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.4 CTU通用流程 (PF-CTU-COMMON)</h3>
+        <p>CTU（料箱机器人）搬运料箱到仓位。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-CTU-COMMON"</span>,
+  <span class="str">"targetRoute"</span>: [
+    { <span class="str">"type"</span>: <span class="str">"CARRIER"</span>, <span class="str">"code"</span>: <span class="str">"C0001"</span> },
+    { <span class="str">"type"</span>: <span class="str">"STORAGE"</span>, <span class="str">"code"</span>: <span class="str">"仓位编号"</span> }
+  ]
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.5 CTU工作站入库流程 (PF-CTU-LOADER-IN)</h3>
+        <p>从工作站（装卸机/输送线）将料箱入库，支持多层料箱同时入库。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-CTU-LOADER-IN"</span>,
+  <span class="str">"targetRoute"</span>: [{ <span class="str">"type"</span>: <span class="str">"EQPT"</span>, <span class="str">"code"</span>: <span class="str">"222"</span> }],
+  <span class="str">"extra"</span>: {
+    <span class="str">"carrierInfo"</span>: [
+      { <span class="str">"carrierType"</span>: <span class="str">"3"</span>, <span class="str">"carrierCode"</span>: <span class="str">"jieb1"</span>, <span class="str">"layer"</span>: <span class="num">0</span> },
+      { <span class="str">"carrierType"</span>: <span class="str">"3"</span>, <span class="str">"carrierCode"</span>: <span class="str">"jieb2"</span>, <span class="str">"layer"</span>: <span class="num">1</span> }
+    ]
+  }
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.6 CTU缓存架出库流程 (WMS-PF-CTU-ALLOC-WALL-OUT)</h3>
+        <p>从CTU缓存架（分播墙）将料箱出库。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"WMS-PF-CTU-ALLOC-WALL-OUT"</span>,
+  <span class="str">"targetRoute"</span>: [
+    { <span class="str">"type"</span>: <span class="str">"CARRIER"</span>, <span class="str">"code"</span>: <span class="str">"jieb1"</span> },
+    { <span class="str">"type"</span>: <span class="str">"PTL_WALL"</span>, <span class="str">"code"</span>: <span class="str">"900003"</span> }
+  ]
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.7 CTU缓存架入库流程 (WMS-PF-CTU-ALLOC-WALL-IN)</h3>
+        <p>将料箱入库到CTU缓存架仓位。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"WMS-PF-CTU-ALLOC-WALL-IN"</span>,
+  <span class="str">"targetRoute"</span>: [{ <span class="str">"type"</span>: <span class="str">"STORAGE"</span>, <span class="str">"code"</span>: <span class="str">"R900003A03021"</span> }],
+  <span class="str">"extra"</span>: { <span class="str">"carrierInfo"</span>: [{ <span class="str">"carrierType"</span>: <span class="str">"3"</span>, <span class="str">"carrierCode"</span>: <span class="str">"jieb1"</span> }] }
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.8 CTU输送线探测入库流程 (PF-CTU-CONVEYOR-IN-DETECT)</h3>
+        <p>从输送线探测料箱后入库。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-CTU-CONVEYOR-IN-DETECT"</span>,
+  <span class="str">"targetRoute"</span>: [{ <span class="str">"type"</span>: <span class="str">"EQPT"</span>, <span class="str">"code"</span>: <span class="str">"777"</span> }]
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.9 CTU输送线入库流程 (PF-CTU-CONVEYOR-IN)</h3>
+        <p>从输送线指定料箱入库。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-CTU-CONVEYOR-IN"</span>,
+  <span class="str">"targetRoute"</span>: [{ <span class="str">"type"</span>: <span class="str">"EQPT"</span>, <span class="str">"code"</span>: <span class="str">"777"</span> }],
+  <span class="str">"extra"</span>: { <span class="str">"carrierInfo"</span>: [{ <span class="str">"carrierType"</span>: <span class="str">"3"</span>, <span class="str">"carrierCode"</span>: <span class="str">"901"</span> }] }
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.10 叉车通用流程 (PF-FMR-COMMON)</h3>
+        <p>叉车搬运托盘到区域。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-FMR-COMMON"</span>,
+  <span class="str">"targetRoute"</span>: [
+    { <span class="str">"type"</span>: <span class="str">"CARRIER"</span>, <span class="str">"code"</span>: <span class="str">"PA0001"</span> },
+    { <span class="str">"type"</span>: <span class="str">"ZONE"</span>, <span class="str">"code"</span>: <span class="str">"SL2"</span> }
+  ],
+  <span class="str">"interrupt"</span>: <span class="num">0</span>
+}</div>
+    </div>
+
+    <div class="interface-card">
+        <h3>3.11 滚筒车通用流程 (PF-CMR-COMMON)</h3>
+        <p>滚筒车站点到站点搬运。</p>
+        <div class="code-block">{
+  <span class="str">"taskType"</span>: <span class="str">"PF-CMR-COMMON"</span>,
+  <span class="str">"targetRoute"</span>: [
+    { <span class="str">"type"</span>: <span class="str">"SITE"</span>, <span class="str">"code"</span>: <span class="str">"012***0512"</span> },
+    { <span class="str">"type"</span>: <span class="str">"SITE"</span>, <span class="str">"code"</span>: <span class="str">"022***0843"</span> }
+  ],
+  <span class="str">"interrupt"</span>: <span class="num">0</span>
+}</div>
+    </div>
+</section>
+
+<!-- WMS Guide -->
+<section id="wms-guide">
+    <h2>🎯 WMS对接最佳实践</h2>
+
+    <h3>核心对接流程</h3>
+    <div class="flow-steps">
+        <div class="flow-step">
+            <h4>1. 初始配置</h4>
+            <p>在RCS系统中注册第三方应用，获取 appKey 和 appSecret。配置SPI回调地址（业务通知中设置）。开启所需业务通知：ZONE_HOMING、ZONE_BANISH、AMR_ALARM、TASK_ALARM、BIND等。</p>
+        </div>
+        <div class="flow-step">
+            <h4>2. 基础数据同步</h4>
+            <p>WMS需要与RCS保持载具、站点、仓位等基础数据同步。通过载具绑定/解绑接口维护载具位置，通过绑定解绑通知SPI接收RCS侧的变更。</p>
+        </div>
+        <div class="flow-step">
+            <h4>3. 下发搬运任务</h4>
+            <p>WMS调用 <code>/api/robot/controller/task/submit</code> 下发任务，根据车型选择正确的 taskType。如果任务有多个步骤且非自动开始，需通过 <code>task/extend/continue</code> 驱动每个步骤。</p>
+        </div>
+        <div class="flow-step">
+            <h4>4. 接收任务回馈</h4>
+            <p>WMS实现 <code>/api/robot/reporter/task</code> SPI接口，接收任务开始(start)、走出储位(outbin)、任务完成(end)等回馈，更新WMS侧任务状态和库存位置。</p>
+        </div>
+        <div class="flow-step">
+            <h4>5. 处理资源申请</h4>
+            <p>当RCS需要WMS指定目标位置时，会通过 <code>/api/robot/reporter/resource</code> 申请资源。WMS需在响应中返回分配的站点/仓位/区域。</p>
+        </div>
+        <div class="flow-step">
+            <h4>6. 异常处理</h4>
+            <p>实现机器人告警和任务告警SPI接口，接收异常推送。WMS可据此触发告警通知、任务重试等逻辑。可通过任务取消接口取消异常任务。</p>
+        </div>
+        <div class="flow-step">
+            <h4>7. 状态查询</h4>
+            <p>WMS可主动调用查询接口获取任务状态、机器人状态、载具状态，用于监控看板或补偿机制。</p>
+        </div>
+    </div>
+
+    <div class="info-box tip">
+        <strong>💡 接口调用顺序（典型出库流程）</strong>
+        1. 物料绑定（将物料绑定到货架）→ 2. 任务下发（搬运货架到工作站）→ 3. 接收start回馈（任务开始）→ 4. 接收outbin回馈（货架离开储位，WMS更新库存）→ 5. 接收end回馈（货架到达工作站，WMS更新位置）→ 6. 拣货完成后下发回库任务
+    </div>
+
+    <div class="info-box warn">
+        <strong>⚠️ 关键注意事项</strong>
+        <ul style="margin: 8px 0 0 20px;">
+            <li>所有API接口均支持幂等，重复调用不会产生副作用</li>
+            <li>超时设置：连接超时30秒，数据返回超时60秒</li>
+            <li>签名认证合法请求时间建议不超过120秒</li>
+            <li>载具绑定/解绑前需确保载具和站点均未被任务占用</li>
+            <li>批量取消任务时，cancelType必须为DROP，且不能取消CTU车型</li>
+            <li>SPI接口地址可在RCS业务通知中自定义配置</li>
+            <li>任务状态：QUEUE→WAIT→EXECUTING→FINISHED/CANCELLED/MANUALED</li>
+        </ul>
+    </div>
+
+    <h3>接口分类速查表</h3>
+    <table>
+        <thead><tr><th>分类</th><th>接口</th><th>使用场景</th></tr></thead>
+        <tbody>
+            <tr><td rowspan="3"><strong>任务管理</strong></td><td>任务下发</td><td>创建搬运任务（核心接口）</td></tr>
+            <tr><td>任务继续执行</td><td>多步骤任务驱动下一步</td></tr>
+            <tr><td>任务取消</td><td>取消任务（软取消/硬取消）</td></tr>
+            <tr><td rowspan="2"><strong>任务查询</strong></td><td>查询任务状态</td><td>查任务进度</td></tr>
+            <tr><td>查询机器人状态</td><td>查机器人位置/电量</td></tr>
+            <tr><td rowspan="4"><strong>区域控制</strong></td><td>区域暂停恢复</td><td>急停/恢复区域内机器人</td></tr>
+            <tr><td>区域归巢</td><td>机器人回停放区（支持关机）</td></tr>
+            <tr><td>区域驱离</td><td>清空区域内机器人</td></tr>
+            <tr><td>区域封锁</td><td>禁止外部机器人进入</td></tr>
+            <tr><td rowspan="4"><strong>载具管理</strong></td><td>载具绑定/解绑站点</td><td>维护载具位置</td></tr>
+            <tr><td>存储对象绑定/解绑</td><td>仓位级别的绑定（CTU场景）</td></tr>
+            <tr><td>载具禁用/启用</td><td>暂停使用某载具</td></tr>
+            <tr><td>物料绑定/解绑</td><td>货架与物料关联</td></tr>
+            <tr><td rowspan="2"><strong>高级功能</strong></td><td>预调度任务</td><td>提前调度机器人到待命点</td></tr>
+            <tr><td>外设执行通知</td><td>电梯/自动门/装卸机协同</td></tr>
+        </tbody>
+    </table>
+</section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+@use "./theme";
+
+// 基础样式
+page {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+// H5 端字体平滑渲染
+/* #ifdef H5 */
+html,
+body {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    "Helvetica Neue",
+    Helvetica,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* #endif */
+
+// 页面容器
+.page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary);
+}
+
+.page--padding {
+  box-sizing: border-box;
+  padding: 16rpx 32rpx 0;
+}
+
+.page--tabbar {
+  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+}
+
+// 筛选栏
+.filter-bar {
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  margin-top: 16rpx;
+  overflow: hidden;
+  background: var(--color-bg);
+  border-radius: 16rpx;
+
+  :deep(.wd-drop-menu) {
+    flex: 1;
+  }
+
+  :deep(.wd-drop-menu-item) {
+    flex: 1;
+  }
+}
+
+// 全局 wd-card 间距
+.page .wd-card,
+.filter-bar .wd-card {
+  margin: 0;
+  margin-bottom: 16rpx;
+}
+
+// 弹窗底部按钮
+.popup-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+
+  .wd-button {
+    flex: 1;
+  }
+}
+
+// 渐变背景
+.gradient-bg {
+  &--primary {
+    background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-bg) 100%);
+  }
+
+  &--success {
+    background: linear-gradient(135deg, var(--color-success-light) 0%, var(--color-bg) 100%);
+  }
+
+  &--warning {
+    background: linear-gradient(135deg, var(--color-warning-light) 0%, var(--color-bg) 100%);
+  }
+
+  &--danger {
+    background: linear-gradient(135deg, var(--color-danger-light) 0%, var(--color-bg) 100%);
+  }
+}
+
+// 底部弹窗圆角
+.popup-bottom {
+  border-radius: 24rpx 24rpx 0 0;
+}
+
+.popup-bottom-scroll {
+  max-height: 80vh;
+  border-radius: 24rpx 24rpx 0 0;
+}
+
+// 弹窗标题
+.popup-title {
+  margin-bottom: 16rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: var(--wot-text-main);
+  text-align: center;
+}
+
+

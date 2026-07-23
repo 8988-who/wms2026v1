@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--suppress ALL -->
+<mapper namespace="com.youlai.boot.codegen.mapper.DatabaseMapper">
+
+    <!-- 查询数据库表分页（PostgreSQL 版本）-->
+    <select id="getTablePage" resultType="com.youlai.boot.codegen.model.vo.TablePageVO">
+        SELECT
+            t1.table_name AS table_name,
+            obj_description(('"' || t1.table_schema || '"."' || t1.table_name || '"')::regclass) AS table_comment,
+            NULL AS table_collation,
+            'PostgreSQL' AS engine,
+            NULL AS create_time,
+            CASE WHEN t2.id IS NOT NULL THEN 1 ELSE 0 END AS isConfigured
+        FROM
+            information_schema.tables t1
+            LEFT JOIN gen_table t2 ON t1.table_name = t2.table_name
+        WHERE
+            t1.table_schema = current_schema()
+            AND t1.table_type = 'BASE TABLE'
+            <if test="queryParams.keywords != null and queryParams.keywords.trim() neq ''">
+                AND t1.table_name ILIKE CONCAT('%',#{queryParams.keywords},'%')
+            </if>
+            <!-- 排除的表 -->
+            <if test="queryParams.excludeTables != null and queryParams.excludeTables.size() > 0">
+                AND t1.table_name NOT IN
+                <foreach collection="queryParams.excludeTables" item="excludeTable" open="(" close=")" separator=",">
+                    #{excludeTable}
+                </foreach>
+            </if>
+        ORDER BY
+            t1.table_name ASC
+    </select>
+
+    <!-- 查询数据库表元数据（PostgreSQL 版本）-->
+    <select id="getTableMetadata" resultType="com.youlai.boot.codegen.model.vo.TableMetaVO">
+        SELECT
+            t1.table_name AS table_name,
+            obj_description(('"' || t1.table_schema || '"."' || t1.table_name || '"')::regclass) AS table_comment,
+            NULL AS table_collation,
+            'PostgreSQL' AS engine,
+            NULL AS create_time
+        FROM
+            information_schema.tables t1
+        WHERE
+            t1.table_schema = current_schema()
+          AND t1.table_name = #{tableName}
+    </select>
+
+    <!-- 获取数据库表字段元数据（PostgreSQL 版本）-->
+    <select id="getTableColumns" resultType="com.youlai.boot.codegen.model.vo.ColumnMetaVO">
+        SELECT
+            a.attname AS column_name,
+            CASE t.typname
+                WHEN 'int2' THEN 'smallint'
+                WHEN 'int4' THEN 'integer'
+                WHEN 'int8' THEN 'bigint'
+                WHEN 'varchar' THEN 'varchar'
+                WHEN 'bpchar' THEN 'char'
+                WHEN 'timestamp' THEN 'timestamp'
+                WHEN 'timestamptz' THEN 'timestamp'
+                WHEN 'date' THEN 'date'
+                WHEN 'time' THEN 'time'
+                WHEN 'timetz' THEN 'time'
+                WHEN 'bool' THEN 'boolean'
+                WHEN 'numeric' THEN 'decimal'
+                WHEN 'json' THEN 'json'
+                WHEN 'jsonb' THEN 'json'
+                WHEN 'text' THEN 'text'
+                WHEN 'float4' THEN 'float'
+                WHEN 'float8' THEN 'double'
+                ELSE t.typname
+            END AS data_type,
+            col_description(a.attrelid, a.attnum) AS column_comment,
+            CASE WHEN pk.conname IS NOT NULL THEN 1 ELSE 0 END AS isPrimaryKey,
+            CASE WHEN a.attnotnull = false THEN 'YES' ELSE 'NO' END AS isNullable,
+            CASE WHEN t.typname IN ('varchar','bpchar') THEN a.atttypmod - 4 ELSE NULL END AS characterMaximumLength,
+            NULL AS character_set_name,
+            NULL AS collation_name
+        FROM pg_attribute a
+        JOIN pg_class c ON a.attrelid = c.oid
+        JOIN pg_namespace n ON c.relnamespace = n.oid
+        JOIN pg_type t ON a.atttypid = t.oid
+        LEFT JOIN (
+            SELECT cc.conname, cc.conrelid, UNNEST(cc.conkey) AS attnum
+            FROM pg_constraint cc
+            WHERE cc.contype = 'p'
+        ) pk ON pk.conrelid = c.oid AND pk.attnum = a.attnum
+        WHERE c.relname = #{tableName}
+          AND n.nspname = current_schema()
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+        ORDER BY a.attnum ASC
+    </select>
+
+</mapper>

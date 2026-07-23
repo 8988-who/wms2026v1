@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.youlai.boot.warehouse.mapper.WmsAisleMapper">
+
+    <resultMap id="WmsAisleVOResultMap" type="com.youlai.boot.warehouse.model.vo.WmsAisleVO">
+        <id property="id" column="id"/>
+        <result property="plantCode" column="plant_code"/>
+        <result property="locationId" column="location_id"/>
+        <result property="locationCode" column="location_code"/>
+        <result property="aisleCode" column="aisle_code"/>
+        <result property="aisleName" column="aisle_name"/>
+        <result property="floor" column="floor"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="aislePurpose" column="aisle_purpose"/>
+        <result property="isHandoverPoint" column="is_handover_point"/>
+        <result property="pointCount" column="point_count"/>
+        <result property="createdByName" column="created_by_name"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedByName" column="updated_by_name"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+
+    <select id="getWmsAislePage" resultMap="WmsAisleVOResultMap">
+        SELECT
+            a.id,
+            a.plant_code,
+            a.location_id,
+            l.location_code,
+            a.aisle_code,
+            a.aisle_name,
+            a.floor,
+            a.sort_order,
+            a.status,
+            a.remark,
+            a.aisle_purpose,
+            a.is_handover_point,
+            (SELECT COUNT(*) FROM wms_point WHERE wms_point.aisle_id = a.id) AS point_count,
+            su1.nickname AS created_by_name,
+            a.created_time,
+            su2.nickname AS updated_by_name,
+            a.updated_time
+        FROM wms_aisle a
+        LEFT JOIN wms_location l ON a.location_id = l.id
+        LEFT JOIN sys_user su1 ON a.created_by = su1.id
+        LEFT JOIN sys_user su2 ON a.updated_by = su2.id
+        <where>
+            <if test="queryParams.status != null">
+                AND a.status = #{queryParams.status}
+            </if>
+            <if test="queryParams.plantCode != null and queryParams.plantCode != ''">
+                AND a.plant_code LIKE '%' || #{queryParams.plantCode} || '%'
+            </if>
+            <if test="queryParams.floor != null and queryParams.floor != ''">
+                AND a.floor LIKE '%' || #{queryParams.floor} || '%'
+            </if>
+            <if test="queryParams.aisleCode != null and queryParams.aisleCode != ''">
+                AND a.aisle_code LIKE '%' || #{queryParams.aisleCode} || '%'
+            </if>
+            <if test="queryParams.aisleName != null and queryParams.aisleName != ''">
+                AND a.aisle_name LIKE '%' || #{queryParams.aisleName} || '%'
+            </if>
+        </where>
+        ORDER BY a.sort_order ASC, a.id ASC
+    </select>
+
+</mapper>
