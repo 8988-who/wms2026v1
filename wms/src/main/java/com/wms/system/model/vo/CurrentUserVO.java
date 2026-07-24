@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.vo;
+package com.wms.system.model.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

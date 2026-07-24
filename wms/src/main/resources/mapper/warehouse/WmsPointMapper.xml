@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.wms.warehouse.mapper.WmsPointMapper">
 
@@ -70,6 +70,12 @@
             </if>
             <if test="queryParams.aisleId != null">
                 AND p.aisle_id = #{queryParams.aisleId}
+            </if>
+            <if test="queryParams.locationCode != null and queryParams.locationCode != ''">
+                AND l.location_code LIKE '%' || #{queryParams.locationCode} || '%'
+            </if>
+            <if test="queryParams.aisleCode != null and queryParams.aisleCode != ''">
+                AND a.aisle_code LIKE '%' || #{queryParams.aisleCode} || '%'
             </if>
         </where>
         ORDER BY p.sort_order ASC, p.id ASC

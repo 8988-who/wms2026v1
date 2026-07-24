@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.vo;
+package com.wms.system.model.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,7 +24,7 @@ public class RouteVO {
     @Schema(description = "组件路径", example = "system/user/index")
     private String component;
 
-    @Schema(description = "跳转链接", example = "https://www.youlai.tech")
+    @Schema(description = "跳转链接", example = "https://www.wms.com")
     private String redirect;
 
     @Schema(description = "路由名称")
@@ -54,7 +54,7 @@ public class RouteVO {
         @JsonInclude(JsonInclude.Include.NON_NULL)
         private Boolean alwaysShow;
 
-        @Schema(description = "外链地址(内嵌模式用)", example = "https://www.youlai.tech")
+        @Schema(description = "外链地址(内嵌模式用)", example = "https://www.wms.com")
         @JsonInclude(JsonInclude.Include.NON_NULL)
         private String externalUrl;
 

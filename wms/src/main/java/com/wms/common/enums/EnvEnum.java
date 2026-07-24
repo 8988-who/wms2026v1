@@ -1,4 +1,4 @@
-﻿package com.wms.common.enums;
+package com.wms.common.enums;
 
 import com.wms.common.base.IBaseEnum;
 import lombok.Getter;

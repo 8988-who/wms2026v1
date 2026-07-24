@@ -1,4 +1,4 @@
-﻿package com.wms.message.topic;
+package com.wms.message.topic;
 
 /**
  * SSE 主题常量

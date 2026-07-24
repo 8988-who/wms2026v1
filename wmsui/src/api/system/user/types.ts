@@ -153,3 +153,15 @@ export interface EmailUpdateForm {
   /** 当前密码 */
   password?: string;
 }
+
+/** 最近登录记录 */
+export interface LoginRecordItem {
+  /** 设备 */
+  device?: string;
+  /** 地区 */
+  region?: string;
+  /** IP 地址 */
+  ip?: string;
+  /** 登录时间 */
+  createTime?: string;
+}

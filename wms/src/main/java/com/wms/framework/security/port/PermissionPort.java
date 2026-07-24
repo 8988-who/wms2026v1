@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.port;
+package com.wms.framework.security.port;
 
 import java.util.Set;
 
@@ -8,7 +8,7 @@ import java.util.Set;
  * 由 system 模块提供适配器实现，framework 层通过此接口获取角色权限集合，
  * 不直接依赖 system 模块的 {@code RoleMenuService}。
  *
- * @see com.youlai.boot.system.security.adapter.PermissionAdapter
+ * @see com.wms.system.security.adapter.PermissionAdapter
  */
 public interface PermissionPort {
 

@@ -1,4 +1,4 @@
-﻿package com.wms.message.dto;
+package com.wms.message.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

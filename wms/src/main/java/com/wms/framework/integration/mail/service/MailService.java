@@ -1,4 +1,4 @@
-﻿package com.wms.framework.integration.mail.service;
+package com.wms.framework.integration.mail.service;
 
 import com.wms.framework.integration.mail.config.MailProperties;
 import jakarta.mail.MessagingException;

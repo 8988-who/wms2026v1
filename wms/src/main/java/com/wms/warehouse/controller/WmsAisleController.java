@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.controller;
+package com.wms.warehouse.controller;
 
 import com.wms.warehouse.service.WmsAisleService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +9,10 @@ import com.wms.warehouse.model.dto.WmsAisleDTO;
 import com.wms.warehouse.model.dto.WmsAisleQueryDTO;
 import com.wms.warehouse.model.vo.WmsAisleVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.wms.common.annotation.Log;
+import com.wms.common.annotation.RepeatSubmit;
+import com.wms.common.enums.ActionTypeEnum;
+import com.wms.common.enums.LogModuleEnum;
 import com.wms.common.result.PageResult;
 import com.wms.common.result.Result;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,6 +43,7 @@ public class WmsAisleController {
     @Operation(summary = "巷道分页列表")
     @GetMapping
     @PreAuthorize("@ss.hasPerm('warehouse:wms-aisle:list')")
+    @Log(module = LogModuleEnum.WMS_AISLE, value = ActionTypeEnum.LIST)
     public PageResult<WmsAisleVO> getWmsAislePage(WmsAisleQueryDTO queryParams) {
         IPage<WmsAisleVO> result = wmsAisleService.getWmsAislePage(queryParams);
         return PageResult.success(result);
@@ -47,6 +52,8 @@ public class WmsAisleController {
     @Operation(summary = "新增巷道")
     @PostMapping
     @PreAuthorize("@ss.hasPerm('warehouse:wms-aisle:create')")
+    @RepeatSubmit
+    @Log(module = LogModuleEnum.WMS_AISLE, value = ActionTypeEnum.INSERT)
     public Result<Void> saveWmsAisle(@RequestBody @Valid WmsAisleDTO dto) {
         boolean result = wmsAisleService.saveWmsAisle(dto);
         return Result.judge(result);
@@ -65,6 +72,7 @@ public class WmsAisleController {
     @Operation(summary = "修改巷道")
     @PutMapping(value = "/{id}")
     @PreAuthorize("@ss.hasPerm('warehouse:wms-aisle:update')")
+    @Log(module = LogModuleEnum.WMS_AISLE, value = ActionTypeEnum.UPDATE)
     public Result<Void> updateWmsAisle(
             @Parameter(description = "巷道ID") @PathVariable Long id,
             @RequestBody @Validated WmsAisleDTO dto
@@ -76,6 +84,7 @@ public class WmsAisleController {
     @Operation(summary = "删除巷道")
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('warehouse:wms-aisle:delete')")
+    @Log(module = LogModuleEnum.WMS_AISLE, value = ActionTypeEnum.DELETE)
     public Result<Void> deleteWmsAisles(
             @Parameter(description = "巷道ID，多个以英文逗号(,)分割") @PathVariable String ids
     ) {
@@ -86,6 +95,7 @@ public class WmsAisleController {
     @Operation(summary = "批量更新巷道状态（启用/停用）")
     @PutMapping("/status")
     @PreAuthorize("@ss.hasPerm('warehouse:wms-aisle:update')")
+    @Log(module = LogModuleEnum.WMS_AISLE, value = ActionTypeEnum.OTHER)
     public Result<Void> batchUpdateStatus(@RequestBody @Valid BatchStatusForm batchStatusForm) {
         boolean result = wmsAisleService.batchUpdateStatus(batchStatusForm);
         return Result.judge(result);
@@ -98,10 +108,10 @@ public class WmsAisleController {
         return Result.success(options);
     }
 
-    @Operation(summary = "获取搜索筛选下拉选项（巷道编码）")
+    @Operation(summary = "获取搜索筛选下拉选项（巷道编码、区域编码）")
     @GetMapping("/filter-options")
-    public Result<java.util.List<String>> getFilterOptions() {
-        java.util.List<String> options = wmsAisleService.getFilterOptions();
+    public Result<java.util.Map<String, java.util.List<?>>> getFilterOptions() {
+        java.util.Map<String, java.util.List<?>> options = wmsAisleService.getFilterOptions();
         return Result.success(options);
     }
 }

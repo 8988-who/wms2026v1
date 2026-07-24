@@ -1,4 +1,4 @@
-﻿package com.wms.system.security.adapter;
+package com.wms.system.security.adapter;
 
 import com.wms.framework.security.port.PermissionPort;
 import com.wms.system.service.RoleMenuService;

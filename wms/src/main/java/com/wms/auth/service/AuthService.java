@@ -1,4 +1,4 @@
-﻿package com.wms.auth.service;
+package com.wms.auth.service;
 
 import com.wms.framework.captcha.model.CaptchaInfo;
 import com.wms.framework.security.model.AuthenticationToken;

@@ -1,7 +1,7 @@
-﻿package com.wms.system.service;
+package com.wms.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.wms.codegen.model.entity.GenTable;
+
 import com.wms.system.model.form.MenuForm;
 import com.wms.common.model.Option;
 import com.wms.system.model.entity.Menu;
@@ -72,11 +72,4 @@ public interface MenuService extends IService<Menu> {
      */
     boolean deleteMenu(Long id);
 
-    /**
-     * 代码生成时添加菜单
-     *
-     * @param parentMenuId 父菜单ID
-     * @param genConfig   实体名
-     */
-    void addMenuForCodegen(Long parentMenuId, GenTable genTable);
 }

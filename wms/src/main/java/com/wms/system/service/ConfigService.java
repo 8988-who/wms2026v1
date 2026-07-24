@@ -1,4 +1,4 @@
-﻿package com.wms.system.service;
+package com.wms.system.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;

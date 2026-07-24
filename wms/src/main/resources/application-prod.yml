@@ -38,7 +38,7 @@ spring:
       spec: initialCapacity=50,maximumSize=1000,expireAfterWrite=600s
   # 邮件配置
   mail:
-    host: smtp.youlai.tech
+    host: smtp.wms.com
     port: 587
     username: your-email@example.com
     password: 123456
@@ -119,7 +119,7 @@ oss:
     secret-key: minioadmin
     # 存储桶名称
     bucket-name: public
-    # (可选)自定义域名，如果配置了域名，生成的文件URL是域名格式，未配置则URL则是IP格式 (eg: https://www.youlai.tech/storage)
+    # (可选)自定义域名，如果配置了域名，生成的文件URL是域名格式，未配置则URL则是IP格式 (eg: https://www.wms.com/storage)
     custom-domain:
   # 阿里云OSS对象存储服务
   aliyun:
@@ -143,7 +143,7 @@ sms:
     accessKeySecret: SoOWRqpjtS7xxxxxxZ2PZiMTJOVC
     domain: dysmsapi.aliyuncs.com
     regionId: cn-shanghai
-    signName: 有来技术
+    signName: WMS技术
     templates:
       #  注册短信验证码模板
       register: SMS_22xxx771
@@ -164,10 +164,10 @@ springdoc:
     - group: "系统管理" # 分组名称
       paths-to-match: "/**" # 匹配的请求路径
       packages-to-scan: # 扫描的 Controller 包，限制只生成指定包的接口文档
-        - com.youlai.boot.auth.controller
-        - com.youlai.boot.system.controller
-        - com.youlai.boot.module.file.controller
-        - com.youlai.boot.module.codegen.controller
+        - com.wms.auth.controller
+        - com.wms.system.controller
+        - com.wms.file.controller
+
   default-flat-param-object: true # 将对象参数扁平化显示在文档中
 
 # knife4j 配置

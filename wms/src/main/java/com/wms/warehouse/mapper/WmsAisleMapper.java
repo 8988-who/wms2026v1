@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.mapper;
+package com.wms.warehouse.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.wms.warehouse.model.entity.WmsAisle;

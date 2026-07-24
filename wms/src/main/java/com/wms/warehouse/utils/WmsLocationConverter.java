@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.utils;
+package com.wms.warehouse.utils;
 
 import org.mapstruct.Mapper;
 import com.wms.warehouse.model.entity.WmsLocation;

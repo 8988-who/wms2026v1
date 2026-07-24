@@ -1,4 +1,4 @@
-﻿package com.wms.framework.integration.mail.config;
+package com.wms.framework.integration.mail.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

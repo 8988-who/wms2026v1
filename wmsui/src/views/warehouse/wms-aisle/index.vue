@@ -14,6 +14,18 @@
             <el-option v-for="item in filterOptions.aisleCodes" :key="item" :label="item" :value="item" />
           </el-select>
         </el-form-item>
+        <el-form-item label="区域编码" prop="locationCode">
+          <el-select v-model="params.locationCode" placeholder="区域编码" clearable filterable>
+            <el-option v-for="item in filterOptions.locationCodes" :key="item" :label="item" :value="item" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="巷道用途" prop="aislePurpose">
+          <el-select v-model="params.aislePurpose" placeholder="巷道用途" clearable filterable>
+            <el-option label="满架优先" value="FULL" />
+            <el-option label="空架优先" value="EMPTY" />
+            <el-option label="混合" value="MIXED" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery">搜索</el-button>
           <el-button @click="handleResetQuery">重置</el-button>
@@ -32,11 +44,10 @@
           >新增</el-button>
           <el-dropdown
               v-hasPerm="['warehouse:wms-aisle:update','warehouse:wms-aisle:delete']"
-              :disabled="!hasSelection"
               @command="handleBatchCommand"
               style="margin-left: 10px;"
           >
-            <el-button :disabled="!hasSelection">
+            <el-button @click="handleBatchClick">
               批量操作<el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
             <template #dropdown>
@@ -137,7 +148,7 @@
               >
                 <template #default="scope">
                   <el-tag :type="scope.row.aislePurpose === 'FULL' ? 'danger' : scope.row.aislePurpose === 'EMPTY' ? 'warning' : 'success'">
-                    {{ scope.row.aislePurpose === 'FULL' ? '满架优先' : scope.row.aislePurpose === 'EMPTY' ? '空架优先' : scope.row.aislePurpose || '-' }}
+                    {{ scope.row.aislePurpose === 'FULL' ? '满架优先' : scope.row.aislePurpose === 'EMPTY' ? '空架优先' : scope.row.aislePurpose === 'MIXED' ? '混合' : scope.row.aislePurpose || '-' }}
                   </el-tag>
                 </template>
               </el-table-column>
@@ -353,6 +364,7 @@
 
   const queryFormRef = ref<FormInstance>();
   const dataFormRef = ref<FormInstance>();
+  const dataTableRef = ref();
   const tableWrapperRef = ref<HTMLElement | null>(null);
   const { toggle: toggleFullscreen } = useFullscreen(tableWrapperRef);
 
@@ -373,6 +385,13 @@
   });
 
   const { selectedIds, hasSelection, handleSelectionChange } = useTableSelection<WmsAisleItem>();
+
+  /** 点击批量操作时自动全选当前页 */
+  function handleBatchClick(): void {
+    if (!hasSelection.value) {
+      dataTableRef.value?.toggleAllSelection();
+    }
+  }
 
   // 表单下拉选项（从 wms_location 加载）
   const formOptions = reactive({
@@ -419,12 +438,14 @@
   // 搜索下拉选项
   const filterOptions = reactive({
     aisleCodes: [] as string[],
+    locationCodes: [] as string[],
   });
 
   async function loadFilterOptions(): Promise<void> {
     try {
       const data = await WmsAisleAPI.getFilterOptions();
-      filterOptions.aisleCodes = data || [];
+      filterOptions.aisleCodes = data.aisleCodes || [];
+      filterOptions.locationCodes = data.locationCodes || [];
     } catch {
       // 加载失败不影响主功能
     }

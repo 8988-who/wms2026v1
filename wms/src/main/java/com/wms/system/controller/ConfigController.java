@@ -1,4 +1,4 @@
-﻿package com.wms.system.controller;
+package com.wms.system.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.wms.common.enums.ActionTypeEnum;

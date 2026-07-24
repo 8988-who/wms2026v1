@@ -1,4 +1,4 @@
-﻿package com.wms.common.base;
+package com.wms.common.base;
 
 import cn.hutool.core.util.ObjectUtil;
 

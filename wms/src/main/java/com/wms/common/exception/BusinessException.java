@@ -1,4 +1,4 @@
-﻿package com.wms.common.exception;
+package com.wms.common.exception;
 
 import com.wms.common.result.IResultCode;
 import lombok.Getter;

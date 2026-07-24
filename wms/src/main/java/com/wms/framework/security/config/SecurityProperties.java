@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.config;
+package com.wms.framework.security.config;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;

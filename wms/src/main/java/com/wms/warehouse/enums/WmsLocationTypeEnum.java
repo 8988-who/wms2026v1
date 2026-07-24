@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.enums;
+package com.wms.warehouse.enums;
 
 import com.wms.common.base.IBaseEnum;
 import lombok.AllArgsConstructor;

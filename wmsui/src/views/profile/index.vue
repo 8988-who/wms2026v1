@@ -39,7 +39,7 @@
             </span>
             <span class="profile-hero__meta-item">
               <el-icon><Location /></el-icon>
-              最近登录 {{ recentLoginRecords[0]?.time }}
+              最近登录 {{ recentLoginRecords[0]?.createTime }}
             </span>
           </div>
         </div>
@@ -159,21 +159,22 @@
             </header>
 
             <div class="profile-login">
-              <div
-                v-for="record in recentLoginRecords"
-                :key="record.time"
-                class="profile-login__item"
-              >
-                <span class="profile-icon">
-                  <el-icon><Monitor /></el-icon>
-                </span>
-                <div class="profile-login__body">
-                  <strong class="profile-login__device">{{ record.device }}</strong>
-                  <span class="profile-login__meta">{{ record.location }} / {{ record.ip }}</span>
+                <div
+                  v-for="record in recentLoginRecords"
+                  :key="record.createTime"
+                  class="profile-login__item"
+                >
+                  <span class="profile-icon">
+                    <el-icon><Monitor /></el-icon>
+                  </span>
+                  <div class="profile-login__body">
+                    <strong class="profile-login__device">{{ record.device }}</strong>
+                    <span class="profile-login__meta">{{ record.region }} / {{ record.ip }}</span>
+                  </div>
+                  <time class="profile-login__time">{{ record.createTime }}</time>
                 </div>
-                <time class="profile-login__time">{{ record.time }}</time>
+                <p v-if="!recentLoginRecords.length" class="profile-empty">暂无登录记录</p>
               </div>
-            </div>
           </section>
 
           <section class="profile-card">
@@ -308,6 +309,7 @@ import type {
   MobileUpdateForm,
   EmailUpdateForm,
   UserProfileForm,
+  LoginRecordItem,
 } from "@/api/system/user";
 
 import type { Component } from "vue";
@@ -394,26 +396,7 @@ const mobileTimer = ref();
 const emailCountdown = ref(0);
 const emailTimer = ref();
 
-const recentLoginRecords = [
-  {
-    device: "Chrome / Windows",
-    location: "上海",
-    ip: "192.168.1.26",
-    time: "2026-06-20 09:32",
-  },
-  {
-    device: "Edge / Windows",
-    location: "杭州",
-    ip: "192.168.1.18",
-    time: "2026-06-19 18:46",
-  },
-  {
-    device: "Safari / iOS",
-    location: "深圳",
-    ip: "192.168.1.12",
-    time: "2026-06-18 14:08",
-  },
-];
+const recentLoginRecords = ref<LoginRecordItem[]>([]);
 
 const userProfileRules = {
   nickname: [{ required: true, message: "请输入昵称", trigger: "blur" }],
@@ -918,6 +901,15 @@ const loadUserProfile = async () => {
   userProfile.value = data;
 };
 
+const loadLoginRecords = async () => {
+  try {
+    const data = await UserAPI.getLoginRecords();
+    recentLoginRecords.value = data || [];
+  } catch {
+    // 加载失败不影响主体功能
+  }
+};
+
 onMounted(async () => {
   if (mobileTimer.value) {
     clearInterval(mobileTimer.value);
@@ -926,6 +918,7 @@ onMounted(async () => {
     clearInterval(emailTimer.value);
   }
   await loadUserProfile();
+  await loadLoginRecords();
 });
 
 onBeforeUnmount(() => {

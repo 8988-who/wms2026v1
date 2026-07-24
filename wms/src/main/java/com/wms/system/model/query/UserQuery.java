@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.query;
+package com.wms.system.model.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wms.common.base.BaseQuery;

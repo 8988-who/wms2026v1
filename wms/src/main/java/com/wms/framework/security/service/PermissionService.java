@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.service;
+package com.wms.framework.security.service;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;

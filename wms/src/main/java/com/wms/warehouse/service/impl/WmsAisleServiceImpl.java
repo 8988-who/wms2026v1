@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.service.impl;
+package com.wms.warehouse.service.impl;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
@@ -17,7 +17,7 @@ import com.wms.warehouse.model.vo.WmsAisleVO;
 import com.wms.warehouse.service.WmsAisleService;
 import com.wms.warehouse.service.WmsCascadeService;
 import com.wms.warehouse.service.WmsLocationService;
-import com.wms.warehouse.utils.WmsCodeGeneratorUtil;
+import com.wms.warehouse.utils.WmsCodeGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,6 +43,7 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     private final WmsAisleConverter wmsAisleConverter;
     private final WmsLocationService wmsLocationService;
     private final WmsCascadeService wmsCascadeService;
+    private final WmsCodeGeneratorService wmsCodeGeneratorService;
 
     @Override
     public IPage<WmsAisleVO> getWmsAislePage(WmsAisleQueryDTO queryParams) {
@@ -65,14 +66,14 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
 
         dto.setFloor(location.getFloor());
 
-        List<String> existingCodes = this.list(new LambdaQueryWrapper<WmsAisle>()
-                .likeRight(WmsAisle::getAisleCode, location.getLocationCode() + "-A")
-                .select(WmsAisle::getAisleCode))
-                .stream()
-                .map(WmsAisle::getAisleCode)
-                .toList();
-
-        String aisleCode = WmsCodeGeneratorUtil.generateAisleCode(location.getLocationCode(), "A", () -> existingCodes);
+        String aisleCode = wmsCodeGeneratorService.generateAisleCode(location.getLocationCode(), "A", () -> {
+            WmsAisle max = this.getOne(new LambdaQueryWrapper<WmsAisle>()
+                    .likeRight(WmsAisle::getAisleCode, location.getLocationCode() + "-A")
+                    .select(WmsAisle::getAisleCode)
+                    .orderByDesc(WmsAisle::getAisleCode)
+                    .last("LIMIT 1"));
+            return max != null ? WmsCodeGeneratorService.extractSeq(max.getAisleCode(), location.getLocationCode() + "-A") : 0;
+        });
         dto.setAisleCode(aisleCode);
 
         WmsAisle entity = wmsAisleConverter.toEntity(dto);
@@ -91,14 +92,14 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
 
             dto.setFloor(location.getFloor());
 
-            List<String> existingCodes = this.list(new LambdaQueryWrapper<WmsAisle>()
-                    .likeRight(WmsAisle::getAisleCode, location.getLocationCode() + "-A")
-                    .select(WmsAisle::getAisleCode))
-                    .stream()
-                    .map(WmsAisle::getAisleCode)
-                    .toList();
-
-            String aisleCode = WmsCodeGeneratorUtil.generateAisleCode(location.getLocationCode(), "A", () -> existingCodes);
+            String aisleCode = wmsCodeGeneratorService.generateAisleCode(location.getLocationCode(), "A", () -> {
+                WmsAisle max = this.getOne(new LambdaQueryWrapper<WmsAisle>()
+                        .likeRight(WmsAisle::getAisleCode, location.getLocationCode() + "-A")
+                        .select(WmsAisle::getAisleCode)
+                        .orderByDesc(WmsAisle::getAisleCode)
+                        .last("LIMIT 1"));
+                return max != null ? WmsCodeGeneratorService.extractSeq(max.getAisleCode(), location.getLocationCode() + "-A") : 0;
+            });
             dto.setAisleCode(aisleCode);
         } else {
             dto.setAisleCode(existing.getAisleCode());
@@ -180,14 +181,23 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     }
 
     @Override
-    public java.util.List<String> getFilterOptions() {
-        java.util.List<WmsAisle> list = this.list(new LambdaQueryWrapper<WmsAisle>()
-                .select(WmsAisle::getAisleCode));
-        return list.stream()
-                .map(WmsAisle::getAisleCode)
-                .filter(StrUtil::isNotBlank)
-                .distinct()
-                .sorted()
+    public java.util.Map<String, java.util.List<?>> getFilterOptions() {
+        // 巷道编码
+        java.util.List<String> aisleCodes = this.list(new LambdaQueryWrapper<WmsAisle>()
+                .select(WmsAisle::getAisleCode))
+                .stream().map(WmsAisle::getAisleCode).filter(StrUtil::isNotBlank).distinct().sorted()
                 .collect(java.util.stream.Collectors.toList());
+
+        // 区域编码
+        java.util.List<String> locationCodes = wmsLocationService.list(
+                new LambdaQueryWrapper<WmsLocation>()
+                        .select(WmsLocation::getLocationCode))
+                .stream().map(WmsLocation::getLocationCode).filter(StrUtil::isNotBlank).distinct().sorted()
+                .collect(java.util.stream.Collectors.toList());
+
+        java.util.Map<String, java.util.List<?>> result = new java.util.LinkedHashMap<>();
+        result.put("aisleCodes", aisleCodes);
+        result.put("locationCodes", locationCodes);
+        return result;
     }
 }

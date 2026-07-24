@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.controller;
+package com.wms.warehouse.controller;
 
 import com.wms.warehouse.service.WmsLocationService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +9,10 @@ import com.wms.warehouse.model.dto.WmsLocationDTO;
 import com.wms.warehouse.model.dto.WmsLocationQueryDTO;
 import com.wms.warehouse.model.vo.WmsLocationVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.wms.common.annotation.Log;
+import com.wms.common.annotation.RepeatSubmit;
+import com.wms.common.enums.ActionTypeEnum;
+import com.wms.common.enums.LogModuleEnum;
 import com.wms.common.result.PageResult;
 import com.wms.common.result.Result;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,6 +43,7 @@ public class WmsLocationController {
     @Operation(summary = "库位/区域分页列表")
     @GetMapping
     @PreAuthorize("@ss.hasPerm('warehouse:wms-location:list')")
+    @Log(module = LogModuleEnum.WMS_LOCATION, value = ActionTypeEnum.LIST)
     public PageResult<WmsLocationVO> getWmsLocationPage(WmsLocationQueryDTO queryParams) {
         IPage<WmsLocationVO> result = wmsLocationService.getWmsLocationPage(queryParams);
         return PageResult.success(result);
@@ -47,6 +52,8 @@ public class WmsLocationController {
     @Operation(summary = "新增库位/区域")
     @PostMapping
     @PreAuthorize("@ss.hasPerm('warehouse:wms-location:create')")
+    @RepeatSubmit
+    @Log(module = LogModuleEnum.WMS_LOCATION, value = ActionTypeEnum.INSERT)
     public Result<Void> saveWmsLocation(@RequestBody @Valid WmsLocationDTO dto) {
         boolean result = wmsLocationService.saveWmsLocation(dto);
         return Result.judge(result);
@@ -65,6 +72,7 @@ public class WmsLocationController {
     @Operation(summary = "修改库位/区域")
     @PutMapping(value = "/{id}")
     @PreAuthorize("@ss.hasPerm('warehouse:wms-location:update')")
+    @Log(module = LogModuleEnum.WMS_LOCATION, value = ActionTypeEnum.UPDATE)
     public Result<Void> updateWmsLocation(
             @Parameter(description = "库位/区域ID") @PathVariable Long id,
             @RequestBody @Validated WmsLocationDTO dto
@@ -76,6 +84,7 @@ public class WmsLocationController {
     @Operation(summary = "删除库位/区域")
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('warehouse:wms-location:delete')")
+    @Log(module = LogModuleEnum.WMS_LOCATION, value = ActionTypeEnum.DELETE)
     public Result<Void> deleteWmsLocations(
             @Parameter(description = "库位/区域ID，多个以英文逗号(,)分割") @PathVariable String ids
     ) {
@@ -86,6 +95,7 @@ public class WmsLocationController {
     @Operation(summary = "批量更新库位/区域状态（启用/停用）")
     @PutMapping("/status")
     @PreAuthorize("@ss.hasPerm('warehouse:wms-location:update')")
+    @Log(module = LogModuleEnum.WMS_LOCATION, value = ActionTypeEnum.OTHER)
     public Result<Void> batchUpdateStatus(@RequestBody @Valid BatchStatusForm batchStatusForm) {
         boolean result = wmsLocationService.batchUpdateStatus(batchStatusForm);
         return Result.judge(result);

@@ -1,4 +1,4 @@
-﻿package com.wms.framework.apidoc;
+package com.wms.framework.apidoc;
 
 
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;

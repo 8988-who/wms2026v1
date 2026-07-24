@@ -1,4 +1,4 @@
-﻿package com.wms.common.enums;
+package com.wms.common.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -25,7 +25,9 @@ public enum LogModuleEnum implements IBaseEnum<Integer> {
     CONFIG(7, "系统配置"),
     FILE(8, "文件管理"),
     LOG(9, "日志管理"),
-    CODEGEN(11, "代码生成"),
+    WMS_POINT(81, "点位管理"),
+    WMS_AISLE(82, "巷道管理"),
+    WMS_LOCATION(83, "库位/区域管理"),
     OTHER(99, "其他");
 
     @EnumValue

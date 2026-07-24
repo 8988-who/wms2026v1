@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.service.impl;
+package com.wms.warehouse.service.impl;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
@@ -15,7 +15,7 @@ import com.wms.warehouse.model.dto.WmsLocationQueryDTO;
 import com.wms.warehouse.model.vo.WmsLocationVO;
 import com.wms.warehouse.service.WmsCascadeService;
 import com.wms.warehouse.service.WmsLocationService;
-import com.wms.warehouse.utils.WmsCodeGeneratorUtil;
+import com.wms.warehouse.utils.WmsCodeGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,6 +40,7 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
 
     private final WmsLocationConverter wmsLocationConverter;
     private final WmsCascadeService wmsCascadeService;
+    private final WmsCodeGeneratorService wmsCodeGeneratorService;
 
     @Override
     public IPage<WmsLocationVO> getWmsLocationPage(WmsLocationQueryDTO queryParams) {
@@ -57,14 +58,15 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
     @Override
     public boolean saveWmsLocation(WmsLocationDTO dto) {
         String plantCode = dto.getPlantCode();
-        List<String> existingCodes = this.list(new LambdaQueryWrapper<WmsLocation>()
-                .eq(WmsLocation::getPlantCode, plantCode)
-                .select(WmsLocation::getLocationCode))
-                .stream()
-                .map(WmsLocation::getLocationCode)
-                .toList();
 
-        String locationCode = WmsCodeGeneratorUtil.generateLocationCode(plantCode, () -> existingCodes);
+        String locationCode = wmsCodeGeneratorService.generateLocationCode(plantCode, () -> {
+            WmsLocation max = this.getOne(new LambdaQueryWrapper<WmsLocation>()
+                    .eq(WmsLocation::getPlantCode, plantCode)
+                    .select(WmsLocation::getLocationCode)
+                    .orderByDesc(WmsLocation::getLocationCode)
+                    .last("LIMIT 1"));
+            return max != null ? WmsCodeGeneratorService.extractSeq(max.getLocationCode(), plantCode + "-") : 0;
+        });
         dto.setLocationCode(locationCode);
 
         WmsLocation entity = wmsLocationConverter.toEntity(dto);
@@ -81,13 +83,14 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
         String oldPlantCode = existing.getPlantCode();
 
         if (!newPlantCode.equals(oldPlantCode)) {
-            List<String> existingCodes = this.list(new LambdaQueryWrapper<WmsLocation>()
-                    .eq(WmsLocation::getPlantCode, newPlantCode)
-                    .select(WmsLocation::getLocationCode))
-                    .stream()
-                    .map(WmsLocation::getLocationCode)
-                    .toList();
-            String locationCode = WmsCodeGeneratorUtil.generateLocationCode(newPlantCode, () -> existingCodes);
+            String locationCode = wmsCodeGeneratorService.generateLocationCode(newPlantCode, () -> {
+                WmsLocation max = this.getOne(new LambdaQueryWrapper<WmsLocation>()
+                        .eq(WmsLocation::getPlantCode, newPlantCode)
+                        .select(WmsLocation::getLocationCode)
+                        .orderByDesc(WmsLocation::getLocationCode)
+                        .last("LIMIT 1"));
+                return max != null ? WmsCodeGeneratorService.extractSeq(max.getLocationCode(), newPlantCode + "-") : 0;
+            });
             dto.setLocationCode(locationCode);
         } else {
             dto.setLocationCode(existing.getLocationCode());

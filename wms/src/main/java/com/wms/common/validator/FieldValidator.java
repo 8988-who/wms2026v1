@@ -1,4 +1,4 @@
-﻿package com.wms.common.validator;
+package com.wms.common.validator;
 
 import com.wms.common.annotation.ValidField;
 import jakarta.validation.ConstraintValidator;

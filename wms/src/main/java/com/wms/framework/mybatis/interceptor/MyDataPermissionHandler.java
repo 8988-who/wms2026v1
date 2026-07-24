@@ -1,4 +1,4 @@
-﻿package com.wms.framework.mybatis.interceptor;
+package com.wms.framework.mybatis.interceptor;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;

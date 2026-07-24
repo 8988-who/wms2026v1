@@ -1,4 +1,4 @@
-﻿package com.wms.system.handler;
+package com.wms.system.handler;
 
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;

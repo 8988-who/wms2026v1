@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.service.impl;
+package com.wms.warehouse.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;

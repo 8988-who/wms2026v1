@@ -1,4 +1,4 @@
-﻿package com.wms.auth.service.impl;
+package com.wms.auth.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.wms.auth.service.AuthService;

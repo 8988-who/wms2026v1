@@ -1,4 +1,4 @@
-﻿package com.wms.framework.captcha.config;
+package com.wms.framework.captcha.config;
 
 import cn.hutool.captcha.generator.CodeGenerator;
 import cn.hutool.captcha.generator.MathGenerator;

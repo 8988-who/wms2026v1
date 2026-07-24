@@ -1,4 +1,4 @@
-﻿package com.wms.system.converter;
+package com.wms.system.converter;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wms.system.model.entity.Config;

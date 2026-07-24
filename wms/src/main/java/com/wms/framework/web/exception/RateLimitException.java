@@ -1,4 +1,4 @@
-﻿package com.wms.framework.web.exception;
+package com.wms.framework.web.exception;
 
 import com.wms.common.result.ResultCode;
 import lombok.Getter;

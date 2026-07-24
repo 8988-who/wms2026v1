@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.vo;
+package com.wms.system.model.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;

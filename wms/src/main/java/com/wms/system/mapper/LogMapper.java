@@ -1,4 +1,4 @@
-﻿package com.wms.system.mapper;
+package com.wms.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -6,6 +6,7 @@ import com.wms.system.model.dto.VisitCountDTO;
 import com.wms.system.model.vo.VisitOverviewVO;
 import com.wms.system.model.entity.SysLog;
 import com.wms.system.model.query.LogQuery;
+import com.wms.system.model.vo.LoginRecordVO;
 import com.wms.system.model.vo.LogPageVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -52,6 +53,14 @@ public interface LogMapper extends BaseMapper<SysLog> {
      * 获取访问IP统计
      */
     VisitOverviewVO getUvStats();
+
+    /**
+     * 获取用户最近登录记录
+     *
+     * @param userId 用户ID
+     * @return 登录记录列表
+     */
+    List<LoginRecordVO> getRecentLoginRecords(@Param("userId") Long userId);
 }
 
 

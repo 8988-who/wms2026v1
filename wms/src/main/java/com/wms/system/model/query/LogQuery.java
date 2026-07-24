@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.query;
+package com.wms.system.model.query;
 
 import com.wms.common.base.BaseQuery;
 import io.swagger.v3.oas.annotations.media.Schema;

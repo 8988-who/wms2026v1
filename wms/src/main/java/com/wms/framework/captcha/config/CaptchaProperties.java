@@ -1,4 +1,4 @@
-﻿package com.wms.framework.captcha.config;
+package com.wms.framework.captcha.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

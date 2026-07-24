@@ -1,4 +1,4 @@
-﻿package com.wms.common.util;
+package com.wms.common.util;
 
 import cn.hutool.core.util.StrUtil;
 import jakarta.annotation.PostConstruct;

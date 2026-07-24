@@ -1,4 +1,4 @@
-﻿package com.wms.auth.security.handler;
+package com.wms.auth.security.handler;
 
 import com.wms.common.result.ResultCode;
 import com.wms.framework.web.util.ResponseWriter;

@@ -122,20 +122,6 @@
                   登录
                 </el-button>
               </el-form>
-
-              <div class="login-alt">
-                <div class="login-alt__divider">其他登录方式</div>
-                <div class="login-alt__buttons">
-                  <button class="login-alt__btn">
-                    <span class="login-alt__icon i-svg:qr-code" />
-                    扫码登录
-                  </button>
-                  <button class="login-alt__btn">
-                    <span class="login-alt__icon i-svg:security" />
-                    统一认证
-                  </button>
-                </div>
-              </div>
             </div>
 
             <ResetPwd
@@ -146,8 +132,7 @@
             />
           </transition>
         </div>
-
-        <div class="login-footer">Copyright © 2021-2026 youlai.tech</div>
+        <div class="login-footer">Copyright © 2021-2026 wms.com</div>
       </div>
     </div>
   </div>

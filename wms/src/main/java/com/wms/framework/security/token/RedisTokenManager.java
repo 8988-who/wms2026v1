@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.token;
+package com.wms.framework.security.token;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;

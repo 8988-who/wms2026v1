@@ -1,4 +1,4 @@
-﻿package com.wms.system.security.adapter;
+package com.wms.system.security.adapter;
 
 import com.wms.common.enums.SocialPlatformEnum;
 import com.wms.framework.security.model.SecurityUser;

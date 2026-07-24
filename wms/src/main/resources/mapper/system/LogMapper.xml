@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -115,6 +115,23 @@
                 2) AS uvGrowthRate
             FROM
                 sys_log
+    </select>
+
+    <!-- 获取用户最近登录记录 -->
+    <select id="getRecentLoginRecords" resultType="com.wms.system.model.vo.LoginRecordVO">
+        SELECT
+            t1.device,
+            CONCAT(t1.province, ' ', t1.city) AS region,
+            t1.ip,
+            t1.create_time AS createTime
+        FROM
+            sys_log t1
+        WHERE
+            t1.operator_id = #{userId}
+            AND t1.action_type = 1 <!-- 1=LOGIN -->
+        ORDER BY
+            t1.create_time DESC
+        LIMIT 3
     </select>
 
 

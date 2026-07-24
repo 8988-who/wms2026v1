@@ -1,4 +1,4 @@
-﻿package com.wms.auth.security.config;
+package com.wms.auth.security.config;
 
 import cn.hutool.core.util.ArrayUtil;
 import com.wms.framework.captcha.service.CaptchaService;

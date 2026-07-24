@@ -1,4 +1,4 @@
-﻿package com.wms.common.constant;
+package com.wms.common.constant;
 
 /**
  * Redis 常量
@@ -62,6 +62,15 @@ public interface RedisConstants {
     interface System {
         String CONFIG = "system:config";                 // 系统配置
         String ROLE_PERMS = "system:role:perms"; // 系统角色和权限映射
+    }
+
+    /**
+     * 编码生成器序列
+     */
+    interface CodeSeq {
+        String LOCATION = "code:seq:location:{}";  // 库位编码序列
+        String AISLE = "code:seq:aisle:{}:{}";     // 巷道编码序列（plantCode + prefix）
+        String POINT = "code:seq:point:{}";        // 点位编码序列（aisleCode）
     }
 
 }

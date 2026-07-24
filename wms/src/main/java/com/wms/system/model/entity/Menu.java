@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.entity;
+package com.wms.system.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;

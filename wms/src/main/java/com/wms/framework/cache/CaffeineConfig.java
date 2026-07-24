@@ -1,4 +1,4 @@
-﻿package com.wms.framework.cache;
+package com.wms.framework.cache;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;

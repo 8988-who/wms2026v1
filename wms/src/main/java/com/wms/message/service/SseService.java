@@ -1,4 +1,4 @@
-﻿package com.wms.message.service;
+package com.wms.message.service;
 
 import com.wms.message.dto.DictChangeEvent;
 import com.wms.message.dto.OnlineUserDTO;

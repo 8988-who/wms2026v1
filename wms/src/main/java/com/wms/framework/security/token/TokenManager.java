@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.token;
+package com.wms.framework.security.token;
 
 
 import com.wms.framework.security.model.AuthenticationToken;

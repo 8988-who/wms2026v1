@@ -1,4 +1,4 @@
-﻿package com.wms.framework.integration.sms.service;
+package com.wms.framework.integration.sms.service;
 
 import com.wms.framework.integration.sms.enums.SmsTypeEnum;
 

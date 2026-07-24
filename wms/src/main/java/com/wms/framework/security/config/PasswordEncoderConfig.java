@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.config;
+package com.wms.framework.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

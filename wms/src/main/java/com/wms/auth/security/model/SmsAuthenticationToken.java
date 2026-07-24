@@ -1,4 +1,4 @@
-﻿package com.wms.auth.security.model;
+package com.wms.auth.security.model;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;

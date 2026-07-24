@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="page-container">
     <el-card class="page-search" shadow="never">
       <el-form ref="queryFormRef" :model="params" :inline="true">
@@ -179,7 +179,7 @@
         </el-form-item>
 
         <el-form-item label="域名" prop="domain">
-          <el-input v-model="formData.domain" placeholder="demo.youlai.tech（可选）" />
+          <el-input v-model="formData.domain" placeholder="demo.wms.com（可选）" />
         </el-form-item>
 
         <el-form-item

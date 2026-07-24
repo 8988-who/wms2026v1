@@ -1,4 +1,4 @@
-﻿package com.wms.framework.web.util;
+package com.wms.framework.web.util;
 
 import cn.hutool.extra.servlet.JakartaServletUtil;
 import cn.hutool.json.JSONUtil;

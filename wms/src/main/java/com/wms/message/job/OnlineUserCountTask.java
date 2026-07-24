@@ -1,4 +1,4 @@
-﻿package com.wms.message.job;
+package com.wms.message.job;
 
 import com.wms.message.registry.SseSessionRegistry;
 import com.wms.message.service.SseService;

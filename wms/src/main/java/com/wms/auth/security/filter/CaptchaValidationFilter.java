@@ -1,4 +1,4 @@
-﻿package com.wms.auth.security.filter;
+package com.wms.auth.security.filter;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;

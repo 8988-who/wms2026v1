@@ -1,4 +1,4 @@
-﻿package com.wms.framework.mybatis.handler;
+package com.wms.framework.mybatis.handler;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.wms.framework.security.util.SecurityUtils;

@@ -1,4 +1,4 @@
-﻿package com.wms.common.constant;
+package com.wms.common.constant;
 
 /**
  * 系统常量

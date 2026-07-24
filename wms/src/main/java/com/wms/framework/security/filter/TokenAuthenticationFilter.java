@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.filter;
+package com.wms.framework.security.filter;
 
 import cn.hutool.core.util.StrUtil;
 import com.wms.common.constant.SecurityConstants;

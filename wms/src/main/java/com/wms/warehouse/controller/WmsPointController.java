@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.controller;
+package com.wms.warehouse.controller;
 
 import com.wms.warehouse.service.WmsPointService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +9,10 @@ import com.wms.warehouse.model.dto.WmsPointDTO;
 import com.wms.warehouse.model.dto.WmsPointQueryDTO;
 import com.wms.warehouse.model.vo.WmsPointVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.wms.common.annotation.Log;
+import com.wms.common.annotation.RepeatSubmit;
+import com.wms.common.enums.ActionTypeEnum;
+import com.wms.common.enums.LogModuleEnum;
 import com.wms.common.result.PageResult;
 import com.wms.common.result.Result;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,6 +43,7 @@ public class WmsPointController {
     @Operation(summary = "点位分页列表")
     @GetMapping
     @PreAuthorize("@ss.hasPerm('warehouse:wms-point:list')")
+    @Log(module = LogModuleEnum.WMS_POINT, value = ActionTypeEnum.LIST)
     public PageResult<WmsPointVO> getWmsPointPage(WmsPointQueryDTO queryParams) {
         IPage<WmsPointVO> result = wmsPointService.getWmsPointPage(queryParams);
         return PageResult.success(result);
@@ -47,6 +52,8 @@ public class WmsPointController {
     @Operation(summary = "新增点位")
     @PostMapping
     @PreAuthorize("@ss.hasPerm('warehouse:wms-point:create')")
+    @RepeatSubmit
+    @Log(module = LogModuleEnum.WMS_POINT, value = ActionTypeEnum.INSERT)
     public Result<Void> saveWmsPoint(@RequestBody @Valid WmsPointDTO dto) {
         boolean result = wmsPointService.saveWmsPoint(dto);
         return Result.judge(result);
@@ -65,6 +72,7 @@ public class WmsPointController {
     @Operation(summary = "修改点位")
     @PutMapping(value = "/{id}")
     @PreAuthorize("@ss.hasPerm('warehouse:wms-point:update')")
+    @Log(module = LogModuleEnum.WMS_POINT, value = ActionTypeEnum.UPDATE)
     public Result<Void> updateWmsPoint(
             @Parameter(description = "点位ID") @PathVariable Long id,
             @RequestBody @Validated WmsPointDTO dto
@@ -76,6 +84,7 @@ public class WmsPointController {
     @Operation(summary = "删除点位")
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('warehouse:wms-point:delete')")
+    @Log(module = LogModuleEnum.WMS_POINT, value = ActionTypeEnum.DELETE)
     public Result<Void> deleteWmsPoints(
             @Parameter(description = "点位ID，多个以英文逗号(,)分割") @PathVariable String ids
     ) {
@@ -86,6 +95,7 @@ public class WmsPointController {
     @Operation(summary = "批量更新点位状态（启用/停用）")
     @PutMapping("/status")
     @PreAuthorize("@ss.hasPerm('warehouse:wms-point:update')")
+    @Log(module = LogModuleEnum.WMS_POINT, value = ActionTypeEnum.OTHER)
     public Result<Void> batchUpdateStatus(@RequestBody @Valid BatchStatusForm batchStatusForm) {
         boolean result = wmsPointService.batchUpdateStatus(batchStatusForm);
         return Result.judge(result);
@@ -98,10 +108,10 @@ public class WmsPointController {
         return Result.success(options);
     }
 
-    @Operation(summary = "获取搜索筛选下拉选项（点位编码）")
+    @Operation(summary = "获取搜索筛选下拉选项（点位编码、区域编码、巷道编码）")
     @GetMapping("/filter-options")
-    public Result<java.util.List<String>> getFilterOptions() {
-        java.util.List<String> options = wmsPointService.getFilterOptions();
+    public Result<java.util.Map<String, java.util.List<?>>> getFilterOptions() {
+        java.util.Map<String, java.util.List<?>> options = wmsPointService.getFilterOptions();
         return Result.success(options);
     }
 }

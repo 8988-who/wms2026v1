@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.model;
+package com.wms.framework.security.model;
 
 import lombok.Data;
 

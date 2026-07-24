@@ -1,4 +1,4 @@
-﻿package com.wms.system.service.impl;
+package com.wms.system.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -7,9 +7,10 @@ import com.wms.system.model.dto.VisitCountDTO;
 import com.wms.system.model.vo.VisitOverviewVO;
 import com.wms.system.model.entity.SysLog;
 import com.wms.system.model.query.LogQuery;
-import com.wms.system.model.vo.LogPageVO;
+import com.wms.system.model.vo.LoginRecordVO;
 import com.wms.system.model.vo.VisitOverviewVO;
 import com.wms.system.model.vo.VisitTrendVO;
+import com.wms.system.model.vo.LogPageVO;
 import com.wms.system.service.LogService;
 import org.springframework.stereotype.Service;
 
@@ -107,6 +108,14 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, SysLog>
         }
 
         return result;
+    }
+
+    /**
+     * 获取用户最近登录记录
+     */
+    @Override
+    public List<LoginRecordVO> getRecentLoginRecords(Long userId) {
+        return this.baseMapper.getRecentLoginRecords(userId);
     }
 
 }

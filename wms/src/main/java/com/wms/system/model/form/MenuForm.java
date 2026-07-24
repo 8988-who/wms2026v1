@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.form;
+package com.wms.system.model.form;
 
 import com.wms.common.model.KeyValue;
 import io.swagger.v3.oas.annotations.media.Schema;

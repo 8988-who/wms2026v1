@@ -1,4 +1,4 @@
-﻿package com.wms.system.mapper;
+package com.wms.system.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;

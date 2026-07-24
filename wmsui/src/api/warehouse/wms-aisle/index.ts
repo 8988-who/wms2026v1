@@ -62,7 +62,7 @@ const WmsAisleAPI = {
   },
   /** 获取搜索筛选下拉选项（巷道编码） */
   getFilterOptions() {
-    return request<unknown, string[]>({
+    return request<unknown, Record<string, string[]>>({
       url: `${WMS_AISLE_BASE_URL}/filter-options`,
       method: "get",
     });

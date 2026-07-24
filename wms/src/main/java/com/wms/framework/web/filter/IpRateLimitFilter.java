@@ -1,4 +1,4 @@
-﻿package com.wms.framework.web.filter;
+package com.wms.framework.web.filter;
 
 import cn.hutool.core.util.StrUtil;
 import com.wms.common.constant.RedisConstants;

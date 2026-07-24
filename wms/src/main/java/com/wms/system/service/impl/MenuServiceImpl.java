@@ -1,4 +1,4 @@
-﻿package com.wms.system.service.impl;
+package com.wms.system.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Assert;
@@ -7,7 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.wms.codegen.model.entity.GenTable;
+
 import com.wms.framework.security.util.SecurityUtils;
 import com.wms.system.converter.MenuConverter;
 import com.wms.system.mapper.MenuMapper;
@@ -439,71 +439,5 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
 
     }
 
-    /**
-     * 代码生成时添加菜单
-     *
-     * @param parentMenuId 父菜单ID
-     * @param genTable    实体名称
-     */
-    @Override
-    public void addMenuForCodegen(Long parentMenuId, GenTable genTable) {
-        Menu parentMenu = this.getById(parentMenuId);
-        Assert.notNull(parentMenu, "上级菜单不存在");
-
-        String entityName = genTable.getEntityName();
-
-        long count = this.count(new LambdaQueryWrapper<Menu>().eq(Menu::getRouteName, entityName));
-        if (count > 0) {
-            return;
-        }
-
-        // 获取父级菜单子菜单最带的排序
-        Menu maxSortMenu = this.getOne(new LambdaQueryWrapper<Menu>().eq(Menu::getParentId, parentMenuId)
-                .orderByDesc(Menu::getSort)
-                .last("limit 1")
-        );
-        int sort = 1;
-        if (maxSortMenu != null) {
-            sort = maxSortMenu.getSort() + 1;
-        }
-
-        Menu menu = new Menu();
-        menu.setParentId(parentMenuId);
-        menu.setName(genTable.getBusinessName());
-
-        menu.setRouteName(entityName);
-        menu.setRoutePath(StrUtil.toSymbolCase(entityName, '-'));
-        menu.setComponent(genTable.getModuleName() + "/" + StrUtil.toSymbolCase(entityName, '-') + "/index");
-        menu.setType(MenuTypeEnum.MENU.getValue());
-        menu.setSort(sort);
-        menu.setVisible(1);
-        boolean result = this.save(menu);
-
-        if (result) {
-            // 生成treePath
-            String treePath = generateMenuTreePath(parentMenuId);
-            menu.setTreePath(treePath);
-            this.updateById(menu);
-
-            // 生成CURD按钮权限
-            String permPrefix = genTable.getModuleName() + ":" + genTable.getTableName().replace("_", "-") + ":";
-            String[] actions = {"查询", "新增", "修改", "删除"};
-            String[] perms = {"list", "create", "update", "delete"};
-
-            for (int i = 0; i < actions.length; i++) {
-                Menu button = new Menu();
-                button.setParentId(menu.getId());
-                button.setType(MenuTypeEnum.BUTTON.getValue());
-                button.setName(actions[i]);
-                button.setPerm(permPrefix + perms[i]);
-                button.setSort(i + 1);
-                this.save(button);
-
-                // 生成treePath
-                button.setTreePath(treePath + "," + button.getId());
-                this.updateById(button);
-            }
-        }
-    }
 
 }

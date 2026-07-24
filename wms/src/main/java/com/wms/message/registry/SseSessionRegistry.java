@@ -1,4 +1,4 @@
-﻿package com.wms.message.registry;
+package com.wms.message.registry;
 
 import com.wms.message.dto.OnlineUserDTO;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-﻿package com.wms.auth.controller;
+package com.wms.auth.controller;
 
 import com.wms.auth.model.form.LoginForm;
 import com.wms.common.enums.ActionTypeEnum;

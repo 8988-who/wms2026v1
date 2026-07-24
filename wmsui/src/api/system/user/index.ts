@@ -237,6 +237,14 @@ const UserAPI = {
       method: "get",
     });
   },
+
+  /** 获取当前用户最近登录记录 */
+  getLoginRecords() {
+    return request<unknown, LoginRecordItem[]>({
+      url: `/api/v1/logs/login-records`,
+      method: "get",
+    });
+  },
 };
 
 export default UserAPI;

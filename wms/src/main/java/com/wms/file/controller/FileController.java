@@ -1,4 +1,4 @@
-﻿package com.wms.file.controller;
+package com.wms.file.controller;
 
 import com.wms.common.result.Result;
 import com.wms.file.service.FileService;

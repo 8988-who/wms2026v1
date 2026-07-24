@@ -1,4 +1,4 @@
-﻿package com.wms.auth.security.provider;
+package com.wms.auth.security.provider;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;

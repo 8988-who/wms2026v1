@@ -1,4 +1,4 @@
-﻿package com.wms.message.controller;
+package com.wms.message.controller;
 
 import com.wms.common.result.Result;
 import com.wms.framework.security.model.SecurityUserDetails;

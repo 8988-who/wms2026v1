@@ -1,4 +1,4 @@
-﻿package com.wms.system.enums;
+package com.wms.system.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.wms.common.base.IBaseEnum;

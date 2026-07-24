@@ -1,4 +1,4 @@
-﻿package com.wms.framework.mybatis.config;
+package com.wms.framework.mybatis.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;

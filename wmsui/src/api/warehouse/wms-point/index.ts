@@ -54,7 +54,7 @@ const WmsPointAPI = {
     });
   },
   getFilterOptions() {
-    return request<unknown, string[]>({
+    return request<unknown, Record<string, string[]>>({
       url: `${WMS_POINT_BASE_URL}/filter-options`,
       method: "get",
     });

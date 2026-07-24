@@ -1,4 +1,4 @@
-﻿package com.wms.common.result;
+package com.wms.common.result;
 
 import cn.hutool.core.util.StrUtil;
 import lombok.Data;

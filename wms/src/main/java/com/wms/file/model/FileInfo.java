@@ -1,4 +1,4 @@
-﻿package com.wms.file.model;
+package com.wms.file.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

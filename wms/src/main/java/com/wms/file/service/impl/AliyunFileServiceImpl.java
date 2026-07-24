@@ -1,4 +1,4 @@
-﻿package com.wms.file.service.impl;
+package com.wms.file.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;

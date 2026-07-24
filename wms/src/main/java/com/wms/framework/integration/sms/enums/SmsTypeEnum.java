@@ -1,4 +1,4 @@
-﻿package com.wms.framework.integration.sms.enums;
+package com.wms.framework.integration.sms.enums;
 
 import com.wms.common.base.IBaseEnum;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.token;
+package com.wms.framework.security.token;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DateUtil;

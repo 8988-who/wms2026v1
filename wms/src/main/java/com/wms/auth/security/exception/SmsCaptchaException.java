@@ -1,4 +1,4 @@
-﻿package com.wms.auth.security.exception;
+package com.wms.auth.security.exception;
 
 import org.springframework.security.core.AuthenticationException;
 

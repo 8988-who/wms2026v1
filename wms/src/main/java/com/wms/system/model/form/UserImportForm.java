@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.form;
+package com.wms.system.model.form;
 
 import cn.idev.excel.annotation.ExcelProperty;
 import lombok.Data;

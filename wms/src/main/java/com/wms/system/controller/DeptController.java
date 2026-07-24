@@ -1,4 +1,4 @@
-﻿package com.wms.system.controller;
+package com.wms.system.controller;
 
 import com.wms.common.enums.ActionTypeEnum;
 import com.wms.common.enums.LogModuleEnum;

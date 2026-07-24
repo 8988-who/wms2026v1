@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.exception;
+package com.wms.framework.security.exception;
 
 import com.wms.common.result.ResultCode;
 import lombok.Getter;

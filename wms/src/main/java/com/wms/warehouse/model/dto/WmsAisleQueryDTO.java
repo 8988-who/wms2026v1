@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.model.dto;
+package com.wms.warehouse.model.dto;
 
 import com.wms.common.base.BaseQuery;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,6 +36,12 @@ public class WmsAisleQueryDTO extends BaseQuery {
 
     @Schema(description = "楼层")
     private String floor;
+
+    @Schema(description = "区域编码")
+    private String locationCode;
+
+    @Schema(description = "巷道用途(FULL-满架优先 EMPTY-空架优先 MIXED-混合)")
+    private String aislePurpose;
 
     @Schema(description = "状态(1->正常；0->禁用)")
     private Integer status;

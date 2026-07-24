@@ -1,4 +1,4 @@
-﻿package com.wms.common.base;
+package com.wms.common.base;
 
 import com.wms.common.annotation.ValidField;
 import io.swagger.v3.oas.annotations.media.Schema;

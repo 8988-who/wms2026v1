@@ -1,4 +1,4 @@
-﻿package com.wms.common.annotation;
+package com.wms.common.annotation;
 
 import com.wms.common.enums.ActionTypeEnum;
 import com.wms.common.enums.LogModuleEnum;

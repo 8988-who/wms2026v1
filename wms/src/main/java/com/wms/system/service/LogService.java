@@ -1,14 +1,16 @@
-﻿package com.wms.system.service;
+package com.wms.system.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wms.system.model.entity.SysLog;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.wms.system.model.query.LogQuery;
+import com.wms.system.model.vo.LoginRecordVO;
 import com.wms.system.model.vo.LogPageVO;
 import com.wms.system.model.vo.VisitOverviewVO;
 import com.wms.system.model.vo.VisitTrendVO;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 系统日志 服务接口
@@ -37,4 +39,11 @@ public interface LogService extends IService<SysLog> {
      */
     VisitOverviewVO getVisitStats();
 
+    /**
+     * 获取用户最近登录记录
+     *
+     * @param userId 用户ID
+     * @return 登录记录列表
+     */
+    List<LoginRecordVO> getRecentLoginRecords(Long userId);
 }

@@ -46,10 +46,6 @@
         <!-- redisson 分布式锁 -->
         <redisson.version>4.1.0</redisson.version>
 
-        <!-- 自动代码生成 -->
-        <mybatis-plus-generator.version>3.5.6</mybatis-plus-generator.version>
-        <velocity.version>2.3</velocity.version>
-
         <!-- IP 地区转换 -->
         <ip2region.version>2.7.0</ip2region.version>
 
@@ -231,20 +227,6 @@
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
             <version>${redisson.version}</version>
-        </dependency>
-
-        <!-- mybatis-plus 代码生成器 -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-generator</artifactId>
-            <version>${mybatis-plus-generator.version}</version>
-        </dependency>
-
-        <!-- velocity 模板引擎(代码生成) -->
-        <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity-engine-core</artifactId>
-            <version>${velocity.version}</version>
         </dependency>
 
         <!-- IP 转省市区 -->

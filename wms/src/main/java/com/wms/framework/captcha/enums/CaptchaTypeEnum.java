@@ -1,4 +1,4 @@
-﻿package com.wms.framework.captcha.enums;
+package com.wms.framework.captcha.enums;
 
 /**
  * EasyCaptcha 验证码类型

@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.vo;
+package com.wms.system.model.vo;
 
 import cn.idev.excel.annotation.ExcelProperty;
 import cn.idev.excel.annotation.format.DateTimeFormat;

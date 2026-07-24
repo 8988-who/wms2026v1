@@ -13,6 +13,16 @@
             <el-option v-for="item in filterOptions.pointCodes" :key="item" :label="item" :value="item" />
           </el-select>
         </el-form-item>
+        <el-form-item label="区域编码" prop="locationCode">
+          <el-select v-model="params.locationCode" placeholder="区域编码" clearable filterable>
+            <el-option v-for="item in filterOptions.locationCodes" :key="item" :label="item" :value="item" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="巷道编码" prop="aisleCode">
+          <el-select v-model="params.aisleCode" placeholder="巷道编码" clearable filterable>
+            <el-option v-for="item in filterOptions.aisleCodes" :key="item" :label="item" :value="item" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery">搜索</el-button>
           <el-button @click="handleResetQuery">重置</el-button>
@@ -30,11 +40,10 @@
           >新增</el-button>
           <el-dropdown
               v-hasPerm="['warehouse:wms-point:update','warehouse:wms-point:delete']"
-              :disabled="!hasSelection"
               @command="handleBatchCommand"
               style="margin-left: 10px;"
           >
-            <el-button :disabled="!hasSelection">
+            <el-button @click="handleBatchClick">
               批量操作<el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
             <template #dropdown>
@@ -368,6 +377,7 @@
 
   const queryFormRef = ref<FormInstance>();
   const dataFormRef = ref<FormInstance>();
+  const dataTableRef = ref();
   const tableWrapperRef = ref<HTMLElement | null>(null);
   const { toggle: toggleFullscreen } = useFullscreen(tableWrapperRef);
 
@@ -387,6 +397,13 @@
   });
 
   const { selectedIds, hasSelection, handleSelectionChange } = useTableSelection<WmsPointItem>();
+
+  /** 点击批量操作时自动全选当前页 */
+  function handleBatchClick(): void {
+    if (!hasSelection.value) {
+      dataTableRef.value?.toggleAllSelection();
+    }
+  }
 
   const formOptions = reactive({
     plantCodes: [] as string[],
@@ -452,12 +469,16 @@
 
   const filterOptions = reactive({
     pointCodes: [] as string[],
+    locationCodes: [] as string[],
+    aisleCodes: [] as string[],
   });
 
   async function loadFilterOptions(): Promise<void> {
     try {
       const data = await WmsPointAPI.getFilterOptions();
-      filterOptions.pointCodes = data || [];
+      filterOptions.pointCodes = data.pointCodes || [];
+      filterOptions.locationCodes = data.locationCodes || [];
+      filterOptions.aisleCodes = data.aisleCodes || [];
     } catch {
       // 加载失败不影响主功能
     }

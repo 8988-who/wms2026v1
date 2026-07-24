@@ -1,4 +1,4 @@
-﻿package com.wms.framework.captcha.service;
+package com.wms.framework.captcha.service;
 
 import cn.hutool.captcha.AbstractCaptcha;
 import cn.hutool.captcha.CaptchaUtil;

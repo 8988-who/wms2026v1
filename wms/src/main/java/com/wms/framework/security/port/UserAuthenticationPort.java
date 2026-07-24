@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.port;
+package com.wms.framework.security.port;
 
 import com.wms.common.enums.SocialPlatformEnum;
 import com.wms.framework.security.model.SecurityUser;
@@ -9,7 +9,7 @@ import com.wms.framework.security.model.SecurityUser;
  * 由 system 模块提供适配器实现，framework 层通过此接口获取认证数据，
  * 不直接依赖 system 模块的 {@code UserService} / {@code UserSocialService}。
  *
- * @see com.youlai.boot.system.security.adapter.UserAuthenticationAdapter
+ * @see com.wms.system.security.adapter.UserAuthenticationAdapter
  */
 public interface UserAuthenticationPort {
 

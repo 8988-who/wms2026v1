@@ -1,4 +1,4 @@
-﻿package com.wms.framework.cache;
+package com.wms.framework.cache;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

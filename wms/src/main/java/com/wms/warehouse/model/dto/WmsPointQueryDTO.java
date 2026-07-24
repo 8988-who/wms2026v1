@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.model.dto;
+package com.wms.warehouse.model.dto;
 
 import com.wms.common.base.BaseQuery;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,6 +36,12 @@ public class WmsPointQueryDTO extends BaseQuery {
 
     @Schema(description = "点位名称")
     private String pointName;
+
+    @Schema(description = "区域编码")
+    private String locationCode;
+
+    @Schema(description = "巷道编码")
+    private String aisleCode;
 
     @Schema(description = "楼层")
     private String floor;

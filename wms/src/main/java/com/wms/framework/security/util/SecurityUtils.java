@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.util;
+package com.wms.framework.security.util;
 
 import com.wms.common.constant.SystemConstants;
 import com.wms.framework.security.model.RoleDataScope;

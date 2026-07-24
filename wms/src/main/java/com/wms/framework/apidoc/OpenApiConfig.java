@@ -1,4 +1,4 @@
-﻿package com.wms.framework.apidoc;
+package com.wms.framework.apidoc;
 
 import cn.hutool.core.util.ArrayUtil;
 import com.wms.framework.security.config.SecurityProperties;
@@ -54,9 +54,9 @@ public class OpenApiConfig {
                                 .url("http://www.apache.org/licenses/LICENSE-2.0")
                         )
                         .contact(new Contact()
-                                .name("youlai")
-                                .email("youlaitech@163.com")
-                                .url("https://www.youlai.tech")
+                                .name("wms")
+                                .email("wms@wms.com")
+                                .url("https://www.wms.com")
                         )
                 )
                 // 配置全局鉴权参数-Authorize

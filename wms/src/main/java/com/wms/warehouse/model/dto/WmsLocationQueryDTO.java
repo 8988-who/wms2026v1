@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.model.dto;
+package com.wms.warehouse.model.dto;
 
 import com.wms.common.base.BaseQuery;
 import io.swagger.v3.oas.annotations.media.Schema;

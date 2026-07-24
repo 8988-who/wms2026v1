@@ -1,4 +1,4 @@
-﻿package com.wms.framework.web.ratelimit;
+package com.wms.framework.web.ratelimit;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;

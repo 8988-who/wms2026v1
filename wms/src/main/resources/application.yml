@@ -4,7 +4,7 @@ spring:
   profiles:
     active: dev
   config:
-    import: classpath:codegen.yml
+    import: 
   servlet:
     multipart:
       max-file-size: 50MB

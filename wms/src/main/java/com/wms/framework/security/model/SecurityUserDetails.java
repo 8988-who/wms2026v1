@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.model;
+package com.wms.framework.security.model;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;

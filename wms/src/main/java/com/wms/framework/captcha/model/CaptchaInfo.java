@@ -1,4 +1,4 @@
-﻿package com.wms.framework.captcha.model;
+package com.wms.framework.captcha.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-﻿package com.wms.system.controller;
+package com.wms.system.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wms.common.annotation.Log;
@@ -7,6 +7,7 @@ import com.wms.common.enums.LogModuleEnum;
 import com.wms.common.result.PageResult;
 import com.wms.common.result.Result;
 import com.wms.system.model.query.LogQuery;
+import com.wms.system.model.vo.LoginRecordVO;
 import com.wms.system.model.vo.LogPageVO;
 import com.wms.system.model.vo.VisitOverviewVO;
 import com.wms.system.model.vo.VisitTrendVO;
@@ -17,7 +18,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import com.wms.framework.security.util.SecurityUtils;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 日志控制层
@@ -60,6 +63,14 @@ public class LogController {
     public Result<VisitOverviewVO> getVisitOverview() {
         VisitOverviewVO result = logService.getVisitStats();
         return Result.success(result);
+    }
+
+    @Operation(summary = "获取当前用户最近登录记录")
+    @GetMapping("/login-records")
+    public Result<List<LoginRecordVO>> getRecentLoginRecords() {
+        Long userId = SecurityUtils.getUserId();
+        List<LoginRecordVO> records = logService.getRecentLoginRecords(userId);
+        return Result.success(records);
     }
 
 }

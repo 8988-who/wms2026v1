@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.service;
+package com.wms.warehouse.service;
 
 import com.wms.warehouse.model.entity.WmsPoint;
 import com.wms.common.model.BatchStatusForm;
@@ -33,5 +33,5 @@ public interface WmsPointService extends IService<WmsPoint> {
 
     java.util.Map<String, java.util.List<?>> getFormOptions();
 
-    java.util.List<String> getFilterOptions();
+    java.util.Map<String, java.util.List<?>> getFilterOptions();
 }

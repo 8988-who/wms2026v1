@@ -10,6 +10,8 @@ export interface WmsAisleQueryParams extends BaseQueryParams {
   aisleCode?: string;
   aisleName?: string;
   floor?: string;
+  locationCode?: string;
+  aislePurpose?: string;
   status?: number;
 }
 

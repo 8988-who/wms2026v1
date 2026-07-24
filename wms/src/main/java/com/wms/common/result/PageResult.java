@@ -1,4 +1,4 @@
-﻿package com.wms.common.result;
+package com.wms.common.result;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.Data;

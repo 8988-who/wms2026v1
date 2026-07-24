@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.service;
+package com.wms.framework.security.service;
 
 import com.wms.framework.security.model.SecurityUser;
 import com.wms.framework.security.model.SecurityUserDetails;

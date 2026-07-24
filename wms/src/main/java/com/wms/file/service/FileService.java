@@ -1,4 +1,4 @@
-﻿package com.wms.file.service;
+package com.wms.file.service;
 
 import com.wms.file.model.FileInfo;
 import org.springframework.web.multipart.MultipartFile;

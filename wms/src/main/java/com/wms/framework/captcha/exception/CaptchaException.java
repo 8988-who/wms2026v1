@@ -1,4 +1,4 @@
-﻿package com.wms.framework.captcha.exception;
+package com.wms.framework.captcha.exception;
 
 import com.wms.common.result.ResultCode;
 import lombok.Getter;

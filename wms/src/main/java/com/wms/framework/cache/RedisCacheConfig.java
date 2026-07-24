@@ -1,4 +1,4 @@
-﻿package com.wms.framework.cache;
+package com.wms.framework.cache;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.cache.autoconfigure.CacheProperties;

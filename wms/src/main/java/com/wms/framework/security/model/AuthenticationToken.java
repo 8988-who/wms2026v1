@@ -1,4 +1,4 @@
-﻿package com.wms.framework.security.model;
+package com.wms.framework.security.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;

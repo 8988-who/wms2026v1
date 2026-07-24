@@ -1,4 +1,4 @@
-﻿package com.wms.framework.integration.mail.config;
+package com.wms.framework.integration.mail.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

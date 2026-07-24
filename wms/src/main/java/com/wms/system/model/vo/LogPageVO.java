@@ -1,4 +1,4 @@
-﻿package com.wms.system.model.vo;
+package com.wms.system.model.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.wms.common.enums.ActionTypeEnum;

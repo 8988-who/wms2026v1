@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.service;
+package com.wms.warehouse.service;
 
 import com.wms.common.model.BatchStatusForm;
 import com.wms.warehouse.model.entity.WmsLocation;

@@ -1,4 +1,4 @@
-﻿package com.wms.common.result;
+package com.wms.common.result;
 
 import java.io.Serializable;
 

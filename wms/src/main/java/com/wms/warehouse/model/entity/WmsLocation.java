@@ -1,4 +1,4 @@
-﻿package com.wms.warehouse.model.entity;
+package com.wms.warehouse.model.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
