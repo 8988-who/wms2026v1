@@ -103,7 +103,6 @@ public class WmsLocationController {
 
     @Operation(summary = "获取表单下拉选项（厂区编码、区域类型）")
     @GetMapping("/form-options")
-    @PreAuthorize("@ss.hasPerm('warehouse:wms-location:list')")
     public Result<java.util.Map<String, java.util.List<?>>> getFormOptions() {
         java.util.Map<String, java.util.List<?>> options = wmsLocationService.getFormOptions();
         return Result.success(options);

@@ -20,6 +20,10 @@ export interface DeptItem {
   id?: string;
   /** 部门名称 */
   name?: string;
+  /** 部门编号 */
+  code?: string;
+  /** 厂区编码 */
+  plantCode?: string;
   /** 父部门ID */
   parentId?: string;
   /** 排序 */
@@ -40,6 +44,8 @@ export interface DeptForm {
   name?: string;
   /** 部门编号 */
   code?: string;
+  /** 厂区编码 */
+  plantCode?: string;
   /** 父部门ID */
   parentId?: string;
   /** 排序 */

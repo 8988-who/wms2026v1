@@ -20,6 +20,9 @@ public class DeptForm {
     @Schema(description="部门编号", example = "RD001")
     private String code;
 
+    @Schema(description="厂区编码（用于数据权限隔离）", example = "101")
+    private String plantCode;
+
     @Schema(description="父部门ID", example = "1000")
     @NotNull(message = "父部门ID不能为空")
     private Long parentId;

@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 /**
  * 巷道分页查询对象
  * <p>
@@ -42,5 +44,9 @@ public class WmsAisleQueryDTO extends BaseQuery {
 
     @Schema(description = "状态(1->正常；0->禁用)")
     private Integer status;
+
+    /** 数据权限：可访问的厂区编码列表（系统自动注入） */
+    @Schema(hidden = true)
+    private List<String> dataScopePlantCodes;
 
 }

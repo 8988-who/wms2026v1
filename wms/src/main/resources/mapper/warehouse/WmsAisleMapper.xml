@@ -52,6 +52,12 @@
             <if test="queryParams.plantCode != null and queryParams.plantCode != ''">
                 AND a.plant_code LIKE '%' || #{queryParams.plantCode} || '%'
             </if>
+            <if test="queryParams.dataScopePlantCodes != null and queryParams.dataScopePlantCodes.size() > 0">
+                AND a.plant_code IN
+                <foreach collection="queryParams.dataScopePlantCodes" item="code" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+            </if>
             <if test="queryParams.floor != null and queryParams.floor != ''">
                 AND a.floor LIKE '%' || #{queryParams.floor} || '%'
             </if>
