@@ -23,9 +23,6 @@ public class DeptVO {
     @Schema(description = "部门编号")
     private String code;
 
-    @Schema(description = "厂区编码（用于数据权限隔离）")
-    private String plantCode;
-
     @Schema(description = "排序")
     private Integer sort;
 

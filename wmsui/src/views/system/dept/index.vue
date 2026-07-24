@@ -69,7 +69,7 @@
           <el-table-column type="selection" width="55" align="center" />
           <el-table-column prop="name" label="部门名称" min-width="200" />
           <el-table-column prop="code" label="部门编号" width="120" />
-          <el-table-column prop="plantCode" label="厂区编码" width="120" />
+
           <el-table-column prop="status" label="状态" width="100">
             <template #default="scope">
               <el-tag v-if="scope.row.status === CommonStatus.ENABLED" type="success">正常</el-tag>
@@ -137,16 +137,6 @@
         <el-form-item label="部门编号" prop="code">
           <el-input v-model="formData.code" placeholder="请输入部门编码" />
         </el-form-item>
-        <el-form-item label="厂区编码" prop="plantCode">
-          <el-select v-model="formData.plantCode" placeholder="请选择厂区编码" clearable filterable>
-            <el-option
-              v-for="code in plantCodeOptions"
-              :key="code"
-              :label="code"
-              :value="code"
-            />
-          </el-select>
-        </el-form-item>
         <el-form-item label="显示排序" prop="sort">
           <el-input-number
             v-model="formData.sort"
@@ -209,7 +199,6 @@ const dialogState = reactive({
 });
 
 const deptOptions = ref<OptionItem[]>([]);
-const plantCodeOptions = ref<string[]>([]);
 
 const initialFormData: DeptForm = {
   status: CommonStatus.ENABLED,
@@ -280,15 +269,6 @@ async function openDialog(parentId?: string, deptId?: string): Promise<void> {
       children: data,
     },
   ];
-
-  // 加载厂区编码下拉选项
-  try {
-    const options = await WmsLocationAPI.getFormOptions();
-    plantCodeOptions.value = options.plantCodes || [];
-  } catch (e) {
-    console.error("获取厂区编码下拉选项失败:", e);
-    plantCodeOptions.value = [];
-  }
 
   dialogState.visible = true;
   if (deptId) {

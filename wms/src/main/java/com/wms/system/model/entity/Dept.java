@@ -39,11 +39,6 @@ public class Dept extends BaseEntity {
     private String treePath;
 
     /**
-     * 厂区编码（用于数据权限隔离）
-     */
-    private String plantCode;
-
-    /**
      * 显示顺序
      */
     private Integer sort;

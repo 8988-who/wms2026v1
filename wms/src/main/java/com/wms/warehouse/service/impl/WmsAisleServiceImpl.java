@@ -20,7 +20,6 @@ import com.wms.warehouse.service.WmsAisleService;
 import com.wms.warehouse.service.WmsCascadeService;
 import com.wms.warehouse.service.WmsLocationService;
 import com.wms.warehouse.utils.WmsCodeGeneratorService;
-import com.wms.common.service.PlantCodeScopeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -50,12 +49,10 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     private final WmsCascadeService wmsCascadeService;
     private final WmsCodeGeneratorService wmsCodeGeneratorService;
     private final WmsPointMapper wmsPointMapper;
-    private final PlantCodeScopeService plantCodeScopeService;
 
     @Override
     public IPage<WmsAisleVO> getWmsAislePage(WmsAisleQueryDTO queryParams) {
         Page<WmsAisleVO> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
-        queryParams.setDataScopePlantCodes(plantCodeScopeService.getAccessiblePlantCodes());
         return this.getBaseMapper().getWmsAislePage(page, queryParams);
     }
 

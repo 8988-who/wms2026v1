@@ -19,7 +19,6 @@ import com.wms.warehouse.service.WmsAisleService;
 import com.wms.warehouse.service.WmsLocationService;
 import com.wms.warehouse.service.WmsPointService;
 import com.wms.warehouse.utils.WmsCodeGeneratorService;
-import com.wms.common.service.PlantCodeScopeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -49,12 +48,10 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
     private final WmsLocationService wmsLocationService;
     private final WmsAisleService wmsAisleService;
     private final WmsCodeGeneratorService wmsCodeGeneratorService;
-    private final PlantCodeScopeService plantCodeScopeService;
 
     @Override
     public IPage<WmsPointVO> getWmsPointPage(WmsPointQueryDTO queryParams) {
         Page<WmsPointVO> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
-        queryParams.setDataScopePlantCodes(plantCodeScopeService.getAccessiblePlantCodes());
         return this.getBaseMapper().getWmsPointPage(page, queryParams);
     }
 
