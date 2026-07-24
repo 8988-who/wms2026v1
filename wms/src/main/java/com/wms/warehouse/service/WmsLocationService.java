@@ -36,4 +36,6 @@ public interface WmsLocationService extends IService<WmsLocation> {
 
     Map<String, List<String>> getFilterOptions(String plantCode, String floor);
 
+    Map<String, List<?>> getFormOptions();
+
 }

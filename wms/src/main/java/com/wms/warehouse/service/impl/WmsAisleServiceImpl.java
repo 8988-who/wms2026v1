@@ -9,8 +9,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wms.common.model.BatchStatusForm;
 import com.wms.warehouse.utils.WmsAisleConverter;
 import com.wms.warehouse.mapper.WmsAisleMapper;
+import com.wms.warehouse.mapper.WmsPointMapper;
 import com.wms.warehouse.model.entity.WmsAisle;
 import com.wms.warehouse.model.entity.WmsLocation;
+import com.wms.warehouse.model.entity.WmsPoint;
 import com.wms.warehouse.model.dto.WmsAisleDTO;
 import com.wms.warehouse.model.dto.WmsAisleQueryDTO;
 import com.wms.warehouse.model.vo.WmsAisleVO;
@@ -20,6 +22,8 @@ import com.wms.warehouse.service.WmsLocationService;
 import com.wms.warehouse.utils.WmsCodeGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +48,7 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     private final WmsLocationService wmsLocationService;
     private final WmsCascadeService wmsCascadeService;
     private final WmsCodeGeneratorService wmsCodeGeneratorService;
+    private final WmsPointMapper wmsPointMapper;
 
     @Override
     public IPage<WmsAisleVO> getWmsAislePage(WmsAisleQueryDTO queryParams) {
@@ -59,6 +64,8 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = {"wms:aisle:formOptions", "wms:aisle:filterOptions"}, allEntries = true)
     public boolean saveWmsAisle(WmsAisleDTO dto) {
         WmsLocation location = wmsLocationService.getById(dto.getLocationId());
         Assert.notNull(location, "所属区域不存在");
@@ -81,6 +88,8 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = {"wms:aisle:formOptions", "wms:aisle:filterOptions"}, allEntries = true)
     public boolean updateWmsAisle(Long id, WmsAisleDTO dto) {
         WmsAisle existing = this.getById(id);
         Assert.notNull(existing, "巷道不存在");
@@ -112,15 +121,24 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = {"wms:aisle:formOptions", "wms:aisle:filterOptions"}, allEntries = true)
     public boolean deleteWmsAisles(String ids) {
         if (StrUtil.isBlank(ids)) {
             return false;
         }
         String[] idArray = ids.split(",");
         for (String id : idArray) {
-            WmsAisle entity = this.getById(Long.parseLong(id));
+            Long aisleId = Long.parseLong(id);
+            WmsAisle entity = this.getById(aisleId);
             Assert.notNull(entity, "巷道不存在");
-            this.removeById(Long.parseLong(id));
+
+            Long pointCount = wmsPointMapper.selectCount(
+                    new LambdaQueryWrapper<WmsPoint>()
+                            .eq(WmsPoint::getAisleId, aisleId));
+            Assert.isTrue(pointCount == 0, "该巷道下存在" + pointCount + "个点位，请先删除点位后重试");
+
+            this.removeById(aisleId);
         }
         return true;
     }
@@ -147,6 +165,7 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     }
 
     @Override
+    @Cacheable(cacheNames = "wms:aisle:formOptions")
     public java.util.Map<String, java.util.List<?>> getFormOptions() {
         java.util.List<WmsLocation> locations = wmsLocationService.list(
                 new LambdaQueryWrapper<WmsLocation>()
@@ -181,6 +200,7 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     }
 
     @Override
+    @Cacheable(cacheNames = "wms:aisle:filterOptions")
     public java.util.Map<String, java.util.List<?>> getFilterOptions() {
         // 巷道编码
         java.util.List<String> aisleCodes = this.list(new LambdaQueryWrapper<WmsAisle>()

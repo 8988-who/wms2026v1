@@ -25,7 +25,6 @@ public class WmsPointDTO {
     private Long id;
 
     @Schema(description = "厂区编码", example = "PLANT001")
-    @NotBlank(message = "厂区编码不能为空")
     private String plantCode;
 
     @Schema(description = "所属区域ID", example = "1")

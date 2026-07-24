@@ -8,7 +8,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wms.common.model.BatchStatusForm;
 import com.wms.warehouse.utils.WmsLocationConverter;
+import com.wms.warehouse.mapper.WmsAisleMapper;
 import com.wms.warehouse.mapper.WmsLocationMapper;
+import com.wms.warehouse.model.entity.WmsAisle;
 import com.wms.warehouse.model.entity.WmsLocation;
 import com.wms.warehouse.model.dto.WmsLocationDTO;
 import com.wms.warehouse.model.dto.WmsLocationQueryDTO;
@@ -18,6 +20,8 @@ import com.wms.warehouse.service.WmsLocationService;
 import com.wms.warehouse.utils.WmsCodeGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +45,7 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
     private final WmsLocationConverter wmsLocationConverter;
     private final WmsCascadeService wmsCascadeService;
     private final WmsCodeGeneratorService wmsCodeGeneratorService;
+    private final WmsAisleMapper wmsAisleMapper;
 
     @Override
     public IPage<WmsLocationVO> getWmsLocationPage(WmsLocationQueryDTO queryParams) {
@@ -56,6 +61,8 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = {"wms:location:formOptions", "wms:location:filterOptions"}, allEntries = true)
     public boolean saveWmsLocation(WmsLocationDTO dto) {
         String plantCode = dto.getPlantCode();
 
@@ -75,6 +82,7 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = {"wms:location:formOptions", "wms:location:filterOptions"}, allEntries = true)
     public boolean updateWmsLocation(Long id, WmsLocationDTO dto) {
         WmsLocation existing = this.getById(id);
         Assert.notNull(existing, "库位/区域不存在");
@@ -108,15 +116,28 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = {"wms:location:formOptions", "wms:location:filterOptions"}, allEntries = true)
     public boolean deleteWmsLocations(String ids) {
         if (StrUtil.isBlank(ids)) {
             return false;
         }
         String[] idArray = ids.split(",");
         for (String id : idArray) {
-            WmsLocation entity = this.getById(Long.parseLong(id));
+            Long locationId = Long.parseLong(id);
+            WmsLocation entity = this.getById(locationId);
             Assert.notNull(entity, "库位/区域不存在");
-            this.removeById(Long.parseLong(id));
+
+            Long childCount = this.count(new LambdaQueryWrapper<WmsLocation>()
+                    .eq(WmsLocation::getParentId, locationId));
+            Assert.isTrue(childCount == 0, "该区域下存在" + childCount + "个子区域，请先删除子区域后重试");
+
+            Long aisleCount = wmsAisleMapper.selectCount(
+                    new LambdaQueryWrapper<WmsAisle>()
+                            .eq(WmsAisle::getLocationId, locationId));
+            Assert.isTrue(aisleCount == 0, "该区域下存在" + aisleCount + "条巷道，请先删除巷道后重试");
+
+            this.removeById(locationId);
         }
         return true;
     }
@@ -143,6 +164,26 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
     }
 
     @Override
+    @Cacheable(cacheNames = "wms:location:formOptions")
+    public java.util.Map<String, java.util.List<?>> getFormOptions() {
+        java.util.List<WmsLocation> list = this.list(new LambdaQueryWrapper<WmsLocation>()
+                .select(WmsLocation::getPlantCode, WmsLocation::getLocationType));
+
+        java.util.Set<String> plantCodes = new java.util.LinkedHashSet<>();
+        java.util.Set<String> locationTypes = new java.util.LinkedHashSet<>();
+        for (WmsLocation loc : list) {
+            if (StrUtil.isNotBlank(loc.getPlantCode())) plantCodes.add(loc.getPlantCode());
+            if (StrUtil.isNotBlank(loc.getLocationType())) locationTypes.add(loc.getLocationType());
+        }
+
+        java.util.Map<String, java.util.List<?>> result = new java.util.LinkedHashMap<>();
+        result.put("plantCodes", new java.util.ArrayList<>(plantCodes));
+        result.put("locationTypes", new java.util.ArrayList<>(locationTypes));
+        return result;
+    }
+
+    @Override
+    @Cacheable(cacheNames = "wms:location:filterOptions")
     public java.util.Map<String, java.util.List<String>> getFilterOptions(String plantCode, String floor) {
         java.util.List<WmsLocation> allPlants = this.list(new LambdaQueryWrapper<WmsLocation>()
                 .select(WmsLocation::getPlantCode));

@@ -103,6 +103,7 @@ public class WmsPointController {
 
     @Operation(summary = "获取表单下拉选项（厂区编码、所属区域、所属巷道）")
     @GetMapping("/form-options")
+    @PreAuthorize("@ss.hasPerm('warehouse:wms-point:list')")
     public Result<java.util.Map<String, java.util.List<?>>> getFormOptions() {
         java.util.Map<String, java.util.List<?>> options = wmsPointService.getFormOptions();
         return Result.success(options);
@@ -110,6 +111,7 @@ public class WmsPointController {
 
     @Operation(summary = "获取搜索筛选下拉选项（点位编码、区域编码、巷道编码）")
     @GetMapping("/filter-options")
+    @PreAuthorize("@ss.hasPerm('warehouse:wms-point:list')")
     public Result<java.util.Map<String, java.util.List<?>>> getFilterOptions() {
         java.util.Map<String, java.util.List<?>> options = wmsPointService.getFilterOptions();
         return Result.success(options);

@@ -19,9 +19,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class WmsAisleQueryDTO extends BaseQuery {
 
-    @Schema(description = "关键字(巷道编码/名称)")
-    private String keywords;
-
     @Schema(description = "区域ID")
     private Long locationId;
 

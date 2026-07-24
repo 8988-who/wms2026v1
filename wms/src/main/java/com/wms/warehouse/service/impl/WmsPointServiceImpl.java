@@ -21,6 +21,8 @@ import com.wms.warehouse.service.WmsPointService;
 import com.wms.warehouse.utils.WmsCodeGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,6 +64,7 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = {"wms:point:formOptions", "wms:point:filterOptions"}, allEntries = true)
     public boolean saveWmsPoint(WmsPointDTO dto) {
         WmsAisle aisle = wmsAisleService.getById(dto.getAisleId());
         Assert.notNull(aisle, "所属巷道不存在");
@@ -98,6 +101,7 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = {"wms:point:formOptions", "wms:point:filterOptions"}, allEntries = true)
     public boolean updateWmsPoint(Long id, WmsPointDTO dto) {
         WmsPoint existing = this.getById(id);
         Assert.notNull(existing, "点位不存在");
@@ -151,6 +155,7 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = {"wms:point:formOptions", "wms:point:filterOptions"}, allEntries = true)
     public boolean deleteWmsPoints(String ids) {
         if (StrUtil.isBlank(ids)) {
             return false;
@@ -186,6 +191,7 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
     }
 
     @Override
+    @Cacheable(cacheNames = "wms:point:formOptions")
     public java.util.Map<String, java.util.List<?>> getFormOptions() {
         java.util.List<WmsLocation> locations = wmsLocationService.list(
                 new LambdaQueryWrapper<WmsLocation>()
@@ -239,6 +245,7 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
     }
 
     @Override
+    @Cacheable(cacheNames = "wms:point:filterOptions")
     public java.util.Map<String, java.util.List<?>> getFilterOptions() {
         // 点位编码
         java.util.List<String> pointCodes = this.list(new LambdaQueryWrapper<WmsPoint>()

@@ -101,8 +101,17 @@ public class WmsLocationController {
         return Result.judge(result);
     }
 
+    @Operation(summary = "获取表单下拉选项（厂区编码、区域类型）")
+    @GetMapping("/form-options")
+    @PreAuthorize("@ss.hasPerm('warehouse:wms-location:list')")
+    public Result<java.util.Map<String, java.util.List<?>>> getFormOptions() {
+        java.util.Map<String, java.util.List<?>> options = wmsLocationService.getFormOptions();
+        return Result.success(options);
+    }
+
     @Operation(summary = "获取搜索下拉选项（支持级联筛选：厂区→楼层→区域编码）")
     @GetMapping("/filter-options")
+    @PreAuthorize("@ss.hasPerm('warehouse:wms-location:list')")
     public Result<java.util.Map<String, java.util.List<String>>> getFilterOptions(
             @Parameter(description = "厂区编码，传此参数后楼层和区域编码仅返回该厂区下的数据") @RequestParam(required = false) String plantCode,
             @Parameter(description = "楼层，传此参数后区域编码仅返回该楼层下的数据") @RequestParam(required = false) String floor

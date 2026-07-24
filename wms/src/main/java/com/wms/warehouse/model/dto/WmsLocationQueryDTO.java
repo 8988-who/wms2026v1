@@ -19,9 +19,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class WmsLocationQueryDTO extends BaseQuery {
 
-    @Schema(description = "关键字(库位编码/名称)")
-    private String keywords;
-
     @Schema(description = "厂区编码")
     private String plantCode;
 

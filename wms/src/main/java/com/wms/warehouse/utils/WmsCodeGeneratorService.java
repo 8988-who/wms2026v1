@@ -48,19 +48,19 @@ public class WmsCodeGeneratorService {
     /**
      * 生成巷道编码
      * <p>
-     * 格式：{plantCode}-{prefix}{3位序号}（如 PLANT001-A001）
+     * 格式：{locationCode}-{prefix}{3位序号}（如 PLANT001-001-A001）
      *
-     * @param plantCode         厂区编码
+     * @param locationCode      所属区域编码
      * @param prefix            巷道前缀（如 "A"）
      * @param maxSeqSupplier    最大已有序号供应器（首次初始化时使用）
      * @return 巷道编码
      */
-    public String generateAisleCode(String plantCode, String prefix, Supplier<Integer> maxSeqSupplier) {
-        String key = REDIS_KEY_PREFIX + "aisle:" + plantCode + ":" + prefix;
+    public String generateAisleCode(String locationCode, String prefix, Supplier<Integer> maxSeqSupplier) {
+        String key = REDIS_KEY_PREFIX + "aisle:" + locationCode + ":" + prefix;
         initSeqIfAbsent(key, maxSeqSupplier);
         long seq = stringRedisTemplate.opsForValue().increment(key);
-        log.debug("生成巷道编码: plantCode={}, prefix={}, key={}, seq={}", plantCode, prefix, key, seq);
-        return plantCode + "-" + prefix + String.format("%03d", seq);
+        log.debug("生成巷道编码: locationCode={}, prefix={}, key={}, seq={}", locationCode, prefix, key, seq);
+        return locationCode + "-" + prefix + String.format("%03d", seq);
     }
 
     /**

@@ -103,6 +103,7 @@ public class WmsAisleController {
 
     @Operation(summary = "获取表单下拉选项（厂区编码、所属区域）")
     @GetMapping("/form-options")
+    @PreAuthorize("@ss.hasPerm('warehouse:wms-aisle:list')")
     public Result<java.util.Map<String, java.util.List<?>>> getFormOptions() {
         java.util.Map<String, java.util.List<?>> options = wmsAisleService.getFormOptions();
         return Result.success(options);
@@ -110,6 +111,7 @@ public class WmsAisleController {
 
     @Operation(summary = "获取搜索筛选下拉选项（巷道编码、区域编码）")
     @GetMapping("/filter-options")
+    @PreAuthorize("@ss.hasPerm('warehouse:wms-aisle:list')")
     public Result<java.util.Map<String, java.util.List<?>>> getFilterOptions() {
         java.util.Map<String, java.util.List<?>> options = wmsAisleService.getFilterOptions();
         return Result.success(options);
