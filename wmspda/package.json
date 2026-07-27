@@ -1,5 +1,5 @@
 {
-  "name": "youlai-app",
+  "name": "wms-pda",
   "version": "1.0.1",
   "scripts": {
     "dev:app": "uni -p app",

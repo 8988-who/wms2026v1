@@ -1,4 +1,4 @@
-﻿// pages.config.ts
+// pages.config.ts
 import { defineUniPages } from "@uni-helper/vite-plugin-uni-pages";
 
 export default defineUniPages({
@@ -7,7 +7,7 @@ export default defineUniPages({
   globalStyle: {
     navigationBarBackgroundColor: "@navBgColor",
     navigationBarTextStyle: "@navTxtStyle",
-    navigationBarTitleText: "youlai-app",
+    navigationBarTitleText: "wms-pda",
     backgroundColor: "@bgColor",
     backgroundTextStyle: "@bgTxtStyle",
     backgroundColorTop: "@bgColorTop",

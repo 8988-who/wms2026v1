@@ -62,33 +62,4 @@ export const menuConfig: WorkMenuGroup[] = [
       },
     ],
   },
-  {
-    title: "项目链接",
-    children: [
-      {
-        icon: "/static/icons/company.svg",
-        title: "官网",
-        url: "https://www.youlai.tech/",
-        perm: "",
-      },
-      {
-        icon: "/static/icons/file.svg",
-        title: "文档",
-        url: "https://youlai.blog.csdn.net/article/details/143222890",
-        perm: "",
-      },
-      {
-        icon: "/static/icons/api.svg",
-        title: "接口",
-        url: "https://youlai.apifox.cn/",
-        perm: "",
-      },
-      {
-        icon: "/static/icons/git.svg",
-        title: "仓库",
-        url: "https://atomgit.com/youlai/youlai-app",
-        perm: "",
-      },
-    ],
-  },
 ];

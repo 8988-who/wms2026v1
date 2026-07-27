@@ -520,18 +520,27 @@
 
   async function handleCreateClick(): Promise<void> {
     dialog.title = "新增点位";
+    await loadFormOptions();
     openDialog();
   }
 
   async function handleEditClick(id: string): Promise<void> {
     dialog.title = "修改点位";
+    await loadFormOptions();
     const data = await WmsPointAPI.getFormData(id);
     Object.assign(formData, data);
-    openDialog();
-    handleFormPlantCodeChange();
-    if (formData.locationId) {
-      handleFormLocationChange();
+    // 编辑时根据已有值级联过滤下拉选项（不重置 formData）
+    if (formData.plantCode) {
+      formOptions.filteredLocations = formOptions.locations.filter(
+        (loc) => loc.code?.startsWith(formData.plantCode)
+      );
     }
+    if (formData.locationId) {
+      formOptions.filteredAisles = formOptions.aisles.filter(
+        (aisle) => aisle.locationId === formData.locationId
+      );
+    }
+    openDialog();
   }
 
   async function handleSubmit(): Promise<void> {

@@ -22,7 +22,7 @@
       <!-- Logo -->
       <view class="login__brand">
         <image class="login__logo" src="/static/logo.png" mode="aspectFit" />
-        <text class="login__brand-name">youlai-app</text>
+        <text class="login__brand-name">wms-pda</text>
       </view>
 
       <!-- 登录卡片 -->

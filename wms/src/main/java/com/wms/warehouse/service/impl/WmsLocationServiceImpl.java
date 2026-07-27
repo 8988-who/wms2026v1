@@ -20,8 +20,6 @@ import com.wms.warehouse.service.WmsLocationService;
 import com.wms.warehouse.utils.WmsCodeGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +60,6 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(cacheNames = {"wms:location:formOptions", "wms:location:filterOptions"}, allEntries = true)
     public boolean saveWmsLocation(WmsLocationDTO dto) {
         String plantCode = dto.getPlantCode();
 
@@ -82,7 +79,6 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(cacheNames = {"wms:location:formOptions", "wms:location:filterOptions"}, allEntries = true)
     public boolean updateWmsLocation(Long id, WmsLocationDTO dto) {
         WmsLocation existing = this.getById(id);
         Assert.notNull(existing, "库位/区域不存在");
@@ -117,7 +113,6 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(cacheNames = {"wms:location:formOptions", "wms:location:filterOptions"}, allEntries = true)
     public boolean deleteWmsLocations(String ids) {
         if (StrUtil.isBlank(ids)) {
             return false;
@@ -164,7 +159,6 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
     }
 
     @Override
-    @Cacheable(cacheNames = "wms:location:formOptions")
     public java.util.Map<String, java.util.List<?>> getFormOptions() {
         java.util.List<WmsLocation> list = this.list(new LambdaQueryWrapper<WmsLocation>()
                 .select(WmsLocation::getPlantCode, WmsLocation::getLocationType));
@@ -183,7 +177,6 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
     }
 
     @Override
-    @Cacheable(cacheNames = "wms:location:filterOptions")
     public java.util.Map<String, java.util.List<String>> getFilterOptions(String plantCode, String floor) {
         java.util.List<WmsLocation> allPlants = this.list(new LambdaQueryWrapper<WmsLocation>()
                 .select(WmsLocation::getPlantCode));

@@ -491,16 +491,22 @@
 
   async function handleCreateClick(): Promise<void> {
     dialog.title = "新增巷道";
+    await loadFormOptions();
     openDialog();
   }
 
   async function handleEditClick(id: string): Promise<void> {
     dialog.title = "修改巷道";
+    await loadFormOptions();
     const data = await WmsAisleAPI.getFormData(id);
     Object.assign(formData, data);
+    // 编辑时根据已有 plantCode 过滤所属区域（不重置 formData）
+    if (formData.plantCode) {
+      formOptions.filteredLocations = formOptions.locations.filter(
+        (loc) => loc.code?.startsWith(formData.plantCode)
+      );
+    }
     openDialog();
-    // 编辑时根据已有 plantCode 过滤所属区域
-    handleFormPlantCodeChange();
   }
 
   async function handleSubmit(): Promise<void> {

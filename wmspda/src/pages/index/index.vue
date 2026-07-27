@@ -109,7 +109,7 @@ const { handleNavClick } = useNavigation();
 const current = ref(0);
 const recentDaysRange = ref(7);
 
-const swiperList = ref(["https://www.youlai.tech/storage/youlai/bg02.png"]);
+const swiperList = ref(["https://www.wms.tech/storage/wms/bg02.png"]);
 
 /** 访问概览数据 */
 const visitOverviewData = ref<VisitOverview>({
