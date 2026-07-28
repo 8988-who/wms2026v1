@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wms.carriermanagementsystem.cart.mapper.CartMapper">
+
+    <!-- 通用查询映射 -->
+    <resultMap id="CartVOMap" type="com.wms.carriermanagementsystem.cart.model.vo.CartVO">
+        <id column="id" property="id"/>
+        <result column="cart_code" property="cartCode"/>
+        <result column="model_id" property="modelId"/>
+        <result column="model_code" property="modelCode"/>
+        <result column="model_name" property="modelName"/>
+        <result column="max_capacity" property="maxCapacity"/>
+        <result column="current_quantity" property="currentQuantity"/>
+        <result column="status" property="status"/>
+        <result column="area" property="area"/>
+        <result column="bind_worker" property="bindWorker"/>
+        <result column="actual_capacity" property="actualCapacity"/>
+        <result property="createdByName" column="created_by_name"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedByName" column="updated_by_name"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+
+    <!-- 分页查询料车列表（左联型号表取冗余信息，左联 sys_user 取创建/更新人） -->
+    <select id="selectCartList" resultMap="CartVOMap">
+        SELECT
+            c.id,
+            c.cart_code,
+            c.model_id,
+            m.model_code,
+            m.model_name,
+            COALESCE(c.actual_capacity, m.max_capacity) AS max_capacity,
+            c.current_quantity,
+            c.status,
+            c.area,
+            c.bind_worker,
+            c.actual_capacity,
+            su1.nickname AS created_by_name,
+            c.created_time,
+            su2.nickname AS updated_by_name,
+            c.updated_time
+        FROM wms_cart c
+        LEFT JOIN wms_cart_model m ON c.model_id = m.id
+        LEFT JOIN sys_user su1 ON c.created_by = su1.id
+        LEFT JOIN sys_user su2 ON c.updated_by = su2.id
+        <where>
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (c.cart_code LIKE '%' || #{query.keyword} || '%'
+                OR c.bind_worker LIKE '%' || #{query.keyword} || '%')
+            </if>
+            <if test="query.status != null">
+                AND c.status = #{query.status}
+            </if>
+            <if test="query.modelId != null">
+                AND c.model_id = #{query.modelId}
+            </if>
+            <if test="query.area != null and query.area != ''">
+                AND c.area LIKE '%' || #{query.area} || '%'
+            </if>
+        </where>
+        ORDER BY c.cart_code ASC
+    </select>
+
+    <!-- 查询所有不同的区域值 -->
+    <select id="selectDistinctAreas" resultType="java.lang.String">
+        SELECT DISTINCT c.area
+        FROM wms_cart c
+        WHERE c.area IS NOT NULL AND c.area != ''
+        ORDER BY c.area ASC
+    </select>
+
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wms.carriermanagementsystem.cartmodel.mapper.CartModelMapper">
+
+    <!-- 通用查询映射 -->
+    <resultMap id="CartModelVOMap" type="com.wms.carriermanagementsystem.cartmodel.model.vo.CartModelVO">
+        <id column="id" property="id"/>
+        <result column="model_code" property="modelCode"/>
+        <result column="model_name" property="modelName"/>
+        <result column="max_capacity" property="maxCapacity"/>
+        <result column="layer_count" property="layerCount"/>
+        <result column="remark" property="remark"/>
+        <result column="cart_count" property="cartCount"/>
+        <result column="created_name" property="createdByName"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_name" property="updatedByName"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 分页查询型号列表（左联 wms_cart 统计关联料车数） -->
+    <select id="selectCartModelList" resultMap="CartModelVOMap">
+        SELECT
+            m.id,
+            m.model_code,
+            m.model_name,
+            m.max_capacity,
+            m.layer_count,
+            m.remark,
+            COALESCE(c.cart_count, 0) AS cart_count,
+            m.created_time,
+            m.updated_time
+        FROM wms_cart_model m
+        LEFT JOIN (
+            SELECT model_id, COUNT(1) AS cart_count
+            FROM wms_cart
+            GROUP BY model_id
+        ) c ON m.id = c.model_id
+        <where>
+            <if test="query.modelCode != null and query.modelCode != ''">
+                AND m.model_code LIKE '%' || #{query.modelCode} || '%'
+            </if>
+            <if test="query.modelName != null and query.modelName != ''">
+                AND m.model_name LIKE '%' || #{query.modelName} || '%'
+            </if>
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (m.model_code LIKE '%' || #{query.keyword} || '%'
+                OR m.model_name LIKE '%' || #{query.keyword} || '%')
+            </if>
+        </where>
+        ORDER BY m.model_code ASC
+    </select>
+
+    <!-- 查询所有可用型号（表单下拉） -->
+    <select id="selectFormOptions" resultMap="CartModelVOMap">
+        SELECT
+            m.id,
+            m.model_code,
+            m.model_name,
+            m.max_capacity,
+            m.layer_count
+        FROM wms_cart_model m
+        ORDER BY m.model_code ASC
+    </select>
+
+</mapper>

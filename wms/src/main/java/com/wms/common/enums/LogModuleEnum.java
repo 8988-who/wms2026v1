@@ -28,7 +28,9 @@ public enum LogModuleEnum implements IBaseEnum<Integer> {
     WMS_POINT(81, "点位管理"),
     WMS_AISLE(82, "巷道管理"),
     WMS_LOCATION(83, "库位/区域管理"),
-    OTHER(99, "其他");
+    CART_MODEL(84, "料车型号配置"),
+    CART(85, "料车管理"),
+    CART_ITEM(86, "料车物品管理");
 
     @EnumValue
     private final Integer value;
