@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
  * <p>
  * 包含装载明细的 CRUD 操作、装车/取走核心业务逻辑（含容量校验、状态联动），
  * 以及扫码专用方法。所有写操作均添加事务管理。
+ * 料车数量与状态采用 SQL 实时计算 + 手动维护双保险机制：
+ * 查询时实时计算保证展示正确，写入时手动维护保证字段同步。
  * </p>
  *
  * @author Yadmin
@@ -158,8 +160,12 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
             effectiveCapacity = model.getMaxCapacity();
         }
 
-        // ⑤ 装车后不超过容量
-        if (cart.getCurrentQuantity() >= effectiveCapacity) {
+        // ⑤ 实时计算当前装载数量，判断是否超限
+        Long currentCount = cartItemMapper.selectCount(
+                new LambdaQueryWrapper<CartItem>()
+                        .eq(CartItem::getCartId, dto.getCartId())
+                        .eq(CartItem::getStatus, 1));
+        if (currentCount != null && currentCount >= effectiveCapacity) {
             throw new RuntimeException("料车已满，无法继续装车（有效容量：" + effectiveCapacity + "）");
         }
 
@@ -170,23 +176,15 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
         if (entity.getLayerNo() == null) {
             entity.setLayerNo(1);
         }
-        boolean itemSaved = save(entity);
-        if (!itemSaved) {
-            return false;
+        
+        boolean saved = save(entity);
+
+        if (saved) {
+            // 手动维护料车数量与状态（双保险：实时计算 + 手动维护）
+            updateCartAfterChange(cart.getId());
         }
 
-        // 更新 Cart.currentQuantity + 1
-        cart.setCurrentQuantity(cart.getCurrentQuantity() + 1);
-        // 若达到容量上限则状态变为满载
-        if (cart.getCurrentQuantity() >= effectiveCapacity) {
-            cart.setStatus(3);
-        } else if (cart.getStatus() == 1) {
-            // 空闲→使用中
-            cart.setStatus(2);
-        }
-        cartMapper.updateById(cart);
-
-        return true;
+        return saved;
     }
 
     @Override
@@ -200,28 +198,19 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
             throw new RuntimeException("该物品已被取走，不允许重复操作");
         }
 
+        Long cartId = item.getCartId();
+
         // 标记已取走
         item.setStatus(2);
         item.setTakenAt(LocalDateTime.now());
-        boolean itemUpdated = updateById(item);
-        if (!itemUpdated) {
-            return false;
+        boolean updated = updateById(item);
+
+        if (updated) {
+            // 手动维护料车数量与状态（双保险：实时计算 + 手动维护）
+            updateCartAfterChange(cartId);
         }
 
-        // 更新 Cart.currentQuantity - 1
-        Cart cart = cartMapper.selectById(item.getCartId());
-        if (cart != null && cart.getCurrentQuantity() > 0) {
-            cart.setCurrentQuantity(cart.getCurrentQuantity() - 1);
-            // 若料车变空则改为空闲
-            if (cart.getCurrentQuantity() == 0) {
-                cart.setStatus(1);  // 空闲
-            } else if (cart.getStatus() == 3) {
-                cart.setStatus(2);  // 满载→使用中
-            }
-            cartMapper.updateById(cart);
-        }
-
-        return true;
+        return updated;
     }
 
     @Override
@@ -244,12 +233,24 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
 
         // 仅允许删除已取走的记录
         List<CartItem> items = listByIds(idList);
+        Long cartId = null;
         for (CartItem item : items) {
             if (item.getStatus() != 2) {
                 throw new RuntimeException("物品（条码：" + item.getProductCode() + "）尚未取走，不允许删除");
             }
+            if (cartId == null) {
+                cartId = item.getCartId();
+            }
         }
-        return removeByIds(idList);
+
+        boolean removed = removeByIds(idList);
+
+        if (removed && cartId != null) {
+            // 手动维护料车数量与状态（双保险：实时计算 + 手动维护）
+            updateCartAfterChange(cartId);
+        }
+
+        return removed;
     }
 
     @Override
@@ -324,5 +325,44 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
             throw new RuntimeException("未找到任何匹配的物品记录");
         }
         return batchTakeCartItems(ids);
+    }
+
+    /* ========== 内部辅助方法 ========== */
+
+    /**
+     * 物品变更后，手动维护料车的 current_quantity 和 status（双保险机制）
+     */
+    private void updateCartAfterChange(Long cartId) {
+        Cart cart = cartMapper.selectById(cartId);
+        if (cart == null || cart.getStatus() == 4) {
+            return;
+        }
+
+        // 计算有效容量
+        int effectiveCapacity;
+        if (cart.getActualCapacity() != null && cart.getActualCapacity() > 0) {
+            effectiveCapacity = cart.getActualCapacity();
+        } else {
+            CartModel model = cartModelMapper.selectById(cart.getModelId());
+            effectiveCapacity = model != null ? model.getMaxCapacity() : 0;
+        }
+
+        // 实时计算当前装载数量
+        Long currentCount = cartItemMapper.selectCount(
+                new LambdaQueryWrapper<CartItem>()
+                        .eq(CartItem::getCartId, cartId)
+                        .eq(CartItem::getStatus, 1));
+        int count = currentCount != null ? currentCount.intValue() : 0;
+
+        // 更新料车
+        cart.setCurrentQuantity(count);
+        if (count == 0) {
+            cart.setStatus(1);  // 空闲
+        } else if (count >= effectiveCapacity) {
+            cart.setStatus(3);  // 满载
+        } else {
+            cart.setStatus(2);  // 使用中
+        }
+        cartMapper.updateById(cart);
     }
 }

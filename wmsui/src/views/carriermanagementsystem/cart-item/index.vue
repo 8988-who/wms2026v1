@@ -82,7 +82,7 @@
           @selection-change="(rows) => (selectedIds = rows.map((r) => r.id!))"
         >
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column key="sortOrder" label="顺序" prop="sortOrder" width="60" align="center" />
+          <el-table-column key="sortOrder" label="装货顺序" prop="sortOrder" width="60" align="center" />
           <el-table-column key="productCode" label="货品条码" prop="productCode" min-width="140" align="center" />
           <el-table-column key="productModel" label="货品型号" prop="productModel" min-width="120" align="center" />
           <el-table-column key="batchNo" label="批次号" prop="batchNo" min-width="120" align="center" />

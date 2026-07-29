@@ -21,7 +21,7 @@
         <result property="updatedTime" column="updated_time"/>
     </resultMap>
 
-    <!-- 分页查询料车列表（左联型号表取冗余信息，左联 sys_user 取创建/更新人） -->
+    <!-- 分页查询料车列表（实时计算装载数量和状态，左联型号表取冗余信息） -->
     <select id="selectCartList" resultMap="CartVOMap">
         SELECT
             c.id,
@@ -30,8 +30,17 @@
             m.model_code,
             m.model_name,
             COALESCE(c.actual_capacity, m.max_capacity) AS max_capacity,
-            c.current_quantity,
-            c.status,
+            -- 实时计算 current_quantity（在车状态的物品数量）
+            (SELECT COUNT(*) FROM wms_cart_item 
+             WHERE cart_id = c.id AND status = 1) AS current_quantity,
+            -- 实时计算 status（维修状态保持数据库值，其他状态实时计算）
+            CASE 
+                WHEN c.status = 4 THEN 4
+                WHEN (SELECT COUNT(*) FROM wms_cart_item WHERE cart_id = c.id AND status = 1) = 0 THEN 1
+                WHEN (SELECT COUNT(*) FROM wms_cart_item WHERE cart_id = c.id AND status = 1) >= 
+                     COALESCE(c.actual_capacity, m.max_capacity) THEN 3
+                ELSE 2
+            END AS status,
             c.area,
             c.bind_worker,
             c.actual_capacity,
@@ -49,7 +58,24 @@
                 OR c.bind_worker LIKE '%' || #{query.keyword} || '%')
             </if>
             <if test="query.status != null">
-                AND c.status = #{query.status}
+                -- 维修状态直接匹配数据库值
+                <choose>
+                    <when test="query.status == 4">
+                        AND c.status = 4
+                    </when>
+                    <otherwise>
+                        -- 其他状态通过实时计算匹配
+                        AND (
+                            CASE 
+                                WHEN c.status = 4 THEN 4
+                                WHEN (SELECT COUNT(*) FROM wms_cart_item WHERE cart_id = c.id AND status = 1) = 0 THEN 1
+                                WHEN (SELECT COUNT(*) FROM wms_cart_item WHERE cart_id = c.id AND status = 1) >= 
+                                     COALESCE(c.actual_capacity, m.max_capacity) THEN 3
+                                ELSE 2
+                            END
+                        ) = #{query.status}
+                    </otherwise>
+                </choose>
             </if>
             <if test="query.modelId != null">
                 AND c.model_id = #{query.modelId}
