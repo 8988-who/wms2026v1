@@ -23,6 +23,12 @@
             <el-option v-for="item in filterOptions.aisleCodes" :key="item" :label="item" :value="item" />
           </el-select>
         </el-form-item>
+        <el-form-item label="点位条码" prop="barcode">
+          <el-input v-model="params.barcode" placeholder="请输入点位条码" clearable />
+        </el-form-item>
+        <el-form-item label="地图坐标" prop="coordinate">
+          <el-input v-model="params.coordinate" placeholder="请输入地图坐标" clearable />
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery">搜索</el-button>
           <el-button @click="handleResetQuery">重置</el-button>
@@ -291,6 +297,7 @@
                           v-model="formData.pointCode"
                           placeholder="系统自动生成（巷道编码-P序号）"
                           readonly
+                          disabled
                       />
                 </el-form-item>
 
@@ -320,6 +327,7 @@
                           v-model="formData.floor"
                           placeholder="选择区域后自动获取"
                           readonly
+                          disabled
                       />
                 </el-form-item>
 

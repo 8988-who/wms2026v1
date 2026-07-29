@@ -3,8 +3,8 @@
     <!-- 搜索 -->
     <el-card class="page-search" shadow="never">
       <el-form ref="queryFormRef" :model="params" :inline="true">
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="params.status" placeholder="状态" clearable>
+        <el-form-item label="状态" prop="status" >
+          <el-select v-model="params.status" placeholder="状态" clearable >
             <el-option label="开启" :value="1" />
             <el-option label="关闭" :value="0" />
           </el-select>
@@ -277,6 +277,7 @@
                           v-model="formData.aisleCode"
                           placeholder="系统自动生成（区域编码-A序号）"
                           readonly
+                          disabled
                       />
                 </el-form-item>
 
@@ -292,6 +293,7 @@
                           v-model="formData.floor"
                           placeholder="选择区域后自动获取"
                           readonly
+                          disabled
                       />
                 </el-form-item>
 

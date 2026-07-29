@@ -25,6 +25,9 @@ public class WmsLocationQueryDTO extends BaseQuery {
     @Schema(description = "区域编码")
     private String locationCode;
 
+    @Schema(description = "区域名称")
+    private String locationName;
+
     @Schema(description = "库位/区域类型")
     private String locationType;
 

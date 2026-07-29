@@ -8,6 +8,7 @@ import type { BaseQueryParams } from "@/api/common";
 export interface WmsLocationQueryParams extends BaseQueryParams {
   plantCode?: string;
   locationCode?: string;
+  locationName?: string;
   floor?: string;
   updatedBy?: string;
   status?: number;

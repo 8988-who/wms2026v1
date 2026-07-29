@@ -24,6 +24,9 @@
             <el-option v-for="item in filterOptions.locationCodes" :key="item" :label="item" :value="item" />
           </el-select>
         </el-form-item>
+        <el-form-item label="区域名称" prop="locationName">
+          <el-input v-model="params.locationName" placeholder="请输入区域名称" clearable />
+        </el-form-item>
         <el-form-item label="更新人" prop="updatedBy">
           <el-select v-model="params.updatedBy" placeholder="更新人" clearable filterable>
             <el-option v-for="item in filterOptions.updatedByNames" :key="item" :label="item" :value="item" />
@@ -233,6 +236,7 @@
                           v-model="formData.locationCode"
                           placeholder="系统自动生成"
                           readonly
+                          disabled
                       />
                 </el-form-item>
 

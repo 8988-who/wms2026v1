@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wms.carriermanagementsystem.cartitem.mapper.CartItemMapper">
+
+    <!-- 通用查询映射 -->
+    <resultMap id="CartItemVOMap" type="com.wms.carriermanagementsystem.cartitem.model.vo.CartItemVO">
+        <id column="id" property="id"/>
+        <result column="cart_id" property="cartId"/>
+        <result column="cart_code" property="cartCode"/>
+        <result column="cart_status" property="cartStatus"/>
+        <result column="product_code" property="productCode"/>
+        <result column="product_model" property="productModel"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="batch_no" property="batchNo"/>
+        <result column="layer_no" property="layerNo"/>
+        <result column="operator" property="operator"/>
+        <result column="status" property="status"/>
+        <result column="loaded_at" property="loadedAt"/>
+        <result column="taken_at" property="takenAt"/>
+        <result column="remark" property="remark"/>
+        <result property="createdByName" column="created_by_name"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedByName" column="updated_by_name"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+
+    <!-- 分页查询装载明细（左联 wms_cart 取料车编号/状态，左联 sys_user 取创建/更新人） -->
+    <select id="getCartItemPage" resultMap="CartItemVOMap">
+        SELECT
+            ci.id,
+            ci.cart_id,
+            c.cart_code,
+            c.status AS cart_status,
+            ci.product_code,
+            ci.product_model,
+            ci.sort_order,
+            ci.batch_no,
+            ci.layer_no,
+            ci.operator,
+            ci.status,
+            ci.loaded_at,
+            ci.taken_at,
+            ci.remark,
+            su1.nickname AS created_by_name,
+            ci.created_time,
+            su2.nickname AS updated_by_name,
+            ci.updated_time
+        FROM wms_cart_item ci
+        LEFT JOIN wms_cart c ON ci.cart_id = c.id
+        LEFT JOIN sys_user su1 ON ci.created_by = su1.id
+        LEFT JOIN sys_user su2 ON ci.updated_by = su2.id
+        <where>
+            <if test="query.cartId != null">
+                AND ci.cart_id = #{query.cartId}
+            </if>
+            <if test="query.cartCode != null and query.cartCode != ''">
+                AND c.cart_code LIKE '%' || #{query.cartCode} || '%'
+            </if>
+            <if test="query.productCode != null and query.productCode != ''">
+                AND ci.product_code LIKE '%' || #{query.productCode} || '%'
+            </if>
+            <if test="query.productModel != null and query.productModel != ''">
+                AND ci.product_model LIKE '%' || #{query.productModel} || '%'
+            </if>
+            <if test="query.batchNo != null and query.batchNo != ''">
+                AND ci.batch_no LIKE '%' || #{query.batchNo} || '%'
+            </if>
+            <if test="query.status != null">
+                AND ci.status = #{query.status}
+            </if>
+            <if test="query.layerNo != null">
+                AND ci.layer_no = #{query.layerNo}
+            </if>
+            <if test="query.operator != null and query.operator != ''">
+                AND ci.operator LIKE '%' || #{query.operator} || '%'
+            </if>
+            <if test="query.loadedAtStart != null and query.loadedAtStart != ''">
+                AND ci.loaded_at &gt;= #{query.loadedAtStart}::timestamp
+            </if>
+            <if test="query.loadedAtEnd != null and query.loadedAtEnd != ''">
+                AND ci.loaded_at &lt;= #{query.loadedAtEnd}::timestamp
+            </if>
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (ci.product_code LIKE '%' || #{query.keyword} || '%'
+                OR ci.product_model LIKE '%' || #{query.keyword} || '%'
+                OR ci.batch_no LIKE '%' || #{query.keyword} || '%')
+            </if>
+        </where>
+        ORDER BY ci.loaded_at DESC, ci.sort_order DESC
+    </select>
+
+    <!-- 查询指定料车的所有物品 -->
+    <select id="getCartItemsByCartId" resultMap="CartItemVOMap">
+        SELECT
+            ci.id,
+            ci.cart_id,
+            c.cart_code,
+            c.status AS cart_status,
+            ci.product_code,
+            ci.product_model,
+            ci.sort_order,
+            ci.batch_no,
+            ci.layer_no,
+            ci.operator,
+            ci.status,
+            ci.loaded_at,
+            ci.taken_at,
+            ci.remark,
+            su1.nickname AS created_by_name,
+            ci.created_time,
+            su2.nickname AS updated_by_name,
+            ci.updated_time
+        FROM wms_cart_item ci
+        LEFT JOIN wms_cart c ON ci.cart_id = c.id
+        LEFT JOIN sys_user su1 ON ci.created_by = su1.id
+        LEFT JOIN sys_user su2 ON ci.updated_by = su2.id
+        WHERE ci.cart_id = #{cartId}
+        ORDER BY ci.sort_order DESC
+    </select>
+
+    <!-- 获取料车当前最大 sortOrder -->
+    <select id="getMaxSortOrderByCartId" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(ci.sort_order), 0)
+        FROM wms_cart_item ci
+        WHERE ci.cart_id = #{cartId}
+    </select>
+
+</mapper>

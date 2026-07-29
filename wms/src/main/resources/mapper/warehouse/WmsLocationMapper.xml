@@ -45,6 +45,9 @@
             <if test="queryParams.locationCode != null and queryParams.locationCode != ''">
                 AND l.location_code LIKE '%' || #{queryParams.locationCode} || '%'
             </if>
+            <if test="queryParams.locationName != null and queryParams.locationName != ''">
+                AND l.location_name LIKE '%' || #{queryParams.locationName} || '%'
+            </if>
             <if test="queryParams.floor != null and queryParams.floor != ''">
                 AND l.floor LIKE '%' || #{queryParams.floor} || '%'
             </if>

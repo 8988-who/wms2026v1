@@ -34,6 +34,12 @@ public class WmsPointQueryDTO extends BaseQuery {
     @Schema(description = "点位名称")
     private String pointName;
 
+    @Schema(description = "点位条码")
+    private String barcode;
+
+    @Schema(description = "地图坐标")
+    private String coordinate;
+
     @Schema(description = "区域编码")
     private String locationCode;
 

@@ -68,6 +68,12 @@
             <if test="queryParams.pointName != null and queryParams.pointName != ''">
                 AND p.point_name LIKE '%' || #{queryParams.pointName} || '%'
             </if>
+            <if test="queryParams.barcode != null and queryParams.barcode != ''">
+                AND p.barcode LIKE '%' || #{queryParams.barcode} || '%'
+            </if>
+            <if test="queryParams.coordinate != null and queryParams.coordinate != ''">
+                AND p.coordinate LIKE '%' || #{queryParams.coordinate} || '%'
+            </if>
             <if test="queryParams.aisleId != null">
                 AND p.aisle_id = #{queryParams.aisleId}
             </if>

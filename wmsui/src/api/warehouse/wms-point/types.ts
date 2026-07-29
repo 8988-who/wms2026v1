@@ -4,6 +4,8 @@ export interface WmsPointQueryParams extends BaseQueryParams {
   plantCode?: string;
   pointCode?: string;
   pointName?: string;
+  barcode?: string;
+  coordinate?: string;
   floor?: string;
   locationCode?: string;
   aisleCode?: string;
