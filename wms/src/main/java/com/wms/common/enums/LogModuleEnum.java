@@ -30,7 +30,8 @@ public enum LogModuleEnum implements IBaseEnum<Integer> {
     WMS_LOCATION(83, "库位/区域管理"),
     CART_MODEL(84, "料车型号配置"),
     CART(85, "料车管理"),
-    CART_ITEM(86, "料车物品管理");
+    CART_ITEM(86, "料车物品管理"),
+    API_REQUEST_LOG(87, "接口请求日志");
 
     @EnumValue
     private final Integer value;

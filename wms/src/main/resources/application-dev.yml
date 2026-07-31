@@ -9,9 +9,9 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://192.168.175.131:5432/wms_all_template?currentSchema=public&stringtype=unspecified
+    url: jdbc:postgresql://localhost:5432/wms_all_template?currentSchema=public&stringtype=unspecified
     username: postgres
-    password: Admin@zw8888!
+    password:
     max-active: 20
     max-wait: 3000
     test-while-idle: true
@@ -22,9 +22,9 @@ spring:
   data:
     redis:
       database: 0
-      host: 192.168.175.131
+      host: 127.0.0.1
       port: 6379
-      password: Admin@zw8888!
+#      password:
       timeout: 10s
       lettuce:
         pool:
@@ -168,7 +168,7 @@ sms:
     accessKeySecret: SoOWRqpjtS7xxxxxxZ2PZiMTJOVC
     domain: dysmsapi.aliyuncs.com
     regionId: cn-shanghai
-    signName: 
+    signName:
     templates:
       #  注册短信验证码模板
       register: SMS_22xxx771
