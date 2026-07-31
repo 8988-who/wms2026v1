@@ -47,19 +47,19 @@ spring:
       cache-null-values: true
     caffeine:
       spec: initialCapacity=50,maximumSize=1000,expireAfterWrite=600s
-  # 邮件配置
-  mail:
-    host: smtp.wms.com
-    port: 587
-    username: your-email@example.com
-    password: 123456
-    properties:
-      smtp:
-        auth: true
-        starttls:
-          enable: true
-    # 邮件发送者
-    from: wms
+  # # 邮件配置
+  # mail:
+  #   host: smtp.wms.com
+  #   port: 587
+  #   username: 
+  #   password: 123456
+  #   properties:
+  #     smtp:
+  #       auth: true
+  #       starttls:
+  #         enable: true
+  #   # 邮件发送者
+  #   from: wms
 
 management:
   endpoints:
@@ -161,21 +161,21 @@ oss:
     # 文件存储路径 请注意下，mac用户请使用 /Users/your-username/your-path/，否则会有权限问题，windows用户请使用 D:/your-path/
     storage-path: E:/wms20260712/test/
 # 短信配置
-sms:
-  # 阿里云短信
-  aliyun:
-    accessKeyId: LTAI5tSMgfxxxxxxdiBJLyR
-    accessKeySecret: SoOWRqpjtS7xxxxxxZ2PZiMTJOVC
-    domain: dysmsapi.aliyuncs.com
-    regionId: cn-shanghai
-    signName: 
-    templates:
-      #  注册短信验证码模板
-      register: SMS_22xxx771
-      # 登录短信验证码模板
-      login: SMS_22xxx772
-      # 修改手机号短信验证码模板
-      change-mobile: SMS_22xxx773
+# sms:
+#   # 阿里云短信
+#   aliyun:
+#     accessKeyId: LTAI5tSMgfxxxxxxdiBJLyR
+#     accessKeySecret: SoOWRqpjtS7xxxxxxZ2PZiMTJOVC
+#     domain: dysmsapi.aliyuncs.com
+#     regionId: cn-shanghai
+#     signName: 
+#     templates:
+#       #  注册短信验证码模板
+#       register: SMS_22xxx771
+#       # 登录短信验证码模板
+#       login: SMS_22xxx772
+#       # 修改手机号短信验证码模板
+#       change-mobile: SMS_22xxx773
 
 # springdoc 配置文档: https://springdoc.org/properties.html
 springdoc:
@@ -186,14 +186,18 @@ springdoc:
   api-docs:
     path: /v3/api-docs # OpenAPI JSON 地址
   group-configs: # 分组配置
-    - group: "系统管理" # 分组名称
-      paths-to-match: "/**" # 匹配的请求路径
-      packages-to-scan: # 扫描的 Controller 包，限制只生成指定包的接口文档
-        - com.wms.auth.controller
-        - com.wms.system.controller
-        - com.wms.file.controller
-
-        - com.wms.message.controller
+    - group: "系统管理"
+      packages-to-scan:
+        - com.wms.auth
+        - com.wms.system
+        - com.wms.file
+        - com.wms.message
+    - group: "仓库管理"
+      packages-to-scan:
+        - com.wms.warehouse
+    - group: "载具管理系统"
+      packages-to-scan:
+        - com.wms.carriermanagementsystem
   default-flat-param-object: true
 
 # knife4j 配置
