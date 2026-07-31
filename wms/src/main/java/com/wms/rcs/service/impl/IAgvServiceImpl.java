@@ -1,0 +1,50 @@
+package com.wms.rcs.service.impl;
+
+import com.alibaba.fastjson2.JSONObject;
+import com.wms.common.util.ApiRequestUtils;
+import com.wms.rcs.service.IAgvService;
+import com.wms.common.enums.ApiEnum;
+import com.wms.common.result.Result;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+
+/**
+ * @BelongsProject: wms
+ * @BelongsPackage: com.wms.rcs.service.impl
+ * @Author: YangZheng
+ * @CreateTime: 2026-07-31 10:31
+ * @Description: TODO
+ * @Version: 1.0
+ */
+@Slf4j
+@Service
+public class IAgvServiceImpl implements IAgvService {
+
+    @Override
+    public Result<Object> commonRequest(String methodName, Map<String, Object> params) {
+        // 获取接口枚举
+        ApiEnum apiEnum = ApiEnum.getApiEnumByModuleAndMethodName("rcs", methodName);
+        return commonRequest(apiEnum, params);
+    }
+
+    /**
+     * 通用请求接口
+     */
+    @Override
+    public Result<Object> commonRequest(ApiEnum apiEnum, Map<String, Object> params) {
+        // 调用统一接口请求方法
+        String result = ApiRequestUtils.execute(apiEnum, null, params);
+        // 解析出data
+        JSONObject resJsonObj = JSONObject.parse(result);
+        String code = resJsonObj.getString("code");
+        String msg = resJsonObj.getString("message");
+        Object data = resJsonObj.get("data");
+        if ("0".equals(code)) {
+            return Result.success(data, msg);
+        } else {
+            return Result.failed("AGV系统" + msg);
+        }
+    }
+}

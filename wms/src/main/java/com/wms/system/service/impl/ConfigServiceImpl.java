@@ -12,6 +12,7 @@ import com.wms.system.model.form.ConfigForm;
 import com.wms.system.model.query.ConfigQuery;
 import com.wms.system.model.vo.ConfigVO;
 import com.wms.system.service.ConfigService;
+import com.wms.system.service.ISysConfigService;
 import com.wms.framework.security.util.SecurityUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class ConfigServiceImpl extends ServiceImpl<ConfigMapper, Config> implements ConfigService {
+public class ConfigServiceImpl extends ServiceImpl<ConfigMapper, Config> implements ConfigService, ISysConfigService {
 
     private final ConfigConverter configConverter;
 
@@ -123,6 +124,18 @@ public class ConfigServiceImpl extends ServiceImpl<ConfigMapper, Config> impleme
             return super.removeById(id);
         }
         return false;
+    }
+
+    /**
+     * 根据键名查询参数配置信息
+     *
+     * @param configKey 参数键名
+     * @return 参数键值
+     */
+    @Override
+    public String selectConfigByKey(String configKey) {
+        Object value = redisTemplate.opsForHash().get(RedisConstants.System.CONFIG, configKey);
+        return value == null ? null : value.toString();
     }
 
     /**
