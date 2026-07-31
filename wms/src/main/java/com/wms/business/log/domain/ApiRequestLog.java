@@ -20,9 +20,9 @@ import java.util.Date;
  * @date 2026-07-31
  */
 @Data
-@TableName("t_wms_api_request_log")
+@TableName("api_request_log")
 @Schema(description = "接口请求日志实体")
-public class TWmsApiRequestLog implements Serializable {
+public class ApiRequestLog implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Schema(description = "主键ID")

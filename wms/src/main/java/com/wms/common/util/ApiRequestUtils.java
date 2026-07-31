@@ -9,9 +9,9 @@ import cn.hutool.http.webservice.SoapClient;
 import cn.hutool.json.XML;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import com.wms.business.log.domain.TWmsApiRequestLog;
+import com.wms.business.log.domain.ApiRequestLog;
 
-import com.wms.business.log.service.ITWmsApiRequestLogService;
+import com.wms.business.log.service.IApiRequestLogService;
 import com.wms.common.enums.ApiEnum;
 import com.wms.common.util.spring.SpringUtils;
 import com.wms.system.service.ISysConfigService;
@@ -66,7 +66,7 @@ public class ApiRequestUtils {
         String baseurl = StringUtils.stripEnd(getBaseurl(apiEnum.getModule()), "/");
         String url = baseurl + "/" + StringUtils.stripStart(apiEnum.getMethodName(), "/");
         // 初始化日志
-        TWmsApiRequestLog requestLog = new TWmsApiRequestLog();
+        ApiRequestLog requestLog = new ApiRequestLog();
         requestLog.setApiCode(apiEnum.getCode());
         requestLog.setApiName(apiEnum.getName());
         requestLog.setApiMethodName(apiEnum.getMethodName());
@@ -113,7 +113,7 @@ public class ApiRequestUtils {
         } finally {
             // 保存日志
             requestLog.setResTime(DateUtils.getNowDate());
-            SpringUtils.getBean(ITWmsApiRequestLogService.class).saveLogAsync(requestLog);
+            SpringUtils.getBean(IApiRequestLogService.class).saveLogAsync(requestLog);
         }
         // 存在异常的话继续向上抛出
         if (Objects.nonNull(exception)) {
@@ -134,7 +134,7 @@ public class ApiRequestUtils {
     /**
      * 不同模块的解析逻辑
      */
-    private static void handleByModule(TWmsApiRequestLog requestLog) {
+    private static void handleByModule(ApiRequestLog requestLog) {
         // 模块
         String module = requestLog.getModule();
         // 解析返回值
@@ -243,7 +243,7 @@ public class ApiRequestUtils {
     //使用SOAP1.1发送消息
     public static String doPostSoap(String postUrl, String soapXml, String soapAction) {
         // 初始化日志
-        TWmsApiRequestLog requestLog = new TWmsApiRequestLog();
+        ApiRequestLog requestLog = new ApiRequestLog();
         requestLog.setIsSuccess("Y");
         requestLog.setApiCode(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getCode());
         requestLog.setApiName(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getName());
@@ -304,7 +304,7 @@ public class ApiRequestUtils {
             log.error("对接MES获取条码基础信息发生错误：", e);
             throw new RuntimeException("对接MES获取条码基础信息发生错误：" + e.getMessage());
         } finally {
-            SpringUtils.getBean(ITWmsApiRequestLogService.class).save(requestLog);
+            SpringUtils.getBean(IApiRequestLogService.class).save(requestLog);
         }
         return retStr;
     }

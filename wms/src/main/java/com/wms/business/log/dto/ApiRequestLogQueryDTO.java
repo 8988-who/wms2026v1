@@ -16,7 +16,7 @@ import java.io.Serializable;
 @Data
 @Schema(description = "查询接口请求日志DTO")
 @EqualsAndHashCode(callSuper = true)
-public class TWmsApiRequestLogQueryDTO extends BaseQuery implements Serializable {
+public class ApiRequestLogQueryDTO extends BaseQuery implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Schema(description = "所属模块")
