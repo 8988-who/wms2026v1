@@ -141,8 +141,8 @@ public class ApiRequestUtils {
         if (StringUtils.isNotEmpty(requestLog.getResParams())) {
             String resCode = null;
             String isSuccess = null;
-            // agv模块的解析逻辑
-            if ("agv".equals(module)) {
+            // rcs模块的解析逻辑
+            if ("rcs".equals(module)) {
                 JSONObject resParams = JSONObject.parse(requestLog.getResParams());
                 resCode = resParams.getString("code");
                 isSuccess = "0".equals(resCode) ? "Y" : "N";

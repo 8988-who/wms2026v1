@@ -1,6 +1,6 @@
 package com.wms.rcs.controller;
 
-import com.wms.rcs.service.IAgvService;
+import com.wms.rcs.service.AgvService;
 import com.wms.common.result.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,11 +22,11 @@ import java.util.Map;
 @RequestMapping("/api/v1/agv")
 public class AgvController {
     @Autowired
-    private IAgvService iAgvService;
+    private AgvService agvService;
 
     @PostMapping("/commonRequest/{methodName}")
     @Operation(method = "通用请求接口")
     public Result<Object> commonRequest(@PathVariable String methodName, @RequestBody Map<String ,Object> params) {
-        return iAgvService.commonRequest(methodName, params);
+        return agvService.commonRequest(methodName, params);
     }
 }

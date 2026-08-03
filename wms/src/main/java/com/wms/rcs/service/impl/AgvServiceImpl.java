@@ -2,7 +2,7 @@ package com.wms.rcs.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.wms.common.util.ApiRequestUtils;
-import com.wms.rcs.service.IAgvService;
+import com.wms.rcs.service.AgvService;
 import com.wms.common.enums.ApiEnum;
 import com.wms.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
@@ -15,12 +15,12 @@ import java.util.Map;
  * @BelongsPackage: com.wms.rcs.service.impl
  * @Author: YangZheng
  * @CreateTime: 2026-07-31 10:31
- * @Description: TODO
+ * @Description: AGV服务实现
  * @Version: 1.0
  */
 @Slf4j
 @Service
-public class IAgvServiceImpl implements IAgvService {
+public class AgvServiceImpl implements AgvService {
 
     @Override
     public Result<Object> commonRequest(String methodName, Map<String, Object> params) {

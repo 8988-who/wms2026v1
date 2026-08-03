@@ -13,7 +13,7 @@ import java.util.Map;
  * @Description: AgvService接口
  * @Version: 1.0
  */
-public interface IAgvService {
+public interface AgvService {
     Result<Object> commonRequest(String methodName, Map<String, Object> params);
     Result<Object> commonRequest(ApiEnum apiEnum, Map<String, Object> params);
 }
