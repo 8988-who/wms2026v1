@@ -1,7 +1,7 @@
 package com.wms.business.log.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.wms.business.log.domain.TWmsApiRequestLog;
+import com.wms.business.log.domain.ApiRequestLog;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -11,5 +11,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2026-07-31
  */
 @Mapper
-public interface TWmsApiRequestLogMapper extends BaseMapper<TWmsApiRequestLog> {
+public interface ApiRequestLogMapper extends BaseMapper<ApiRequestLog> {
 }

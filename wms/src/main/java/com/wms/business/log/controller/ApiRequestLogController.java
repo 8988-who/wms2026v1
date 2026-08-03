@@ -1,9 +1,9 @@
 package com.wms.business.log.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.wms.business.log.domain.TWmsApiRequestLog;
-import com.wms.business.log.dto.TWmsApiRequestLogQueryDTO;
-import com.wms.business.log.service.ITWmsApiRequestLogService;
+import com.wms.business.log.domain.ApiRequestLog;
+import com.wms.business.log.dto.ApiRequestLogQueryDTO;
+import com.wms.business.log.service.IApiRequestLogService;
 import com.wms.common.annotation.Log;
 import com.wms.common.enums.ActionTypeEnum;
 import com.wms.common.enums.LogModuleEnum;
@@ -28,9 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/api-request-logs")
 @RequiredArgsConstructor
-public class TWmsApiRequestLogController {
+public class ApiRequestLogController {
 
-    private final ITWmsApiRequestLogService apiRequestLogService;
+    private final IApiRequestLogService apiRequestLogService;
 
     /**
      * 分页查询接口请求日志列表
@@ -38,8 +38,8 @@ public class TWmsApiRequestLogController {
     @Operation(summary = "接口请求日志分页列表")
     @GetMapping
     @Log(module = LogModuleEnum.API_REQUEST_LOG, value = ActionTypeEnum.LIST)
-    public PageResult<TWmsApiRequestLog> list(TWmsApiRequestLogQueryDTO queryDTO) {
-        IPage<TWmsApiRequestLog> result = apiRequestLogService.findList(queryDTO);
+    public PageResult<ApiRequestLog> list(ApiRequestLogQueryDTO queryDTO) {
+        IPage<ApiRequestLog> result = apiRequestLogService.findList(queryDTO);
         return PageResult.success(result);
     }
 
@@ -48,7 +48,7 @@ public class TWmsApiRequestLogController {
      */
     @Operation(summary = "获取接口请求日志详细信息")
     @GetMapping("/{id}")
-    public Result<TWmsApiRequestLog> getInfo(
+    public Result<ApiRequestLog> getInfo(
             @Parameter(description = "主键ID") @PathVariable String id
     ) {
         return Result.success(apiRequestLogService.getById(id));
