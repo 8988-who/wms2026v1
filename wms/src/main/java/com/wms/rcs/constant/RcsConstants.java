@@ -5,7 +5,7 @@ package com.wms.rcs.constant;
  * @BelongsPackage: com.wms.rcs.constant
  * @Author: YangZheng
  * @CreateTime: 2026-08-03 09:25
- * @Description: TODO
+ * @Description: RCS常量定义类（请求头标识、版本号）
  * @Version: 1.0
  */
 public class RcsConstants {

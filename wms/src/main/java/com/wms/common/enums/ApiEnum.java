@@ -6,10 +6,10 @@ import lombok.Getter;
 
 /**
  * @BelongsProject: wms
- * @BelongsPackage: com.wms.carriermanagementsystem.common.enums
+ * @BelongsPackage: com.wms.common.enums
  * @Author: YangZheng
  * @CreateTime: 2026-07-31 10:34
- * @Description: TODO
+ * @Description: API接口枚举类（统一管理AGV/MES接口配置）
  * @Version: 1.0
  */
 

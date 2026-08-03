@@ -2,6 +2,7 @@ package com.wms.rcs.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.wms.common.util.ApiRequestUtils;
+import com.wms.common.util.StringUtils;
 import com.wms.rcs.service.AgvService;
 import com.wms.common.enums.ApiEnum;
 import com.wms.common.result.Result;
@@ -36,6 +37,10 @@ public class AgvServiceImpl implements AgvService {
     public Result<Object> commonRequest(ApiEnum apiEnum, Map<String, Object> params) {
         // 调用统一接口请求方法
         String result = ApiRequestUtils.execute(apiEnum, null, params);
+        // 空响应保护
+        if (StringUtils.isEmpty(result)) {
+            return Result.failed("AGV系统返回空响应");
+        }
         // 解析出data
         JSONObject resJsonObj = JSONObject.parse(result);
         String code = resJsonObj.getString("code");

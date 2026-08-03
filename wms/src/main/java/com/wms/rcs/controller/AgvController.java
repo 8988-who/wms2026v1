@@ -25,7 +25,7 @@ public class AgvController {
     private AgvService agvService;
 
     @PostMapping("/commonRequest/{methodName}")
-    @Operation(method = "通用请求接口")
+    @Operation(summary = "通用请求接口")
     public Result<Object> commonRequest(@PathVariable String methodName, @RequestBody Map<String ,Object> params) {
         return agvService.commonRequest(methodName, params);
     }

@@ -47,7 +47,7 @@ import java.util.Objects;
  * @BelongsPackage: com.wms.common.util
  * @Author: YangZheng
  * @CreateTime: 2026-07-31 11:21
- * @Description: TODO
+ * @Description: API统一请求工具类（统一入口，支持POST/GET/WebService/WebServiceMesCode，按模块解析返回值并记录日志）
  * @Version: 1.0
  */
 @Slf4j
@@ -262,11 +262,11 @@ public class ApiRequestUtils {
         // 初始化日志
         ApiRequestLog requestLog = new ApiRequestLog();
         requestLog.setIsSuccess("Y");
-        requestLog.setApiCode(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getCode());
-        requestLog.setApiName(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getName());
-        requestLog.setApiMethodName(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getMethodName());
+        // requestLog.setApiCode(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getCode());
+        // requestLog.setApiName(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getName());
+        // requestLog.setApiMethodName(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getMethodName());
         requestLog.setApiUrl(postUrl);
-        requestLog.setModule(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getModule());
+        // requestLog.setModule(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getModule());
         requestLog.setReqTime(DateUtils.getNowDate());
         requestLog.setReqParams(JSONObject.toJSONString(soapXml));
         String retStr = "";

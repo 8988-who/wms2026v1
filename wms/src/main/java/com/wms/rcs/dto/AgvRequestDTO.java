@@ -13,7 +13,7 @@ import java.io.Serializable;
  * @Version: 1.0
  */
 public class AgvRequestDTO implements Serializable {
-    private static final long seriaVersionUid = 1L;
+    private static final long serialVersionUID = 1L;
 
     /**
     * 请求编号，每个请求都要一个唯一编号，同一个请求重复提交，使用同一编号
