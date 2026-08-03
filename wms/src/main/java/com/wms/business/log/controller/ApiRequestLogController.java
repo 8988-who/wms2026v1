@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/api-request-logs")
 @RequiredArgsConstructor
-public class TWmsApiRequestLogController {
+public class ApiRequestLogController {
 
     private final IApiRequestLogService apiRequestLogService;
 

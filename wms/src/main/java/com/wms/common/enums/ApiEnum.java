@@ -48,9 +48,6 @@ public enum ApiEnum {
     /**
      * MES常用接口
      */
-    MES_CBM_IF_GETBARCODEINFO("MES_CBM_IF_GETBARCODEINFO", "CBM_IF_GetBarcodeInfo",
-            "通过单个条码获取产品型号", "http://tempuri.org/IPackage/CBM_IF_GetBarcodeInfo,CBM_IF_GetBarcodeInfo,http://tempuri.org/",
-            "WebServiceMesCode", "mes", null),
 ;
 
 

@@ -1,6 +1,7 @@
 package com.wms.common.util;
 
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.http.Header;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
@@ -14,6 +15,7 @@ import com.wms.business.log.domain.ApiRequestLog;
 import com.wms.business.log.service.IApiRequestLogService;
 import com.wms.common.enums.ApiEnum;
 import com.wms.common.util.spring.SpringUtils;
+import com.wms.rcs.constant.RcsConstants;
 import com.wms.system.service.ISysConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -25,6 +27,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -81,7 +84,7 @@ public class ApiRequestUtils {
             String resString = null;
             Integer httpCode = null;
             if ("POST".equals(apiEnum.getMethod())) {
-                result = doPost(url, headers, params);
+                result = doPost(url, mergeHeaders(headers), params);
             } else if ("GET".equals(apiEnum.getMethod())) {
                 result = doGet(url, params);
             }
@@ -129,6 +132,20 @@ public class ApiRequestUtils {
             throw new RuntimeException(String.format("尚未配置参数：%1$s", key));
         }
         return baseurl;
+    }
+
+    /**
+     * 组装统一headers，调用方传入的会覆盖默认值
+     */
+    public static Map<String, String> mergeHeaders(Map<String, String> headers) {
+        Map<String, String> merged = new HashMap<>();
+        merged.put(RcsConstants.HEADER_REQUEST_ID, IdUtil.fastSimpleUUID()); // 动态生成
+        merged.put(RcsConstants.HEADER_VERSION, RcsConstants.VERSION);
+        merged.put(RcsConstants.HEADER_TRACE_ID, IdUtil.fastSimpleUUID());
+        if (!CollectionUtils.isEmpty(headers)) {
+            merged.putAll(headers); // 调用方优先
+        }
+        return merged;
     }
 
     /**

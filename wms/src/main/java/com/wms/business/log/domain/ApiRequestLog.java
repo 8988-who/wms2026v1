@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
- * 接口请求日志对象 t_wms_api_request_log
+ * 接口请求日志对象 api_request_log
  *
  * @author YangZheng
  * @date 2026-07-31

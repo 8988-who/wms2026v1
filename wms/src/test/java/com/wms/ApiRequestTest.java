@@ -35,7 +35,7 @@ public class ApiRequestTest {
         headers.put("X-lr-trace-id", "1239076324ad123");
         Map<String, Object> params = new HashMap<>();
 
-        // 3. 发起请求（内部会记录请求日志到 t_wms_api_request_log）
+        // 3. 发起请求（内部会记录请求日志到 api_request_log）
         String result = ApiRequestUtils.execute(apiEnum, headers, params);
         System.out.println("===== 请求结果 =====");
         System.out.println(result);
