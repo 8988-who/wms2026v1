@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.util.AntPathMatcher;
-import com.wms.common.constant.Constants;
+import com.wms.common.constant.SystemConstants;
 
 
 /**
@@ -321,7 +321,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      */
     public static boolean ishttp(String link)
     {
-        return StringUtils.startsWithAny(link, Constants.HTTP, Constants.HTTPS);
+        return StringUtils.startsWithAny(link, SystemConstants.HTTP, SystemConstants.HTTPS);
     }
 
     /**

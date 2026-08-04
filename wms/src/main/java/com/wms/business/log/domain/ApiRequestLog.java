@@ -11,7 +11,6 @@ import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 接口请求日志对象 api_request_log
@@ -61,11 +60,11 @@ public class ApiRequestLog implements Serializable {
 
     @Schema(description = "请求时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date reqTime;
+    private LocalDateTime reqTime;
 
     @Schema(description = "返回时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date resTime;
+    private LocalDateTime resTime;
 
     @Schema(description = "http状态码")
     private String httpCode;

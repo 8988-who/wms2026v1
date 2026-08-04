@@ -1,14 +1,11 @@
 package com.wms.common.util;
 
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.http.Header;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.webservice.SoapClient;
-import cn.hutool.json.XML;
-import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.wms.business.log.domain.ApiRequestLog;
 
@@ -18,25 +15,9 @@ import com.wms.common.util.spring.SpringUtils;
 import com.wms.rcs.constant.RcsConstants;
 import com.wms.system.service.ISysConfigService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.ByteArrayInputStream;
-import java.nio.charset.Charset;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -47,7 +28,7 @@ import java.util.Objects;
  * @BelongsPackage: com.wms.common.util
  * @Author: YangZheng
  * @CreateTime: 2026-07-31 11:21
- * @Description: API统一请求工具类（统一入口，支持POST/GET/WebService/WebServiceMesCode，按模块解析返回值并记录日志）
+ * @Description: API统一请求工具类（统一入口，支持POST/GET/WebService，按模块解析返回值并记录日志）
  * @Version: 1.0
  */
 @Slf4j
@@ -75,7 +56,7 @@ public class ApiRequestUtils {
         requestLog.setApiMethodName(apiEnum.getMethodName());
         requestLog.setApiUrl(url);
         requestLog.setModule(apiEnum.getModule());
-        requestLog.setReqTime(DateUtils.getNowDate());
+        requestLog.setReqTime(LocalDateTime.now());
         requestLog.setReqParams(JSONObject.toJSONString(params));
         Exception exception = null;
         try {
@@ -91,10 +72,6 @@ public class ApiRequestUtils {
             // 如果是WebService的话返回值只有字符串，获取不到http状态码
             else if ("WebService".equals(apiEnum.getMethod())) {
                 resString = doWebService(baseurl, apiEnum.getDesc(), params);
-            }
-            // 如果是WebServiceMesCode的话返回值只有字符串， 单个获取
-            else if ("WebServiceMesCode".equals(apiEnum.getMethod())) {
-                resString = getMesBarcode(MapUtil.getStr(params, "Barcode"));
             }
             // 解析HttpResponse
             if (Objects.nonNull(result)) {
@@ -115,7 +92,7 @@ public class ApiRequestUtils {
             exception = e;
         } finally {
             // 保存日志
-            requestLog.setResTime(DateUtils.getNowDate());
+            requestLog.setResTime(LocalDateTime.now());
             SpringUtils.getBean(IApiRequestLogService.class).saveLogAsync(requestLog);
         }
         // 存在异常的话继续向上抛出
@@ -149,49 +126,15 @@ public class ApiRequestUtils {
     }
 
     /**
-     * 不同模块的解析逻辑
+     * 不同模块的解析逻辑（预留 if-else 扩展点）
      */
     private static void handleByModule(ApiRequestLog requestLog) {
-        // 模块
-        String module = requestLog.getModule();
-        // 解析返回值
         if (StringUtils.isNotEmpty(requestLog.getResParams())) {
-            String resCode = null;
-            String isSuccess = null;
-            // rcs模块的解析逻辑
-            if ("rcs".equals(module)) {
-                JSONObject resParams = JSONObject.parse(requestLog.getResParams());
-                resCode = resParams.getString("code");
-                isSuccess = "0".equals(resCode) ? "Y" : "N";
-            }
-            // mes模块的解析逻辑
-            else if ("mes".equals(module)) {
-                try {
-                    String json;
-                    JSONObject resParams;
-                    // 尝试xml格式解析
-                    try {
-                        cn.hutool.json.JSONObject jsonObject = XML.toJSONObject(requestLog.getResParams());
-                        json = jsonObject.toString();
-                        resParams = JSONObject.parse(json);
-                    } catch (Exception e) {
-                        // 如果解析不出来尝试json解析
-                        resParams = JSONObject.parse(requestLog.getResParams());
-                    }
-//                    requestLog.setResParams(resParams.toJSONString());
-                    isSuccess = "Y";
-                } catch (Exception e) {
-                    isSuccess = "N";
-                }
-            }
-            // 此处添加其他模块的解析逻辑
-            else {
-                JSONObject resParams = JSONObject.parse(requestLog.getResParams());
-                resCode = resParams.getString("code");
-                isSuccess = "0".equals(resCode) ? "Y" : "N";
-            }
+            JSONObject resParams = JSONObject.parse(requestLog.getResParams());
+            String resCode = resParams.getString("code");
+            // 如需按模块定制解析逻辑，可在此添加 if-else 分支
             requestLog.setResCode(resCode);
-            requestLog.setIsSuccess(isSuccess);
+            requestLog.setIsSuccess("0".equals(resCode) ? "Y" : "N");
         }
     }
 
@@ -233,96 +176,5 @@ public class ApiRequestUtils {
             return message;
         }
         return message.substring(0, size);
-    }
-
-
-    public static String getMesBarcode(String code) {
-        String url = SpringUtils.getBean(ISysConfigService.class).selectConfigByKey("wms.mes.baseurl");
-        // 根据实际情况拼接xml
-        String xmlData = String.format("<soapenv:Envelope\n" +
-                "    xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
-                "    xmlns:tem=\"http://tempuri.org/\">\n" +
-                "    <soapenv:Header/>\n" +
-                "    <soapenv:Body>\n" +
-                "        <tem:CBM_IF_GetBarcodeInfo>\n" +
-                "            <!--Optional:-->\n" +
-                "            <tem:json>{\"Barcode\":\"%s\"}</tem:json>\n" +
-                "        </tem:CBM_IF_GetBarcodeInfo>\n" +
-                "    </soapenv:Body>\n" +
-                "</soapenv:Envelope>", code);
-
-        String postSoap = doPostSoap(url, xmlData, "http://tempuri.org/IPackage/CBM_IF_GetBarcodeInfo");
-        // 去除转义字符
-        String unPostSoap = StringEscapeUtils.unescapeXml(postSoap);
-        return unPostSoap;
-    }
-
-    //使用SOAP1.1发送消息
-    public static String doPostSoap(String postUrl, String soapXml, String soapAction) {
-        // 初始化日志
-        ApiRequestLog requestLog = new ApiRequestLog();
-        requestLog.setIsSuccess("Y");
-        // requestLog.setApiCode(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getCode());
-        // requestLog.setApiName(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getName());
-        // requestLog.setApiMethodName(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getMethodName());
-        requestLog.setApiUrl(postUrl);
-        // requestLog.setModule(ApiEnum.MES_CBM_IF_GETBARCODEINFO.getModule());
-        requestLog.setReqTime(DateUtils.getNowDate());
-        requestLog.setReqParams(JSONObject.toJSONString(soapXml));
-        String retStr = "";
-        // 创建HttpClientBuilder
-        HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
-        // HttpClient
-        CloseableHttpClient closeableHttpClient = httpClientBuilder.build();
-        HttpPost httpPost = new HttpPost(postUrl);
-        // 设置请求和传输超时时间
-        RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(10000)
-                .setConnectTimeout(10000).build();
-        httpPost.setConfig(requestConfig);
-        try {
-            httpPost.setHeader("Content-Type", "text/xml;charset=UTF-8");
-            httpPost.setHeader("SOAPAction", soapAction);
-            StringEntity data = new StringEntity(soapXml, Charset.forName("UTF-8"));
-            httpPost.setEntity(data);
-            CloseableHttpResponse response = closeableHttpClient.execute(httpPost);
-            HttpEntity httpEntity = response.getEntity();
-            if (httpEntity != null) {
-                // 打印响应内容
-                String resXml = EntityUtils.toString(httpEntity, "UTF-8");
-                // 记录返回参数、http状态码
-                requestLog.setResTime(DateUtils.getNowDate());
-                requestLog.setResParams(resXml);
-                //解析返回xml 的json
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                Document document = builder.parse(new ByteArrayInputStream(resXml.getBytes()));
-
-                Element root = document.getDocumentElement();
-                NodeList nodeList = root.getElementsByTagName("CBM_IF_GetBarcodeInfoResult");
-                if (nodeList.getLength() > 0) {
-                    String jsonStr = nodeList.item(0).getTextContent();
-                    JSONObject jsonObject = JSON.parseObject(jsonStr);
-                    String infoStr = jsonObject.getString("Info");
-                    String result = jsonObject.getString("Result");
-                    if (StringUtils.equals("OK", result)) {
-                        JSONObject infoObject = JSON.parseObject(infoStr);
-                        retStr = infoObject.getString("Fnumber");
-                    } else if (StringUtils.equals("NG", result)) {
-                        String error = jsonObject.getString("Error");
-                        throw new RuntimeException(error);
-                    }
-                }
-            }
-            // 释放资源
-            closeableHttpClient.close();
-        } catch (Exception e) {
-            requestLog.setIsSuccess("N");
-            requestLog.setErrMsg(subMessage(ExceptionUtil.getExceptionMessage(e), 5000));
-            log.error("对接MES获取条码基础信息发生错误：", e);
-            throw new RuntimeException("对接MES获取条码基础信息发生错误：" + e.getMessage());
-        } finally {
-            SpringUtils.getBean(IApiRequestLogService.class).save(requestLog);
-        }
-        return retStr;
     }
 }

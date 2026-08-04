@@ -1,10 +1,14 @@
 package com.wms.rcs.controller;
 
 import com.wms.rcs.service.AgvService;
+import com.wms.common.annotation.Log;
+import com.wms.common.enums.ActionTypeEnum;
+import com.wms.common.enums.LogModuleEnum;
 import com.wms.common.result.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -26,6 +30,8 @@ public class AgvController {
 
     @PostMapping("/commonRequest/{methodName}")
     @Operation(summary = "通用请求接口")
+    @PreAuthorize("@ss.hasPerm('rcs:agv:request')")
+    @Log(module = LogModuleEnum.RCS_AGV, value = ActionTypeEnum.OTHER)
     public Result<Object> commonRequest(@PathVariable String methodName, @RequestBody Map<String ,Object> params) {
         return agvService.commonRequest(methodName, params);
     }

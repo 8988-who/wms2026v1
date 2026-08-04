@@ -23,4 +23,14 @@ public interface SystemConstants {
      */
     String ROOT_ROLE_CODE = "ROOT";
 
+    /**
+     * http请求
+     */
+    String HTTP = "http://";
+
+    /**
+     * https请求
+     */
+    String HTTPS = "https://";
+
 }
