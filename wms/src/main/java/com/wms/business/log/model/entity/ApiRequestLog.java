@@ -1,33 +1,29 @@
-package com.wms.business.log.domain;
+package com.wms.business.log.model.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.wms.common.base.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.apache.ibatis.type.JdbcType;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 接口请求日志对象 api_request_log
+ * 接口请求日志对象
  *
  * @author YangZheng
  * @date 2026-07-31
  */
 @Data
 @TableName("api_request_log")
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "接口请求日志实体")
-public class ApiRequestLog implements Serializable {
-    private static final long serialVersionUID = 1L;
-
-    @Schema(description = "主键ID")
-    @JsonFormat(shape = JsonFormat.Shape.STRING) // 转化成String传到前端
-    @TableId(type = IdType.ASSIGN_ID)
-    private String id;
+public class ApiRequestLog extends BaseEntity {
 
     @Schema(description = "接口编码")
     private String apiCode;
@@ -72,23 +68,38 @@ public class ApiRequestLog implements Serializable {
     @Schema(description = "返回状态码")
     private String resCode;
 
+    @Schema(description = "耗时（毫秒）")
+    private Long duration;
+
+    @Schema(description = "重试次数")
+    private Integer retryCount;
+
+    @Schema(description = "链路追踪ID")
+    private String traceId;
+
     @Schema(description = "创建人ID")
-    private String createBy;
+    @TableField(value = "created_by", fill = FieldFill.INSERT)
+    private Long createBy;
 
     @Schema(description = "创建人名称")
     private String createName;
 
     @Schema(description = "创建时间")
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
+    @JsonInclude(value = JsonInclude.Include.NON_NULL)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
     @Schema(description = "更新人ID")
-    private String updateBy;
+    @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
+    private Long updateBy;
 
     @Schema(description = "更新人名称")
     private String updateName;
 
     @Schema(description = "更新时间")
+    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
+    @JsonInclude(value = JsonInclude.Include.NON_NULL)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 

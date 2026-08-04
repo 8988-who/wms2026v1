@@ -1,9 +1,9 @@
 package com.wms.business.log.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.wms.business.log.domain.ApiRequestLog;
-import com.wms.business.log.dto.ApiRequestLogQueryDTO;
-import com.wms.business.log.service.IApiRequestLogService;
+import com.wms.business.log.model.entity.ApiRequestLog;
+import com.wms.business.log.model.dto.ApiRequestLogQueryDTO;
+import com.wms.business.log.service.ApiRequestLogService;
 import com.wms.common.annotation.Log;
 import com.wms.common.enums.ActionTypeEnum;
 import com.wms.common.enums.LogModuleEnum;
@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ApiRequestLogController {
 
-    private final IApiRequestLogService apiRequestLogService;
+    private final ApiRequestLogService apiRequestLogService;
 
     /**
      * 分页查询接口请求日志列表

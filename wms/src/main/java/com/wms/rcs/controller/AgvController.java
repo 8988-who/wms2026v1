@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * @BelongsProject: wms
- * @BelongsPackage: com.wms.rcs.controller
+ * @BelongsPackage: com.wms.rcs
  * @Author: YangZheng
  * @CreateTime: 2026-07-31 10:20
  * @Description: AGVController

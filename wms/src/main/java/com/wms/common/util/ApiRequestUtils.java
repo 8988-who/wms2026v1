@@ -7,12 +7,12 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.webservice.SoapClient;
 import com.alibaba.fastjson2.JSONObject;
-import com.wms.business.log.domain.ApiRequestLog;
+import com.wms.business.log.model.entity.ApiRequestLog;
 
-import com.wms.business.log.service.IApiRequestLogService;
+import com.wms.business.log.service.ApiRequestLogService;
 import com.wms.common.enums.ApiEnum;
 import com.wms.common.util.spring.SpringUtils;
-import com.wms.rcs.constant.RcsConstants;
+import com.wms.common.constant.RcsConstants;
 import com.wms.system.service.ISysConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
@@ -41,6 +41,11 @@ public class ApiRequestUtils {
      * 统一请求方法入口
      */
     public static String execute(ApiEnum apiEnum, Map<String, String> headers, Map<String, Object> params) {
+        // 记录开始时间，用于计算耗时
+        long startTime = System.currentTimeMillis();
+        // 生成链路追踪ID
+        String traceId = IdUtil.fastSimpleUUID();
+        
         // 参数校验
         if (Objects.nonNull(apiEnum.getParamsClass())) {
             Object dto = OrikaUtils.mapBean(params, apiEnum.getParamsClass());
@@ -58,14 +63,18 @@ public class ApiRequestUtils {
         requestLog.setModule(apiEnum.getModule());
         requestLog.setReqTime(LocalDateTime.now());
         requestLog.setReqParams(JSONObject.toJSONString(params));
+        requestLog.setTraceId(traceId);
+        requestLog.setRetryCount(0);
         Exception exception = null;
         try {
+            // 组装headers，包含traceId
+            Map<String, String> mergedHeaders = mergeHeaders(headers, traceId);
             // 执行方法
             HttpResponse result = null;
             String resString = null;
             Integer httpCode = null;
             if ("POST".equals(apiEnum.getMethod())) {
-                result = doPost(url, mergeHeaders(headers), params);
+                result = doPost(url, mergedHeaders, params);
             } else if ("GET".equals(apiEnum.getMethod())) {
                 result = doGet(url, params);
             }
@@ -88,12 +97,15 @@ public class ApiRequestUtils {
             // 如果出现异常则记录同步失败标志、同步结果、异常信息
             requestLog.setIsSuccess("N");
             requestLog.setErrMsg(subMessage(ExceptionUtil.getExceptionMessage(e), 5000));
-            log.error(apiEnum.getName() + "接口请求失败", e);
+            log.error(apiEnum.getName() + "接口请求失败, traceId=" + traceId, e);
             exception = e;
         } finally {
+            // 计算耗时
+            long duration = System.currentTimeMillis() - startTime;
+            requestLog.setDuration(duration);
             // 保存日志
             requestLog.setResTime(LocalDateTime.now());
-            SpringUtils.getBean(IApiRequestLogService.class).saveLogAsync(requestLog);
+            SpringUtils.getBean(ApiRequestLogService.class).saveLogAsync(requestLog);
         }
         // 存在异常的话继续向上抛出
         if (Objects.nonNull(exception)) {
@@ -114,15 +126,22 @@ public class ApiRequestUtils {
     /**
      * 组装统一headers，调用方传入的会覆盖默认值
      */
-    public static Map<String, String> mergeHeaders(Map<String, String> headers) {
+    public static Map<String, String> mergeHeaders(Map<String, String> headers, String traceId) {
         Map<String, String> merged = new HashMap<>();
         merged.put(RcsConstants.HEADER_REQUEST_ID, IdUtil.fastSimpleUUID()); // 动态生成
         merged.put(RcsConstants.HEADER_VERSION, RcsConstants.VERSION);
-        merged.put(RcsConstants.HEADER_TRACE_ID, IdUtil.fastSimpleUUID());
+        merged.put(RcsConstants.HEADER_TRACE_ID, traceId);
         if (!CollectionUtils.isEmpty(headers)) {
             merged.putAll(headers); // 调用方优先
         }
         return merged;
+    }
+
+    /**
+     * 组装统一headers（无traceId版本，保持兼容）
+     */
+    public static Map<String, String> mergeHeaders(Map<String, String> headers) {
+        return mergeHeaders(headers, IdUtil.fastSimpleUUID());
     }
 
     /**

@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * @BelongsProject: wms
- * @BelongsPackage: com.wms.rcs.service
+ * @BelongsPackage: com.wms.rcs
  * @Author: YangZheng
  * @CreateTime: 2026-07-31 10:31
  * @Description: AgvService接口

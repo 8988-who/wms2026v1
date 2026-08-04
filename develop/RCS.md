@@ -285,3 +285,73 @@ public interface SystemConstants {
 2. **第二步**：修复 P1 级问题（命名、异常体系）
 3. **第三步**：修复 P2 级问题（性能、数据类型、代码结构）
 4. **第四步**：修复 P3 级问题（注解、公共类整理）
+
+---
+
+## RCS 模块增强
+
+### 调用链路追踪 ✅
+
+**实现方案**：在 `api_request_log` 表新增 `duration`、`retry_count`、`trace_id` 三个字段。
+
+**变更文件**：
+
+| 文件 | 操作 | 内容 |
+|------|------|------|
+| `ApiRequestLog.java` | 修改 | 新增 `duration`、`retryCount`、`traceId` 字段 |
+| `ApiRequestUtils.java` | 修改 | `execute()` 方法中计算耗时、生成 traceId、设置 retryCount |
+| 数据库 | ALTER TABLE | 新增 3 个字段 |
+
+**新增字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `duration` | `BIGINT` | 耗时（毫秒），`System.currentTimeMillis() - startTime` |
+| `retry_count` | `INTEGER` | 重试次数，初始为 0（预留后续重试机制） |
+| `trace_id` | `VARCHAR(64)` | 链路追踪ID，使用 `IdUtil.fastSimpleUUID()` 生成，传递到请求头和日志 |
+
+**核心代码变更**：
+
+```java
+// execute() 方法
+public static String execute(ApiEnum apiEnum, Map<String, String> headers, Map<String, Object> params) {
+    long startTime = System.currentTimeMillis();  // 记录开始时间
+    String traceId = IdUtil.fastSimpleUUID();       // 生成 traceId
+    
+    requestLog.setTraceId(traceId);                // 设置 traceId
+    requestLog.setRetryCount(0);                  // 初始重试次数
+    
+    // ... 执行请求 ...
+    
+    finally {
+        long duration = System.currentTimeMillis() - startTime;  // 计算耗时
+        requestLog.setDuration(duration);
+        requestLog.setResTime(LocalDateTime.now());
+        // 保存日志
+    }
+}
+
+// mergeHeaders() 方法
+public static Map<String, String> mergeHeaders(Map<String, String> headers, String traceId) {
+    merged.put(RcsConstants.HEADER_TRACE_ID, traceId);  // traceId 传递到请求头
+    // ...
+}
+```
+
+**数据库 ALTER TABLE 语句**：
+
+```sql
+ALTER TABLE api_request_log
+ADD COLUMN duration BIGINT DEFAULT NULL,
+ADD COLUMN retry_count INTEGER DEFAULT 0,
+ADD COLUMN trace_id VARCHAR(64) DEFAULT NULL;
+
+-- 添加索引，便于按 trace_id 查询链路
+CREATE INDEX IF NOT EXISTS idx_api_request_log_trace_id ON api_request_log(trace_id);
+```
+
+**优点**：
+- ✅ 可追踪每个接口调用的耗时，便于性能优化
+- ✅ 通过 traceId 串联完整请求链路，便于问题排查
+- ✅ retry_count 预留重试机制扩展点
+- ✅ 改动最小，仅新增 3 个字段，不影响现有功能

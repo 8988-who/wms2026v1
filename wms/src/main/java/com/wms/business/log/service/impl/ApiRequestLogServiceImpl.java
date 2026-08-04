@@ -5,10 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.wms.business.log.domain.ApiRequestLog;
-import com.wms.business.log.dto.ApiRequestLogQueryDTO;
+import com.wms.business.log.model.entity.ApiRequestLog;
+import com.wms.business.log.model.dto.ApiRequestLogQueryDTO;
 import com.wms.business.log.mapper.ApiRequestLogMapper;
-import com.wms.business.log.service.IApiRequestLogService;
+import com.wms.business.log.service.ApiRequestLogService;
 import com.wms.framework.security.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,7 +26,7 @@ import java.util.concurrent.Executor;
 @Slf4j
 @Service
 public class ApiRequestLogServiceImpl extends ServiceImpl<ApiRequestLogMapper, ApiRequestLog>
-        implements IApiRequestLogService {
+        implements ApiRequestLogService {
 
     /**
      * 异步保存日志使用的线程池
@@ -65,7 +65,7 @@ public class ApiRequestLogServiceImpl extends ServiceImpl<ApiRequestLogMapper, A
     @Override
     public void saveLogAsync(ApiRequestLog requestLog) {
         SecurityUtils.getUser().ifPresent(user -> {
-            String userId = user.getUserId() == null ? null : user.getUserId().toString();
+            Long userId = user.getUserId();
             requestLog.setCreateBy(userId);
             requestLog.setCreateName(user.getUsername());
             requestLog.setUpdateBy(userId);

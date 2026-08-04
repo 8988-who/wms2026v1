@@ -1,8 +1,8 @@
-package com.wms.rcs.constant;
+package com.wms.common.constant;
 
 /**
  * @BelongsProject: wms
- * @BelongsPackage: com.wms.rcs.constant
+ * @BelongsPackage: com.wms.common.constant
  * @Author: YangZheng
  * @CreateTime: 2026-08-03 09:25
  * @Description: RCS常量定义类（请求头标识、版本号）

@@ -1,4 +1,4 @@
-package com.wms.rcs.dto;
+package com.wms.rcs.model.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 /**
  * @BelongsProject: wms
- * @BelongsPackage: com.wms.rcs.dto
+ * @BelongsPackage: com.wms.rcs.model.dto
  * @Author: YangZheng
  * @CreateTime: 2026-07-31 10:36
  * @Description: AGV请求DTO
