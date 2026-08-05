@@ -45,6 +45,77 @@ public enum ApiEnum {
 
     AGV_queryTask("AGV_queryTask", "api/robot/controller/task/query",
             "查询任务状态接口", null, "POST", "rcs", null),
+// 20260805
+    AGV_pauseZone("AGV_pauseZone", "api/robot/controller/zone/pause",
+            "按区域暂停与恢复机器人接口 ", null, "POST", "rcs", null),
+
+    AGV_homingZone("AGV_homingZone", "api/robot/controller/zone/homing", 
+            "区域机器人归巢接口", null, "POST", "rcs", null),
+
+    AGV_banishZone("AGV_banishZone", "api/robot/controller/zone/banish", 
+            "区域驱离机器人接口", null, "POST", "rcs", null),
+
+    AGV_blockadeZone("AGV_blockadeZone", "api/robot/controller/zone/blockade", 
+            "区域封锁机器人接口", null, "POST", "rcs", null),
+
+    AGV_bindCarrier("AGV_bindCarrier", "api/robot/controller/carrier/bind", 
+            "载具与站点绑定接口", null, "POST", "rcs", null),
+
+    AGV_bindSite("AGV_bindSite", "/api/robot/controller/site/bind", 
+            "存储对象与搬运对象绑定解绑接口", null, "POST", "rcs", null),
+    
+    AGV_lockCarrier("AGV_lockCarrier", "/api/robot/controller/carrier/lock", 
+            "载具禁用与启用接口 ", null, "POST", "rcs", null),
+
+    AGV_lockSite("AGV_lockSite", "api/robot/controller/site/lock", 
+            "站点禁用与启用", null, "POST", "rcs", null),
+
+    AGV_notifyEqpt("AGV_notifyEqpt", "api/robot/eqpt/notify", 
+            "外设执行通知接口", null, "POST", "rcs", null),
+    
+    AGV_preTask("AGV_preTask", "api/robot/controller/task/pretask", 
+            "预调度任务下发接口", null, "POST", "rcs", null),
+
+    AGV_queryRobot("AGV_queryRobot", "api/robot/controller/robot/query", 
+            "查询机器人状态接口", null, "POST", "rcs", null),
+    
+    AGV_queryCarrier("AGV_queryCarrier", "api/robot/controller/carrier/query", 
+            "查询载具状态接口", null, "POST", "rcs", null),
+
+    AGV_bindReporter("AGV_bindReporter", "/api/robot/reporter/bind",
+            "绑定解绑通知", null, "POST", "rcs", null),
+
+    AGV_warningTask("AGV_warningTask", "/api/robot/reporter/task/warning",
+            "任务异常告警上报接口", null, "POST", "rcs", null),
+
+    AGV_warningRobot("AGV_warningRobot", "/api/robot/reporter/robot/warning",
+            "机器人异常告警上报接口", null, "POST", "rcs", null),
+
+    // AGV_banishZone("AGV_banishZone", "/api/robot/reporter/zone/banish",
+    //         "区域驱离机器人完成回馈接口", null, "POST", "rcs", null),
+
+    // AGV_homingZone("AGV_homingZone", "/api/robot/reporter/zone/homing",
+    //         "机器人归巢完成回馈接口", null, "POST", "rcs", null),
+
+    AGV_eqptReporter("AGV_eqptReporter", "/api/robot/reporter/eqpt",
+            "请求外设接口", null, "POST", "rcs", null),
+
+    AGV_resourceReporter("AGV_resourceReporter", "/api/robot/reporter/resource",
+            "请求资源接口", null, "POST", "rcs", null),
+
+    AGV_taskReporter("AGV_taskReporter", "/api/robot/reporter/task",
+            "任务执行过程回馈接口", null, "POST", "rcs", null),
+
+    AGV_notifyGbtEqpt("AGV_notifyGbtEqpt", "/spi/wcs/robot/eqpt/notifyGbt",
+            "外设执行通知接口", null, "POST", "rcs", null),
+
+    AGV_unbindMatlabel("AGV_unbindMatlabel", "/api/robot/controller/matlabel/unbind",
+            "物料解绑接口", null, "POST", "rcs", null),
+
+    AGV_bindMatlabel("AGV_bindMatlabel", "/api/robot/controller/matlabel/bind",
+            "物料绑定接口", null, "POST", "rcs", null),
+
+
     /**
      * MES常用接口
      */
