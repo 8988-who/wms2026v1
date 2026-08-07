@@ -32,7 +32,8 @@ public enum LogModuleEnum implements IBaseEnum<Integer> {
     CART(85, "料车管理"),
     CART_ITEM(86, "料车物品管理"),
     API_REQUEST_LOG(87, "接口请求日志"),
-    RCS_AGV(88, "AGV调度管理");
+    RCS_AGV(88, "AGV调度管理"),
+    RCS_TASK(89, "RCS本地任务管理");
 
     @EnumValue
     private final Integer value;
