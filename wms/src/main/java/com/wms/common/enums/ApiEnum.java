@@ -91,11 +91,11 @@ public enum ApiEnum {
     AGV_warningRobot("AGV_warningRobot", "/api/robot/reporter/robot/warning",
             "机器人异常告警上报接口", null, "POST", "rcs", null),
 
-    // AGV_banishZone("AGV_banishZone", "/api/robot/reporter/zone/banish",
-    //         "区域驱离机器人完成回馈接口", null, "POST", "rcs", null),
+    AGV_banishZoneReporter("AGV_banishZoneReporter", "/api/robot/reporter/zone/banish",
+            "区域驱离机器人完成回馈接口", null, "POST", "rcs", null),
 
-    // AGV_homingZone("AGV_homingZone", "/api/robot/reporter/zone/homing",
-    //         "机器人归巢完成回馈接口", null, "POST", "rcs", null),
+    AGV_homingZoneReporter("AGV_homingZoneReporter", "/api/robot/reporter/zone/homing",
+            "机器人归巢完成回馈接口", null, "POST", "rcs", null),
 
     AGV_eqptReporter("AGV_eqptReporter", "/api/robot/reporter/eqpt",
             "请求外设接口", null, "POST", "rcs", null),

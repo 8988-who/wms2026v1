@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * RCS本地任务管理接口控制器
  * <p>
- * 提供 RCS 调度任务的分页查询、详情（含状态变更时间线）、新增、修改、删除。
+ * 提供 RCS 调度任务的分页查询、详情（含状态变更时间线）、新增（自动下发RCS）、下发重试、取消（联动RCS）、修改、删除。
  * </p>
  *
  * @author SenyangHe
@@ -55,13 +55,36 @@ public class RcsTaskController {
         return Result.success(rcsTaskService.getRcsTaskDetail(id));
     }
 
-    @Operation(summary = "新增RCS任务")
+    @Operation(summary = "新增RCS任务并下发至RCS")
     @PostMapping
     @PreAuthorize("@ss.hasPerm('rcs:task:create')")
     @RepeatSubmit
     @Log(module = LogModuleEnum.RCS_TASK, value = ActionTypeEnum.INSERT)
-    public Result<Void> saveRcsTask(@RequestBody @Valid RcsTaskDTO dto) {
-        return Result.judge(rcsTaskService.saveRcsTask(dto));
+    public Result<Long> saveRcsTask(@RequestBody @Valid RcsTaskDTO dto) {
+        return Result.success(rcsTaskService.saveAndSubmitRcsTask(dto));
+    }
+
+    @Operation(summary = "下发/重新下发RCS任务")
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("@ss.hasPerm('rcs:task:submit')")
+    @RepeatSubmit
+    @Log(module = LogModuleEnum.RCS_TASK, value = ActionTypeEnum.UPDATE)
+    public Result<Void> submitRcsTask(
+            @Parameter(description = "任务ID") @PathVariable Long id
+    ) {
+        return Result.judge(rcsTaskService.submitRcsTask(id));
+    }
+
+    @Operation(summary = "取消RCS任务（联动RCS）")
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("@ss.hasPerm('rcs:task:cancel')")
+    @RepeatSubmit
+    @Log(module = LogModuleEnum.RCS_TASK, value = ActionTypeEnum.UPDATE)
+    public Result<Void> cancelRcsTask(
+            @Parameter(description = "任务ID") @PathVariable Long id,
+            @Parameter(description = "取消原因") @RequestParam(required = false) String reason
+    ) {
+        return Result.judge(rcsTaskService.cancelRcsTask(id, reason));
     }
 
     @Operation(summary = "修改RCS任务")

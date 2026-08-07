@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.wms.rcs.model.dto.RcsTaskDTO;
 import com.wms.rcs.model.dto.RcsTaskQueryDTO;
+import com.wms.rcs.model.dto.RcsTaskReportDTO;
+import com.wms.rcs.model.dto.RcsTaskWarningDTO;
 import com.wms.rcs.model.entity.RcsTaskEntity;
 import com.wms.rcs.model.vo.RcsTaskVO;
 
@@ -30,8 +32,41 @@ public interface RcsTaskService extends IService<RcsTaskEntity> {
 
     /**
      * 新增任务（状态默认待执行，自动生成任务编号）
+     *
+     * @return 新建任务的主键ID
      */
-    boolean saveRcsTask(RcsTaskDTO dto);
+    Long saveRcsTask(RcsTaskDTO dto);
+
+    /**
+     * 新增任务并立即下发给 RCS（下发闭环）
+     * <p>
+     * 先本地建单（待执行），再调用 RCS 任务下发接口；下发成功回填外部任务号并流转为"已派发"，
+     * 下发失败则流转为"异常"并记录错误信息。本地建单与远程下发不在同一事务，避免远程调用长时间占用数据库连接。
+     * </p>
+     *
+     * @return 新建任务的主键ID
+     */
+    Long saveAndSubmitRcsTask(RcsTaskDTO dto);
+
+    /**
+     * 将指定的"待执行"任务下发给 RCS（可对建单后未成功下发的任务重试）
+     *
+     * @return 下发是否成功
+     */
+    boolean submitRcsTask(Long id);
+
+    /**
+     * 取消任务（联动 RCS）
+     * <p>
+     * 待执行任务本地直接取消；已派发/执行中的任务先调用 RCS 任务取消接口 AGV_cancelTask，
+     * 成功后再流转为"已取消"。终态（已完成/已取消/异常）任务不可取消。
+     * </p>
+     *
+     * @param id     任务ID
+     * @param reason 取消原因（可空）
+     * @return 取消是否成功
+     */
+    boolean cancelRcsTask(Long id, String reason);
 
     /**
      * 修改任务（仅"待执行"状态可修改）
@@ -42,4 +77,28 @@ public interface RcsTaskService extends IService<RcsTaskEntity> {
      * 删除任务（支持逗号分隔的多个ID，级联删除生命周期历史由外键保证）
      */
     boolean deleteRcsTasks(String ids);
+
+    /**
+     * 处理 RCS 任务执行过程回馈（入站回调）
+     * <p>
+     * 优先按 taskCode 反查本地任务，取不到用 rcsTaskId 兜底；将 RCS 的执行阶段/状态映射到本地 6 态，
+     * 经统一状态流转 changeStatus 驱动（operatorType=EXTERNAL）。找不到本地任务时记录日志、不抛异常，
+     * 保证回调幂等友好且不影响 RCS 侧流程。
+     * </p>
+     *
+     * @param report 任务执行回馈请求体
+     * @return 是否成功匹配并处理（未匹配到本地任务返回 false）
+     */
+    boolean handleTaskReport(RcsTaskReportDTO report);
+
+    /**
+     * 处理 RCS 任务异常告警（入站回调）
+     * <p>
+     * 反查规则同 {@link #handleTaskReport}；匹配到的任务流转为"异常"并写入告警信息。
+     * </p>
+     *
+     * @param warning 任务异常告警请求体
+     * @return 是否成功匹配并处理（未匹配到本地任务返回 false）
+     */
+    boolean handleTaskWarning(RcsTaskWarningDTO warning);
 }
