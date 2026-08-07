@@ -10,7 +10,7 @@ import com.wms.warehouse.model.dto.WmsLocationDTO;
  * 基于 MapStruct 实现库位/区域实体(WmsLocation)与数据传输对象(WmsLocationDTO)之间的双向转换。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Mapper(componentModel = "spring")

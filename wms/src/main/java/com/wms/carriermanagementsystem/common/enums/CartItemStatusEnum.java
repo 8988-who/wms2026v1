@@ -10,7 +10,7 @@ import lombok.Getter;
  * 定义装载明细的两种状态：在车、已取走。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Getter

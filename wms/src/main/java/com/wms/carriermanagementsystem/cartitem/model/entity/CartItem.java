@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  * 通过 cart_id 关联料车实例，支持装车和取走两个状态流转。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @TableName("wms_cart_item")

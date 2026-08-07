@@ -10,7 +10,7 @@ import lombok.Getter;
  * 定义料车的四种业务状态：空闲、使用中、已满载、维修。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Getter

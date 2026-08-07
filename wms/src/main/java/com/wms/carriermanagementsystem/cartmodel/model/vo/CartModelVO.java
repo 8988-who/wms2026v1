@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 返回前端的展示字段，包含型号基本信息、关联料车数和创建/更新人信息。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Schema(description = "料车型号视图对象")

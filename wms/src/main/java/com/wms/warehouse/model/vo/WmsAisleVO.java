@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 /**
  * 巷道视图对象
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20 21:07
  */
 @Schema(description = "巷道视图对象")

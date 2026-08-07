@@ -29,7 +29,7 @@ import java.util.List;
  * 提供料车的增删改查、批量状态变更及可用料车列表接口。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Tag(name = "料车管理接口")

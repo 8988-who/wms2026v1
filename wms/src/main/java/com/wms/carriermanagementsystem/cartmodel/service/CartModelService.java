@@ -13,7 +13,7 @@ import java.util.List;
  * 定义型号配置的 CRUD 操作和列表查询方法。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 public interface CartModelService {

@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
  * 继承 BaseQuery，支持按型号代码、型号名称、通用关键词分页查询。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Schema(description = "料车型号分页查询对象")

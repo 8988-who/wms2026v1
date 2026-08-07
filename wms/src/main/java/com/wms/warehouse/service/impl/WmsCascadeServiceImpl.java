@@ -20,7 +20,7 @@ import java.util.List;
  * 直接使用 Mapper 层操作数据库，避免 Service 层循环依赖。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-21
  */
 @Service

@@ -10,7 +10,7 @@ import com.wms.warehouse.model.dto.WmsAisleDTO;
  * 基于 MapStruct 实现巷道实体(WmsAisle)与数据传输对象(WmsAisleDTO)之间的双向转换。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Mapper(componentModel = "spring")

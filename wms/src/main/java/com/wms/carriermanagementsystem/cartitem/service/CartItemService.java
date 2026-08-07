@@ -15,7 +15,7 @@ import java.util.List;
  * 定义装载明细的 CRUD、装车/取走核心业务、扫码专用方法。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 public interface CartItemService {

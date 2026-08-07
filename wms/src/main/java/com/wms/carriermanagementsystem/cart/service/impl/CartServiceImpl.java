@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * 包含料车的 CRUD、状态管理和可用料车查询逻辑，事务注解作用于此层。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Service

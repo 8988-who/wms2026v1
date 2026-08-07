@@ -11,7 +11,7 @@ import org.mapstruct.MappingTarget;
  * 基于 MapStruct 实现料车物品实体(CartItem)与数据传输对象(CartItemDTO)之间的双向转换。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Mapper(componentModel = "spring")

@@ -27,7 +27,7 @@ import java.util.List;
  * 提供型号配置的增删改查、分页列表及表单/筛选下拉选项接口。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Tag(name = "料车型号配置接口")

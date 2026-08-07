@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  * 对应数据库表 wms_cart，存储料车实例信息，通过 model_id 关联料车型号配置。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @TableName("wms_cart")

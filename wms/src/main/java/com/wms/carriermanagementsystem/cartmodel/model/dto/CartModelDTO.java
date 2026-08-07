@@ -12,7 +12,7 @@ import lombok.Setter;
  * 用于前端表单提交和后端内部数据传递，包含型号的完整字段信息。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Schema(description = "料车型号数据传输对象")

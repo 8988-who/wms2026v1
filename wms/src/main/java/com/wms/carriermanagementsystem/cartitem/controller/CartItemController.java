@@ -29,7 +29,7 @@ import java.util.Map;
  * 提供装载明细的增删改查、装车/取走核心业务、扫码专用端点（适配条码机/PDA）。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Tag(name = "料车物品管理接口")

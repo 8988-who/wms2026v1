@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 库位/区域视图对象
  * 用于向前端返回展示数据
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20 12:44
  */
 @Schema(description = "库位/区域视图对象")

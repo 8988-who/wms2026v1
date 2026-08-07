@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
  * 继承 BaseQuery，支持按关键字、区域、厂区、巷道编码/名称、楼层、状态等条件分页查询。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Schema(description = "巷道分页查询对象")

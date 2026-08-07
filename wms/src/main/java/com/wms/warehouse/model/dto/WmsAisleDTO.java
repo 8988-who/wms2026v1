@@ -13,7 +13,7 @@ import org.hibernate.validator.constraints.Range;
  * 用于前端表单提交和后端内部数据传递，包含巷道的完整字段信息。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Schema(description = "巷道数据传输对象")

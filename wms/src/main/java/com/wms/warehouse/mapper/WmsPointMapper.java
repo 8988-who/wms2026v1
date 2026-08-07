@@ -13,7 +13,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 继承 MyBatis-Plus BaseMapper，提供点位分页查询。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Mapper

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * RCS任务视图对象
  * 用于向前端返回展示数据
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-08-04
  */
 @Schema(description = "RCS任务视图对象")

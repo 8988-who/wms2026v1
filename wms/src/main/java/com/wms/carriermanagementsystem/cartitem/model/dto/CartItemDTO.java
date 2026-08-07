@@ -12,7 +12,7 @@ import lombok.Setter;
  * 用于前端装车表单提交和后端内部传递，status/loadedAt/takenAt 由业务逻辑自动维护。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Schema(description = "料车物品传输对象")

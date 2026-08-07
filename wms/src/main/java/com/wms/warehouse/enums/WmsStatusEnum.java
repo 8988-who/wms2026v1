@@ -10,7 +10,7 @@ import lombok.Getter;
  * 定义启用(1)/禁用(0)两种状态，用于库位/区域、巷道、点位等实体的状态字段。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Getter

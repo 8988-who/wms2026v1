@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  * 包含型号增删改查逻辑，事务注解作用于此层。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Service

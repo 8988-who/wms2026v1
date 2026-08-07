@@ -10,7 +10,7 @@ import lombok.Getter;
  * 定义库位层级类型：厂区(0)、区域(1)、货架(2)、库位(3)。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Getter

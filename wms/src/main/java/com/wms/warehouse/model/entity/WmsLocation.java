@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  * 库位/区域实体对象
  * 对应数据库表 wms_location
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20 12:44
  */
 @TableName("wms_location")

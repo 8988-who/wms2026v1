@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 /**
  * 巷道实体对象
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20 21:07
  */
 @TableName("wms_aisle")

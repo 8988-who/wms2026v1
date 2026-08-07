@@ -17,7 +17,7 @@ import java.util.List;
  * 分页查询与关联统计通过 XML 实现。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Mapper

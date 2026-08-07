@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  * 对应数据库表 wms_cart_model，存储料车的型号规格配置信息。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @TableName("wms_cart_model")

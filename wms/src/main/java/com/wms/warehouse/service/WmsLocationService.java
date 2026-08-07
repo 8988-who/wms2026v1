@@ -17,7 +17,7 @@ import java.util.Map;
  * 定义库位/区域的分页查询、新增、修改、删除、批量状态更新及筛选选项等业务操作。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 public interface WmsLocationService extends IService<WmsLocation> {

@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  * 后续直接原子递增，无需重复查库。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-24
  */
 @Slf4j

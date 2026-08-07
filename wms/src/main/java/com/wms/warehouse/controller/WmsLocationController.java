@@ -29,7 +29,7 @@ import jakarta.validation.Valid;
  * 提供库位/区域的增删改查、批量状态更新、级联筛选等 REST API。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Tag(name = "库位/区域接口")

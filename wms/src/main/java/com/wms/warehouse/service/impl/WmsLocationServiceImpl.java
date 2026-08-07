@@ -32,7 +32,7 @@ import java.util.List;
  * 删除、批量状态更新（级联停用巷道和点位）及级联筛选选项等功能。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Service

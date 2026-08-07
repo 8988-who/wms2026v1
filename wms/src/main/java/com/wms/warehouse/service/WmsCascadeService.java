@@ -8,7 +8,7 @@ import java.util.List;
  * 处理库区/巷道/点位之间的级联停用操作。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-21
  */
 public interface WmsCascadeService {

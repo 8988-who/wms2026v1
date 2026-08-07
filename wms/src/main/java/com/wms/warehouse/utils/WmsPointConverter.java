@@ -10,7 +10,7 @@ import com.wms.warehouse.model.dto.WmsPointDTO;
  * 基于 MapStruct 实现点位实体(WmsPoint)与数据传输对象(WmsPointDTO)之间的双向转换。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Mapper(componentModel = "spring")

@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
  * 继承 BaseQuery，支持按料车、货品、批次、状态、时间范围等多维度筛选。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Schema(description = "料车物品分页查询对象")

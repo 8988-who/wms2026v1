@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 返回前端的展示字段，包含装载明细信息、料车冗余信息（联表）、创建/更新人信息。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Schema(description = "料车物品视图对象")

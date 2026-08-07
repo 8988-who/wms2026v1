@@ -14,7 +14,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * 定义巷道的分页查询、新增、修改、删除、批量状态更新及表单/筛选选项等业务操作。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 public interface WmsAisleService extends IService<WmsAisle> {

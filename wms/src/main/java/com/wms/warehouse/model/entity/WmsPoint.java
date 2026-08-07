@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  * 对应数据库表 wms_point，表示巷道下的具体作业点位（AGV停靠/操作点）。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @TableName("wms_point")

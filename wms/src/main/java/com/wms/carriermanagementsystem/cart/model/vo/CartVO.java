@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 返回前端的展示字段，包含料车基本信息、型号信息（联表冗余）、有效容量、创建/更新人信息。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Schema(description = "料车视图对象")

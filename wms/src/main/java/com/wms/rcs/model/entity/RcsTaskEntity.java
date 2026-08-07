@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  * 对应数据库表 wms_rcs_task，存储AGV调度任务信息。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-08-04
  */
 @TableName("wms_rcs_task")

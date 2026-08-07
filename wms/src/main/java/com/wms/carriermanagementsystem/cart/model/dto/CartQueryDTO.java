@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
  * 继承 BaseQuery，支持按料车编号/操作工关键词、状态、型号、区域分页筛选。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Schema(description = "料车分页查询对象")

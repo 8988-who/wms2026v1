@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * 查询时实时计算保证展示正确，写入时手动维护保证字段同步。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 @Service

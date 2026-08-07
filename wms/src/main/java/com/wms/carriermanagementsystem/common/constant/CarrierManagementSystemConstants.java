@@ -6,7 +6,7 @@ package com.wms.carriermanagementsystem.common.constant;
  * 存放 CMS 模块共享的缓存 Key、业务阈值等常量。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 public final class CarrierManagementSystemConstants {

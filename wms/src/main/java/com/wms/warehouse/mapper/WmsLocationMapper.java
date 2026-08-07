@@ -16,7 +16,7 @@ import java.util.List;
  * 继承 MyBatis-Plus BaseMapper，提供库位/区域分页查询和更新人名称查询。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Mapper

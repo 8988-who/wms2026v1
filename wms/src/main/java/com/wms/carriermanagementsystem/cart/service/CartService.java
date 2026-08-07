@@ -15,7 +15,7 @@ import java.util.List;
  * 定义料车的 CRUD 操作、状态管理和可用料车查询方法。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-27
  */
 public interface CartService {

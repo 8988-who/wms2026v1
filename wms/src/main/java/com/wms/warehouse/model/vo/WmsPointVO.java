@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 用于向前端返回点位展示数据，包含关联的区域/巷道信息及创建/更新人名称。
  * </p>
  *
- * @author Yadmin
+ * @author SenyangHe
  * @since 2026-07-20
  */
 @Schema(description = "点位视图对象")
