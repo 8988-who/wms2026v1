@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * RCS任务视图对象
@@ -41,6 +43,9 @@ public class RcsTaskVO {
     @Schema(description = "关联料车编码")
     private String cartCode;
 
+    @Schema(description = "任务扩展参数（JSON）")
+    private Map<String, Object> payload;
+
     @Schema(description = "任务状态")
     private Integer status;
 
@@ -62,6 +67,10 @@ public class RcsTaskVO {
     @Schema(description = "提交时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime submitTime;
+
+    @Schema(description = "派发时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime assignedAt;
 
     @Schema(description = "开始执行时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -90,4 +99,7 @@ public class RcsTaskVO {
     @Schema(description = "更新时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedTime;
+
+    @Schema(description = "状态变更历史（时间线，按变更时间升序）")
+    private List<RcsTaskLifecycleVO> lifecycles;
 }
