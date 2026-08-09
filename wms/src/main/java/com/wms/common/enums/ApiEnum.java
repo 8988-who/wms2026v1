@@ -29,91 +29,91 @@ public enum ApiEnum {
      * AGV 1常用接口 1调度系统提供的接口
      */
     AGV_groupTask("AGV_groupTask", "api/robot/controller/task/group",
-            "任务组接口", null, "POST", "rcs", null),
+            "任务组接口", null, "POST", "rcs", AgvGroupTaskDTO.class),
 
     AGV_submitTask("AGV_submitTask", "api/robot/controller/task/submit",
-            "任务下发接口", null, "POST", "rcs", null),
+            "任务下发接口", null, "POST", "rcs", AgvSubmitTaskDTO.class),
 
     AGV_continueTask("AGV_continueTask", "api/robot/controller/task/extend/continue",
-            "任务继续执行接口", null, "POST", "rcs", AgvRequestDTO.class),
+            "任务继续执行接口", null, "POST", "rcs", AgvContinueTaskDTO.class),
 
     AGV_cancelTask("AGV_cancelTask", "api/robot/controller/task/cancel",
-            "任务取消接口", null, "POST", "rcs", AgvRequestDTO.class),
+            "任务取消接口", null, "POST", "rcs", AgvCancelTaskDTO.class),
 
     AGV_priorityTask("AGV_priorityTask", "api/robot/controller/task/priority",
-            "任务优先级设置接口", null, "POST", "rcs", AgvRequestDTO.class),
+            "任务优先级设置接口", null, "POST", "rcs", AgvPriorityTaskDTO.class),
 
     AGV_queryTask("AGV_queryTask", "api/robot/controller/task/query",
-            "查询任务状态接口", null, "POST", "rcs", null),
+            "查询任务状态接口", null, "POST", "rcs", AgvQueryTaskDTO.class),
 // 20260805
     AGV_pauseZone("AGV_pauseZone", "api/robot/controller/zone/pause",
-            "按区域暂停与恢复机器人接口 ", null, "POST", "rcs", null),
+            "按区域暂停与恢复机器人接口 ", null, "POST", "rcs", AgvPauseZoneDTO.class),
 
     AGV_homingZone("AGV_homingZone", "api/robot/controller/zone/homing", 
-            "区域机器人归巢接口", null, "POST", "rcs", null),
+            "区域机器人归巢接口", null, "POST", "rcs", AgvHomingZoneDTO.class),
 
     AGV_banishZone("AGV_banishZone", "api/robot/controller/zone/banish", 
-            "区域驱离机器人接口", null, "POST", "rcs", null),
+            "区域驱离机器人接口", null, "POST", "rcs", AgvBanishZoneDTO.class),
 
     AGV_blockadeZone("AGV_blockadeZone", "api/robot/controller/zone/blockade", 
-            "区域封锁机器人接口", null, "POST", "rcs", null),
+            "区域封锁机器人接口", null, "POST", "rcs", AgvBlockadeZoneDTO.class),
 
     AGV_bindCarrier("AGV_bindCarrier", "api/robot/controller/carrier/bind", 
-            "载具与站点绑定接口", null, "POST", "rcs", null),
+            "载具与站点绑定接口", null, "POST", "rcs", AgvBindCarrierDTO.class),
 
     AGV_bindSite("AGV_bindSite", "/api/robot/controller/site/bind", 
-            "存储对象与搬运对象绑定解绑接口", null, "POST", "rcs", null),
+            "存储对象与搬运对象绑定解绑接口", null, "POST", "rcs", AgvBindSiteDTO.class),
     
     AGV_lockCarrier("AGV_lockCarrier", "/api/robot/controller/carrier/lock", 
-            "载具禁用与启用接口 ", null, "POST", "rcs", null),
+            "载具禁用与启用接口 ", null, "POST", "rcs", AgvLockCarrierDTO.class),
 
     AGV_lockSite("AGV_lockSite", "api/robot/controller/site/lock", 
-            "站点禁用与启用", null, "POST", "rcs", null),
+            "站点禁用与启用", null, "POST", "rcs", AgvLockSiteDTO.class),
 
     AGV_notifyEqpt("AGV_notifyEqpt", "api/robot/eqpt/notify", 
-            "外设执行通知接口", null, "POST", "rcs", null),
+            "外设执行通知接口", null, "POST", "rcs", AgvNotifyEqptDTO.class),
     
     AGV_preTask("AGV_preTask", "api/robot/controller/task/pretask", 
-            "预调度任务下发接口", null, "POST", "rcs", null),
+            "预调度任务下发接口", null, "POST", "rcs", AgvPreTaskDTO.class),
 
     AGV_queryRobot("AGV_queryRobot", "api/robot/controller/robot/query", 
-            "查询机器人状态接口", null, "POST", "rcs", null),
+            "查询机器人状态接口", null, "POST", "rcs", AgvQueryRobotDTO.class),
     
     AGV_queryCarrier("AGV_queryCarrier", "api/robot/controller/carrier/query", 
-            "查询载具状态接口", null, "POST", "rcs", null),
+            "查询载具状态接口", null, "POST", "rcs", AgvQueryCarrierDTO.class),
 
     AGV_bindReporter("AGV_bindReporter", "/api/robot/reporter/bind",
-            "绑定解绑通知", null, "POST", "rcs", null),
+            "绑定解绑通知", null, "POST", "rcs", AgvBindReporterDTO.class),
 
     AGV_warningTask("AGV_warningTask", "/api/robot/reporter/task/warning",
-            "任务异常告警上报接口", null, "POST", "rcs", null),
+            "任务异常告警上报接口", null, "POST", "rcs", AgvWarningTaskDTO.class),
 
     AGV_warningRobot("AGV_warningRobot", "/api/robot/reporter/robot/warning",
-            "机器人异常告警上报接口", null, "POST", "rcs", null),
+            "机器人异常告警上报接口", null, "POST", "rcs", AgvWarningRobotDTO.class),
 
     AGV_banishZoneReporter("AGV_banishZoneReporter", "/api/robot/reporter/zone/banish",
-            "区域驱离机器人完成回馈接口", null, "POST", "rcs", null),
+            "区域驱离机器人完成回馈接口", null, "POST", "rcs", AgvBanishZoneReporterDTO.class),
 
     AGV_homingZoneReporter("AGV_homingZoneReporter", "/api/robot/reporter/zone/homing",
-            "机器人归巢完成回馈接口", null, "POST", "rcs", null),
+            "机器人归巢完成回馈接口", null, "POST", "rcs", AgvHomingZoneReporterDTO.class),
 
     AGV_eqptReporter("AGV_eqptReporter", "/api/robot/reporter/eqpt",
-            "请求外设接口", null, "POST", "rcs", null),
+            "请求外设接口", null, "POST", "rcs", AgvEqptReporterDTO.class),
 
     AGV_resourceReporter("AGV_resourceReporter", "/api/robot/reporter/resource",
-            "请求资源接口", null, "POST", "rcs", null),
+            "请求资源接口", null, "POST", "rcs", AgvResourceReporterDTO.class),
 
     AGV_taskReporter("AGV_taskReporter", "/api/robot/reporter/task",
-            "任务执行过程回馈接口", null, "POST", "rcs", null),
+            "任务执行过程回馈接口", null, "POST", "rcs", AgvTaskReporterDTO.class),
 
     AGV_notifyGbtEqpt("AGV_notifyGbtEqpt", "/spi/wcs/robot/eqpt/notifyGbt",
-            "外设执行通知接口", null, "POST", "rcs", null),
+            "外设执行通知接口", null, "POST", "rcs", AgvNotifyGbtEqptDTO.class),
 
     AGV_unbindMatlabel("AGV_unbindMatlabel", "/api/robot/controller/matlabel/unbind",
-            "物料解绑接口", null, "POST", "rcs", null),
+            "物料解绑接口", null, "POST", "rcs", AgvUnbindMatlabelDTO.class),
 
     AGV_bindMatlabel("AGV_bindMatlabel", "/api/robot/controller/matlabel/bind",
-            "物料绑定接口", null, "POST", "rcs", null),
+            "物料绑定接口", null, "POST", "rcs", AgvBindMatlabelDTO.class),
 
 
     /**
