@@ -1,6 +1,7 @@
 package com.wms.common.enums;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.wms.business.agv.*;
 import com.wms.rcs.model.dto.AgvRequestDTO;
 import lombok.Getter;
 
@@ -82,6 +83,12 @@ public enum ApiEnum {
     AGV_queryCarrier("AGV_queryCarrier", "api/robot/controller/carrier/query", 
             "查询载具状态接口", null, "POST", "rcs", AgvQueryCarrierDTO.class),
 
+    /*
+     * ===== 以下 8 项为 SPI 回调（RCS→WMS 入站方向），非 WMS 出站接口，不经 ApiEnum/commonRequest 调用 =====
+     * 已迁移至入站控制器 RcsReporterController（前缀 /api/v1/rcs/reporter），
+     * 使用 com.wms.rcs.model.dto 下的 Rcs*ReportDTO 承接，故从 ApiEnum 出站注册表中注释停用。
+     * 保留注释以备回溯，如需恢复请一并恢复 com.wms.business.agv 下对应的占位 DTO。
+     *
     AGV_bindReporter("AGV_bindReporter", "/api/robot/reporter/bind",
             "绑定解绑通知", null, "POST", "rcs", AgvBindReporterDTO.class),
 
@@ -105,6 +112,7 @@ public enum ApiEnum {
 
     AGV_taskReporter("AGV_taskReporter", "/api/robot/reporter/task",
             "任务执行过程回馈接口", null, "POST", "rcs", AgvTaskReporterDTO.class),
+     */
 
     AGV_notifyGbtEqpt("AGV_notifyGbtEqpt", "/spi/wcs/robot/eqpt/notifyGbt",
             "外设执行通知接口", null, "POST", "rcs", AgvNotifyGbtEqptDTO.class),
