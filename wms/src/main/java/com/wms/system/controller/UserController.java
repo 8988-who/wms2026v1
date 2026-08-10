@@ -238,14 +238,16 @@ public class UserController {
         return Result.judge(result);
     }
 
-    @Operation(summary = "发送短信验证码（绑定或更换手机号）")
-    @PostMapping(value = "/mobile/code")
-    public Result<?> sendMobileCode(
-            @Parameter(description = "手机号码", required = true) @RequestParam String mobile
-    ) {
-        boolean result = userService.sendMobileCode(mobile);
-        return Result.judge(result);
-    }
+    // 短信验证码发送接口已下线：未接入厂商短信服务，验证码为固定测试值 "123456"（见 UserServiceImpl.sendMobileCode）。
+    // 接入真实短信服务并改为随机码后取消注释即可恢复。注意：下线期间「绑定或更换手机号」因无法获取验证码将不可用。
+    // @Operation(summary = "发送短信验证码（绑定或更换手机号）")
+    // @PostMapping(value = "/mobile/code")
+    // public Result<?> sendMobileCode(
+    //         @Parameter(description = "手机号码", required = true) @RequestParam String mobile
+    // ) {
+    //     boolean result = userService.sendMobileCode(mobile);
+    //     return Result.judge(result);
+    // }
 
     @Operation(summary = "绑定或更换手机号")
     @PutMapping(value = "/mobile")
@@ -265,14 +267,16 @@ public class UserController {
         return Result.judge(result);
     }
 
-    @Operation(summary = "发送邮箱验证码（绑定或更换邮箱）")
-    @PostMapping(value = "/email/code")
-    public Result<Void> sendEmailCode(
-            @Parameter(description = "邮箱地址", required = true) @RequestParam String email
-    ) {
-        userService.sendEmailCode(email);
-        return Result.success();
-    }
+    // 邮箱验证码发送接口已下线：未接入邮箱服务，验证码为固定测试值 "123456"（见 UserServiceImpl.sendEmailCode）。
+    // 接入真实邮箱服务并改为随机码后取消注释即可恢复。注意：下线期间「绑定或更换邮箱」因无法获取验证码将不可用。
+    // @Operation(summary = "发送邮箱验证码（绑定或更换邮箱）")
+    // @PostMapping(value = "/email/code")
+    // public Result<Void> sendEmailCode(
+    //         @Parameter(description = "邮箱地址", required = true) @RequestParam String email
+    // ) {
+    //     userService.sendEmailCode(email);
+    //     return Result.success();
+    // }
 
     @Operation(summary = "绑定或更换邮箱")
     @PutMapping(value = "/email")

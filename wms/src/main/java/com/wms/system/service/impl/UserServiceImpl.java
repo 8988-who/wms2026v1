@@ -435,6 +435,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, SysUser> implements
     /**
      * 发送短信验证码(绑定或更换手机号)
      *
+     * <p><b>⚠️ 安全提示（接口已下线）：</b>Controller 层 {@code /mobile/code} 接口已注释下线。
+     * 本方法验证码为固定测试值 "123456"，接入真实短信服务前切勿重新暴露接口，启用前须改为随机码且发送成功后才写缓存。</p>
+     *
      * @param mobile 手机号
      * @return true|false
      */
@@ -520,6 +523,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, SysUser> implements
 
     /**
      * 发送邮箱验证码（绑定或更换邮箱）
+     *
+     * <p><b>⚠️ 安全提示（接口已下线）：</b>Controller 层 {@code /email/code} 接口已注释下线。
+     * 本方法验证码为固定测试值 "123456"，接入真实邮箱服务前切勿重新暴露接口，启用前须改为随机码且发送成功后才写缓存。</p>
      *
      * @param email 邮箱
      */

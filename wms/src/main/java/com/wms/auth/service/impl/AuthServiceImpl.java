@@ -73,6 +73,11 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 发送登录短信验证码
      *
+     * <p><b>⚠️ 安全提示（接口已下线）：</b>当前 Controller 层已注释短信登录相关接口
+     * （见 {@code AuthController} 短信验证码登录区块）。本方法验证码为固定测试值 "1234"，
+     * 且发送失败仍会写入 Redis，切勿在未接入真实短信服务前重新暴露接口，否则形成任意手机号登录后门。</p>
+     * <p>启用前必须：1) 接入厂商短信服务；2) 改为服务端随机生成验证码，且仅在发送成功后写入缓存。</p>
+     *
      * @param mobile 手机号
      */
     @Override

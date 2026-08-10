@@ -32,4 +32,9 @@ public @interface ValidField {
      */
     String[] allowedValues();
 
+    /**
+     * 是否忽略大小写进行匹配。默认 false（大小写敏感）。
+     */
+    boolean ignoreCase() default false;
+
 }

@@ -31,6 +31,7 @@ public class BaseQuery implements Serializable {
     private String sortBy;
 
     @Schema(description = "排序方式（正序:ASC；反序:DESC）", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @ValidField(allowedValues = {"ASC", "DESC"}, ignoreCase = true, message = "非法排序方式")
     private String order;
 
     public boolean isPaged() {

@@ -300,6 +300,16 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
             return true;
         }
 
+        // 【C-09 临时方案，待测试后调整】终态任务对迟到/乱序的执行回馈仅记录、不再流转。
+        // 与 handleTaskWarning 保持一致：异常任务的恢复应由主动重试下发驱动，而非被动回馈激活。
+        // 注：changeStatus 内已有 canTransfer 兜底，此处提前拦截可避免无意义的库写与日志噪音。
+        if (RcsTaskStatusEnum.of(task.getStatus()) != null
+                && RcsTaskStatusEnum.of(task.getStatus()).isFinal()) {
+            log.info("RCS任务回馈：任务[{}]已处于终态status={}，仅记录回馈不流转：method={}, status={}",
+                    task.getTaskCode(), task.getStatus(), report.getMethod(), report.getStatus());
+            return true;
+        }
+
         // 回填执行AGV编号（若回馈带上）
         if (StrUtil.isNotBlank(report.getAgvCode())) {
             task.setAgvCode(report.getAgvCode());
@@ -403,12 +413,12 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     }
 
     /**
-     * 是否终态（已完成/已取消/异常）
+     * 是否终态（已完成/已取消/异常）。
+     * <p>委托给 {@link RcsTaskStatusEnum#isFinal()}，保证终态定义单一来源（C-09）。</p>
      */
     private boolean isFinalStatus(Integer status) {
-        return RcsTaskStatusEnum.FINISHED.getValue().equals(status)
-                || RcsTaskStatusEnum.CANCELLED.getValue().equals(status)
-                || RcsTaskStatusEnum.EXCEPTION.getValue().equals(status);
+        RcsTaskStatusEnum e = RcsTaskStatusEnum.of(status);
+        return e != null && e.isFinal();
     }
 
     /**
@@ -460,6 +470,17 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
                              RcsOperatorTypeEnum opType, String opId, String remark) {
         Integer statusFrom = task.getStatus();
         if (toStatus.equals(statusFrom)) {
+            return;
+        }
+        // 【C-09 临时方案，待测试后调整】状态流转合法性校验：非法流转（如终态被回退、执行中打回已派发）
+        // 记 warn 日志并跳过，不抛异常（适配 RCS 回调乱序/重复投递场景，避免回调接口报错）。
+        // 流转白名单见 RcsTaskStatusEnum.TRANSITIONS，业务口径待联调测试后校准。
+        if (!RcsTaskStatusEnum.canTransfer(statusFrom, toStatus)) {
+            log.warn("RCS任务状态非法流转已拒绝：taskId={}, taskCode={}, from={}({}) -> to={}({}), opType={}, remark={}",
+                    task.getId(), task.getTaskCode(),
+                    statusFrom, RcsTaskStatusEnum.getLabelByValue(statusFrom),
+                    toStatus, RcsTaskStatusEnum.getLabelByValue(toStatus),
+                    opType, remark);
             return;
         }
         LocalDateTime now = LocalDateTime.now();

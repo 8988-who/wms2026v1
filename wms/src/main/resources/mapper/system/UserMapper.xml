@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -71,7 +71,12 @@
         <choose>
             <!-- 如果排序参数都传入 -->
             <when test="queryParams.sortBy != null and queryParams.sortBy != '' and queryParams.order != null">
-                ORDER BY u.${queryParams.sortBy} ${queryParams.order}
+                <!-- sortBy 已由 @ValidField 白名单校验；order 收敛为固定枚举，杜绝 ${} 注入 -->
+                ORDER BY u.${queryParams.sortBy}
+                <choose>
+                    <when test="queryParams.order.equalsIgnoreCase('ASC')">ASC</when>
+                    <otherwise>DESC</otherwise>
+                </choose>
             </when>
             <!-- 默认排序 -->
             <otherwise>

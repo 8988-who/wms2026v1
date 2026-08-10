@@ -16,15 +16,21 @@ public class FieldValidator implements ConstraintValidator<ValidField, String> {
 
     private String[] allowedValues;
 
+    private boolean ignoreCase;
+
     @Override
     public void initialize(ValidField constraintAnnotation) {
         this.allowedValues = constraintAnnotation.allowedValues();
+        this.ignoreCase = constraintAnnotation.ignoreCase();
     }
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (value == null) {
             return true;
+        }
+        if (ignoreCase) {
+            return Arrays.stream(allowedValues).anyMatch(allowed -> allowed.equalsIgnoreCase(value));
         }
         return Arrays.asList(allowedValues).contains(value);
     }

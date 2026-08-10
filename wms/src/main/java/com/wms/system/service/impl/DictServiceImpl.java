@@ -152,14 +152,16 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
      *
      * @param ids 字典ID，多个以英文逗号(,)分割
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void deleteDictByIds(List<String> ids) {
-        // 删除字典
+        // 1. 先查出字典编码（必须在删除字典之前，否则字典已删将查不到编码，导致字典项无法级联删除产生孤儿数据）
+        List<Dict> list = this.listByIds(ids);
+
+        // 2. 删除字典
         this.removeByIds(ids);
 
-        // 删除字典项
-        List<Dict> list = this.listByIds(ids);
+        // 3. 删除字典项
         if (!list.isEmpty()) {
             List<String> dictCodes = list.stream().map(Dict::getDictCode).toList();
             dictItemService.remove(new LambdaQueryWrapper<DictItem>()
