@@ -596,8 +596,8 @@
   }
 
   async function handleBatchStatus(status: number, actionText: string): Promise<void> {
-    // 统一 ids 为 number 类型（selectedIds 为 string | number，map(Number) 收敛）
-    const ids = selectedIds.value.map(Number);
+    // 雪花 ID 为字符串（后端 Long 序列化为 string），保持字符串避免 Number 丢精度
+    const ids = selectedIds.value.map(String);
     if (!ids || ids.length === 0) {
       ElMessage.warning("请勾选需要操作的数据项");
       return;

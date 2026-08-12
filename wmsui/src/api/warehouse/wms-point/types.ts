@@ -74,8 +74,8 @@ export interface WmsPointFormOptions {
   aisles: WmsPointAisleOption[];
 }
 
-/** 批量状态更新表单 */
+/** 批量状态更新表单（雪花 ID 为字符串） */
 export interface WmsPointBatchStatusForm {
-  ids: number[];
+  ids: string[];
   status: number;
 }

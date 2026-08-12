@@ -43,8 +43,8 @@ const WmsLocationAPI = {
             method: "delete",
         });
     },
-    /** 批量更新库位/区域状态（启用/停用） */
-    updateStatus(data: { ids: number[]; status: number }) {
+    /** 批量更新库位/区域状态（启用/停用），雪花 ID 为字符串 */
+    updateStatus(data: { ids: string[]; status: number }) {
         return request({
             url: `${WMS_LOCATION_BASE_URL}/status`,
             method: "put",

@@ -41,6 +41,14 @@ import java.util.Objects;
 @Slf4j
 public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLocation> implements WmsLocationService {
 
+    /**
+     * 区域用途类型枚举（现场固定值，与数据库存量数据一致）
+     * 仅作下拉选项/语义固化，不参与业务逻辑。
+     */
+    private static final List<String> LOCATION_TYPES = List.of(
+            "湿坯下线", "防干", "干燥", "立浇交接", "检修/交接", "成型/立浇交接",
+            "木板上线", "木板下线", "上线点", "青坯上线", "青坯下线", "施釉上线", "施釉下线","周转","其他");
+
     private final WmsLocationConverter wmsLocationConverter;
     private final WmsCascadeService wmsCascadeService;
     private final WmsCodeGeneratorService wmsCodeGeneratorService;
@@ -153,18 +161,16 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
     @Override
     public java.util.Map<String, java.util.List<?>> getFormOptions() {
         java.util.List<WmsLocation> list = this.list(new LambdaQueryWrapper<WmsLocation>()
-                .select(WmsLocation::getPlantCode, WmsLocation::getLocationType));
+                .select(WmsLocation::getPlantCode));
 
         java.util.Set<String> plantCodes = new java.util.LinkedHashSet<>();
-        java.util.Set<String> locationTypes = new java.util.LinkedHashSet<>();
         for (WmsLocation loc : list) {
             if (StrUtil.isNotBlank(loc.getPlantCode())) plantCodes.add(loc.getPlantCode());
-            if (StrUtil.isNotBlank(loc.getLocationType())) locationTypes.add(loc.getLocationType());
         }
 
         java.util.Map<String, java.util.List<?>> result = new java.util.LinkedHashMap<>();
         result.put("plantCodes", new java.util.ArrayList<>(plantCodes));
-        result.put("locationTypes", new java.util.ArrayList<>(locationTypes));
+        result.put("locationTypes", new java.util.ArrayList<>(LOCATION_TYPES));
         return result;
     }
 

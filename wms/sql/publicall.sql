@@ -3202,7 +3202,7 @@ CREATE TABLE "public"."wms_aisle" (
   "point_count" int4 NOT NULL DEFAULT 0
 )
 ;
-COMMENT ON COLUMN "public"."wms_aisle"."id" IS '主键（自增）';
+COMMENT ON COLUMN "public"."wms_aisle"."id" IS '主键（雪花算法生成）';
 COMMENT ON COLUMN "public"."wms_aisle"."plant_code" IS '厂区编码（冗余字段，便于查询）';
 COMMENT ON COLUMN "public"."wms_aisle"."location_id" IS '所属区域ID，关联 wms_location.id';
 COMMENT ON COLUMN "public"."wms_aisle"."aisle_code" IS '巷道编码（厂区内唯一，如：A-01, B-02）';
@@ -3470,7 +3470,7 @@ COMMENT ON COLUMN "public"."wms_location"."id" IS '主键';
 COMMENT ON COLUMN "public"."wms_location"."plant_code" IS '厂区编码';
 COMMENT ON COLUMN "public"."wms_location"."location_code" IS '区域编码（厂区内唯一）';
 COMMENT ON COLUMN "public"."wms_location"."location_name" IS '区域名称';
-COMMENT ON COLUMN "public"."wms_location"."location_type" IS '区域类型';
+COMMENT ON COLUMN "public"."wms_location"."location_type" IS '区域用途类型（枚举值：湿坯下线/防干/干燥/立浇交接/检修交接/成型立浇交接/木板上线/木板下线/上线点/青坯上线/青坯下线/施釉上线/施釉下线，当前不参与业务逻辑）';
 COMMENT ON COLUMN "public"."wms_location"."parent_id" IS '父级区域ID（0表示顶级），用于管理归属/树形结构';
 COMMENT ON COLUMN "public"."wms_location"."floor" IS '物理楼层标识（如：1F, 2F, B1），用于快速按楼层筛选和AGV路径规划';
 COMMENT ON COLUMN "public"."wms_location"."sort_order" IS '排序号';
@@ -3480,7 +3480,7 @@ COMMENT ON COLUMN "public"."wms_location"."created_by" IS '创建人';
 COMMENT ON COLUMN "public"."wms_location"."created_time" IS '创建时间';
 COMMENT ON COLUMN "public"."wms_location"."updated_by" IS '更新人';
 COMMENT ON COLUMN "public"."wms_location"."updated_time" IS '更新时间';
-COMMENT ON TABLE "public"."wms_location" IS '库位/区域主表：多厂区隔离，parent_id管归属，floor管物理楼层';
+COMMENT ON TABLE "public"."wms_location" IS '库位/区域主表：plant_code为厂区主维度（多厂区扩展以厂区隔离），parent_id管归属，floor管物理楼层，location_type为用途类型（预留）';
 
 -- ----------------------------
 -- Records of wms_location
@@ -3526,7 +3526,7 @@ CREATE TABLE "public"."wms_point" (
   "updated_time" timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
 )
 ;
-COMMENT ON COLUMN "public"."wms_point"."id" IS '主键（自增）';
+COMMENT ON COLUMN "public"."wms_point"."id" IS '主键（雪花算法生成）';
 COMMENT ON COLUMN "public"."wms_point"."plant_code" IS '厂区编码（冗余，便于厂区隔离查询）';
 COMMENT ON COLUMN "public"."wms_point"."location_id" IS '所属区域ID，关联 wms_location.id';
 COMMENT ON COLUMN "public"."wms_point"."aisle_id" IS '所属巷道ID，关联 wms_aisle.id';

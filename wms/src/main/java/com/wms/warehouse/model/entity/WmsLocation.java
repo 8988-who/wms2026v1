@@ -55,7 +55,7 @@ public class WmsLocation extends WmsBaseEntity {
     private String locationName;
 
     /**
-     * 区域用途类型（预留，如 TURNOVER/DRY_ZONE/DRY_ROOM/BUFFER/PROD_LINE，当前不参与业务逻辑）
+     * 区域用途类型（枚举值：湿坯下线/防干/干燥/立浇交接/检修交接/成型立浇交接/木板上线/木板下线/上线点/青坯上线/青坯下线/施釉上线/施釉下线，当前不参与业务逻辑）
      */
     private String locationType;
 

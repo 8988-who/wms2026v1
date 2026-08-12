@@ -252,7 +252,8 @@
   const tableWrapperRef = ref<HTMLElement | null>(null);
   const { toggle: toggleFullscreen } = useFullscreen(tableWrapperRef);
 
-  const selectedIds = ref<number[]>([]);
+  // 雪花 ID 为字符串（后端 Long 序列化为 string），保持字符串避免 Number 丢精度
+  const selectedIds = ref<string[]>([]);
   const submitLoading = ref(false);
 
   // 下拉选项
@@ -275,10 +276,10 @@
     },
   });
 
-  // 时间范围联动
+  // 时间范围联动（CartItemQueryParams 已声明 loadedAtStart/loadedAtEnd，直接赋值）
   watch(dateRange, ([start, end]) => {
-    (params as Record<string, unknown>).loadedAtStart = start;
-    (params as Record<string, unknown>).loadedAtEnd = end;
+    params.loadedAtStart = start;
+    params.loadedAtEnd = end;
   });
 
   // 弹窗
@@ -286,7 +287,7 @@
     title: "",
     visible: false,
     isEdit: false,
-    editId: 0 as number | null,
+    editId: null as string | null,
   });
 
   const takeDialog = reactive({

@@ -35,7 +35,7 @@ public class WmsLocationVO {
     @Schema(description = "库位/区域类型")
     private String locationType;
 
-    @Schema(description = "库位/区域类型描述（预留：分页SQL未映射，恒为null，前端未使用；如需展示需在 SQL 中 CASE WHEN 映射 TURNOVER/DRY_ZONE/DRY_ROOM/BUFFER/PROD_LINE）")
+    @Schema(description = "库位/区域类型描述（预留：分页SQL未映射，恒为null，前端未使用；如需展示需在 SQL 中 CASE WHEN 映射 湿坯下线/防干/干燥/立浇交接/检修/交接/成型/立浇交接/木板上线/木板下线/上线点/青坯上线/青坯下线/施釉上线/施釉下线）")
     private String locationTypeLabel;
 
     @Schema(description = "父节点ID")

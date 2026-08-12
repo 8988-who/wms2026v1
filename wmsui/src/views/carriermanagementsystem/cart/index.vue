@@ -203,7 +203,8 @@
   const tableWrapperRef = ref<HTMLElement | null>(null);
   const { toggle: toggleFullscreen } = useFullscreen(tableWrapperRef);
 
-  const selectedIds = ref<number[]>([]);
+  // 雪花 ID 为字符串（后端 Long 序列化为 string），保持字符串避免 Number 丢精度
+  const selectedIds = ref<string[]>([]);
 
   // 下拉选项
   const formOptions = ref<CartModelOption[]>([]);

@@ -46,7 +46,7 @@ const CartAPI = {
     });
   },
   /** 批量修改料车状态 */
-  batchUpdateStatus(ids: number[], status: number) {
+  batchUpdateStatus(ids: string[], status: number) {
     return request({
       url: `${CART_BASE_URL}/batch-status`,
       method: "put",

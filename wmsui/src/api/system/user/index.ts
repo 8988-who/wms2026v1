@@ -10,6 +10,7 @@ import type {
   PasswordVerifyForm,
   MobileUpdateForm,
   EmailUpdateForm,
+  LoginRecordItem,
 } from "./types";
 import type { ExcelResult, OptionItem, PageResult } from "@/api/common";
 

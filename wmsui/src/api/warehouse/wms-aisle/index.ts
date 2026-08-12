@@ -45,8 +45,8 @@ const WmsAisleAPI = {
       method: "delete",
     });
   },
-  /** 批量更新巷道状态（启用/停用） */
-  updateStatus(data: { ids: number[]; status: number }) {
+  /** 批量更新巷道状态（启用/停用），雪花 ID 为字符串 */
+  updateStatus(data: { ids: string[]; status: number }) {
     return request({
       url: `${WMS_AISLE_BASE_URL}/status`,
       method: "put",
