@@ -228,6 +228,8 @@
                       <el-input
                           v-model="formData.plantCode"
                           placeholder="请输入厂区编码"
+                          :readonly="!!formData.id"
+                          :disabled="!!formData.id"
                       />
                 </el-form-item>
 

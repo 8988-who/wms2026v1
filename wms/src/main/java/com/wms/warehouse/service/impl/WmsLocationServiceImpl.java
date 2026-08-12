@@ -83,22 +83,11 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
         WmsLocation existing = this.getById(id);
         Assert.notNull(existing, "库位/区域不存在");
 
-        String newPlantCode = dto.getPlantCode();
-        String oldPlantCode = existing.getPlantCode();
+        // P0-1 修复：禁止修改厂区编码，防止下级巷道/点位编码链断裂与冗余字段失准
+        Assert.isTrue(dto.getPlantCode().equals(existing.getPlantCode()),
+                "厂区编码不可修改，如需迁移请删除该区域及下级后重建");
 
-        if (!newPlantCode.equals(oldPlantCode)) {
-            String locationCode = wmsCodeGeneratorService.generateLocationCode(newPlantCode, () -> {
-                WmsLocation max = this.getOne(new LambdaQueryWrapper<WmsLocation>()
-                        .eq(WmsLocation::getPlantCode, newPlantCode)
-                        .select(WmsLocation::getLocationCode)
-                        .orderByDesc(WmsLocation::getLocationCode)
-                        .last("LIMIT 1"));
-                return max != null ? WmsCodeGeneratorService.extractSeq(max.getLocationCode(), newPlantCode + "-") : 0;
-            });
-            dto.setLocationCode(locationCode);
-        } else {
-            dto.setLocationCode(existing.getLocationCode());
-        }
+        dto.setLocationCode(existing.getLocationCode());
 
         WmsLocation entity = wmsLocationConverter.toEntity(dto);
         entity.setId(id);
@@ -142,6 +131,8 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
     public boolean batchUpdateStatus(BatchStatusForm batchStatusForm) {
         List<Long> ids = batchStatusForm.getIds();
         Integer status = batchStatusForm.getStatus();
+        // P1-2 修复：防御 Service 层被内部调用时 status 为空（HTTP 入口已有 @NotNull + @Valid 拦截）
+        Assert.notNull(status, "状态不能为空");
         if (ids == null || ids.isEmpty()) {
             return false;
         }
@@ -186,7 +177,7 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
         }
 
         LambdaQueryWrapper<WmsLocation> wrapper = new LambdaQueryWrapper<WmsLocation>()
-                .select(WmsLocation::getLocationCode, WmsLocation::getFloor, WmsLocation::getUpdateBy);
+                .select(WmsLocation::getLocationCode, WmsLocation::getFloor, WmsLocation::getUpdateBy, WmsLocation::getStatus);
 
         if (StrUtil.isNotBlank(plantCode)) {
             wrapper.eq(WmsLocation::getPlantCode, plantCode);

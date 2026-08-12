@@ -252,6 +252,7 @@
                           placeholder="请选择厂区编码"
                           filterable
                           clearable
+                          :disabled="!!formData.id"
                           @change="handleFormPlantCodeChange"
                       >
                         <el-option v-for="item in formOptions.plantCodes" :key="item" :label="item" :value="item" />
@@ -264,6 +265,7 @@
                           placeholder="请选择所属区域"
                           filterable
                           clearable
+                          :disabled="!!formData.id"
                           @change="handleFormLocationChange"
                       >
                         <el-option

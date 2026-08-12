@@ -17,17 +17,6 @@
 
 
 -- ----------------------------
--- Sequence structure for api_request_log_id_seq
--- ----------------------------
-DROP SEQUENCE IF EXISTS "public"."api_request_log_id_seq";
-CREATE SEQUENCE "public"."api_request_log_id_seq" 
-INCREMENT 1
-MINVALUE  1
-MAXVALUE 9223372036854775807
-START 1
-CACHE 1;
-
--- ----------------------------
 -- Sequence structure for sys_config_id_seq
 -- ----------------------------
 DROP SEQUENCE IF EXISTS "public"."sys_config_id_seq";
@@ -149,99 +138,11 @@ START 1
 CACHE 1;
 
 -- ----------------------------
--- Sequence structure for wms_aisle_id_seq
--- ----------------------------
-DROP SEQUENCE IF EXISTS "public"."wms_aisle_id_seq";
-CREATE SEQUENCE "public"."wms_aisle_id_seq" 
-INCREMENT 1
-MINVALUE  1
-MAXVALUE 9223372036854775807
-START 1
-CACHE 1;
-
--- ----------------------------
--- Sequence structure for wms_cart_id_seq
--- ----------------------------
-DROP SEQUENCE IF EXISTS "public"."wms_cart_id_seq";
-CREATE SEQUENCE "public"."wms_cart_id_seq" 
-INCREMENT 1
-MINVALUE  1
-MAXVALUE 2147483647
-START 1
-CACHE 1;
-
--- ----------------------------
--- Sequence structure for wms_cart_item_id_seq
--- ----------------------------
-DROP SEQUENCE IF EXISTS "public"."wms_cart_item_id_seq";
-CREATE SEQUENCE "public"."wms_cart_item_id_seq" 
-INCREMENT 1
-MINVALUE  1
-MAXVALUE 9223372036854775807
-START 1
-CACHE 1;
-
--- ----------------------------
--- Sequence structure for wms_cart_model_id_seq
--- ----------------------------
-DROP SEQUENCE IF EXISTS "public"."wms_cart_model_id_seq";
-CREATE SEQUENCE "public"."wms_cart_model_id_seq" 
-INCREMENT 1
-MINVALUE  1
-MAXVALUE 2147483647
-START 1
-CACHE 1;
-
--- ----------------------------
--- Sequence structure for wms_location_location_id_seq
--- ----------------------------
-DROP SEQUENCE IF EXISTS "public"."wms_location_location_id_seq";
-CREATE SEQUENCE "public"."wms_location_location_id_seq" 
-INCREMENT 1
-MINVALUE  1
-MAXVALUE 9223372036854775807
-START 1
-CACHE 1;
-
--- ----------------------------
--- Sequence structure for wms_point_id_seq
--- ----------------------------
-DROP SEQUENCE IF EXISTS "public"."wms_point_id_seq";
-CREATE SEQUENCE "public"."wms_point_id_seq" 
-INCREMENT 1
-MINVALUE  1
-MAXVALUE 9223372036854775807
-START 1
-CACHE 1;
-
--- ----------------------------
--- Sequence structure for wms_rcs_task_id_seq
--- ----------------------------
-DROP SEQUENCE IF EXISTS "public"."wms_rcs_task_id_seq";
-CREATE SEQUENCE "public"."wms_rcs_task_id_seq" 
-INCREMENT 1
-MINVALUE  1
-MAXVALUE 9223372036854775807
-START 1
-CACHE 1;
-
--- ----------------------------
--- Sequence structure for wms_rcs_task_lifecycle_id_seq
--- ----------------------------
-DROP SEQUENCE IF EXISTS "public"."wms_rcs_task_lifecycle_id_seq";
-CREATE SEQUENCE "public"."wms_rcs_task_lifecycle_id_seq" 
-INCREMENT 1
-MINVALUE  1
-MAXVALUE 9223372036854775807
-START 1
-CACHE 1;
-
--- ----------------------------
 -- Table structure for api_request_log
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."api_request_log";
 CREATE TABLE "public"."api_request_log" (
-  "id" int8 NOT NULL DEFAULT nextval('api_request_log_id_seq'::regclass),
+  "id" int8 NOT NULL,
   "api_code" varchar(64) COLLATE "pg_catalog"."default",
   "api_method_name" varchar(128) COLLATE "pg_catalog"."default",
   "api_url" varchar(512) COLLATE "pg_catalog"."default",
@@ -720,7 +621,7 @@ COMMENT ON TABLE "public"."sys_user_social" IS '用户第三方账号绑定表';
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."wms_aisle";
 CREATE TABLE "public"."wms_aisle" (
-  "id" int8 NOT NULL DEFAULT nextval('wms_aisle_id_seq'::regclass),
+  "id" int8 NOT NULL,
   "plant_code" varchar(32) COLLATE "pg_catalog"."default" NOT NULL,
   "location_id" int8 NOT NULL,
   "aisle_code" varchar(32) COLLATE "pg_catalog"."default" NOT NULL,
@@ -761,7 +662,7 @@ COMMENT ON TABLE "public"."wms_aisle" IS '巷道/通道表：区域下一级物�
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."wms_cart";
 CREATE TABLE "public"."wms_cart" (
-  "id" int8 NOT NULL DEFAULT nextval('wms_cart_id_seq'::regclass),
+  "id" int8 NOT NULL,
   "cart_code" varchar(50) COLLATE "pg_catalog"."default" NOT NULL,
   "model_id" int4 NOT NULL,
   "current_quantity" int4 DEFAULT 0,
@@ -794,7 +695,7 @@ COMMENT ON TABLE "public"."wms_cart" IS '料车实例表';
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."wms_cart_item";
 CREATE TABLE "public"."wms_cart_item" (
-  "id" int8 NOT NULL DEFAULT nextval('wms_cart_item_id_seq'::regclass),
+  "id" int8 NOT NULL,
   "cart_id" int8 NOT NULL,
   "product_code" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
   "product_model" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
@@ -835,7 +736,7 @@ COMMENT ON TABLE "public"."wms_cart_item" IS '料车装载明细表';
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."wms_cart_model";
 CREATE TABLE "public"."wms_cart_model" (
-  "id" int8 NOT NULL DEFAULT nextval('wms_cart_model_id_seq'::regclass),
+  "id" int8 NOT NULL,
   "model_code" varchar(20) COLLATE "pg_catalog"."default" NOT NULL,
   "model_name" varchar(50) COLLATE "pg_catalog"."default",
   "max_capacity" int4 NOT NULL,
@@ -864,7 +765,7 @@ COMMENT ON TABLE "public"."wms_cart_model" IS '料车型号配置表';
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."wms_location";
 CREATE TABLE "public"."wms_location" (
-  "id" int8 NOT NULL DEFAULT nextval('wms_location_location_id_seq'::regclass),
+  "id" int8 NOT NULL,
   "plant_code" varchar(32) COLLATE "pg_catalog"."default" NOT NULL DEFAULT 'DEFAULT'::character varying,
   "location_code" varchar(32) COLLATE "pg_catalog"."default" NOT NULL,
   "location_name" varchar(64) COLLATE "pg_catalog"."default" NOT NULL,
@@ -884,7 +785,7 @@ COMMENT ON COLUMN "public"."wms_location"."id" IS '主键';
 COMMENT ON COLUMN "public"."wms_location"."plant_code" IS '厂区编码';
 COMMENT ON COLUMN "public"."wms_location"."location_code" IS '区域编码（厂区内唯一）';
 COMMENT ON COLUMN "public"."wms_location"."location_name" IS '区域名称';
-COMMENT ON COLUMN "public"."wms_location"."location_type" IS '区域类型';
+COMMENT ON COLUMN "public"."wms_location"."location_type" IS '区域用途类型（预留，如：TURNOVER/DRY_ZONE/DRY_ROOM/BUFFER/PROD_LINE，当前不参与业务逻辑）';
 COMMENT ON COLUMN "public"."wms_location"."parent_id" IS '父级区域ID（0表示顶级），用于管理归属/树形结构';
 COMMENT ON COLUMN "public"."wms_location"."floor" IS '物理楼层标识（如：1F, 2F, B1），用于快速按楼层筛选和AGV路径规划';
 COMMENT ON COLUMN "public"."wms_location"."sort_order" IS '排序号';
@@ -894,14 +795,14 @@ COMMENT ON COLUMN "public"."wms_location"."created_by" IS '创建人';
 COMMENT ON COLUMN "public"."wms_location"."created_time" IS '创建时间';
 COMMENT ON COLUMN "public"."wms_location"."updated_by" IS '更新人';
 COMMENT ON COLUMN "public"."wms_location"."updated_time" IS '更新时间';
-COMMENT ON TABLE "public"."wms_location" IS '库位/区域主表：多厂区隔离，parent_id管归属，floor管物理楼层';
+COMMENT ON TABLE "public"."wms_location" IS '库位/区域主表：plant_code为厂区主维度（多厂区扩展以厂区隔离），parent_id管归属，floor管物理楼层，location_type为用途类型（预留）';
 
 -- ----------------------------
 -- Table structure for wms_point
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."wms_point";
 CREATE TABLE "public"."wms_point" (
-  "id" int8 NOT NULL DEFAULT nextval('wms_point_id_seq'::regclass),
+  "id" int8 NOT NULL,
   "plant_code" varchar(32) COLLATE "pg_catalog"."default" NOT NULL,
   "location_id" int8 NOT NULL,
   "aisle_id" int8 NOT NULL,
@@ -942,7 +843,7 @@ COMMENT ON TABLE "public"."wms_point" IS '地标/点位表：仅作为AGV路径�
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."wms_rcs_task";
 CREATE TABLE "public"."wms_rcs_task" (
-  "id" int8 NOT NULL DEFAULT nextval('wms_rcs_task_id_seq'::regclass),
+  "id" int8 NOT NULL,
   "task_code" varchar(64) COLLATE "pg_catalog"."default" NOT NULL,
   "task_type" int4 NOT NULL,
   "task_title" varchar(128) COLLATE "pg_catalog"."default",
@@ -995,7 +896,7 @@ COMMENT ON TABLE "public"."wms_rcs_task" IS 'RCS任务表（AGV调度任务全�
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."wms_rcs_task_lifecycle";
 CREATE TABLE "public"."wms_rcs_task_lifecycle" (
-  "id" int8 NOT NULL DEFAULT nextval('wms_rcs_task_lifecycle_id_seq'::regclass),
+  "id" int8 NOT NULL,
   "task_id" int8 NOT NULL,
   "status_from" int4,
   "status_to" int4 NOT NULL,
@@ -1028,11 +929,6 @@ END;
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-
--- ----------------------------
--- Alter sequences owned by
--- ----------------------------
-SELECT setval('"public"."api_request_log_id_seq"', 1, false);
 
 -- ----------------------------
 -- Alter sequences owned by
@@ -1110,58 +1006,6 @@ SELECT setval('"public"."sys_user_notice_id_seq"', 45, true);
 ALTER SEQUENCE "public"."sys_user_social_id_seq"
 OWNED BY "public"."sys_user_social"."id";
 SELECT setval('"public"."sys_user_social_id_seq"', 1, true);
-
--- ----------------------------
--- Alter sequences owned by
--- ----------------------------
-ALTER SEQUENCE "public"."wms_aisle_id_seq"
-OWNED BY "public"."wms_aisle"."id";
-SELECT setval('"public"."wms_aisle_id_seq"', 134, true);
-
--- ----------------------------
--- Alter sequences owned by
--- ----------------------------
-ALTER SEQUENCE "public"."wms_cart_id_seq"
-OWNED BY "public"."wms_cart"."id";
-SELECT setval('"public"."wms_cart_id_seq"', 9, true);
-
--- ----------------------------
--- Alter sequences owned by
--- ----------------------------
-ALTER SEQUENCE "public"."wms_cart_item_id_seq"
-OWNED BY "public"."wms_cart_item"."id";
-SELECT setval('"public"."wms_cart_item_id_seq"', 15, true);
-
--- ----------------------------
--- Alter sequences owned by
--- ----------------------------
-ALTER SEQUENCE "public"."wms_cart_model_id_seq"
-OWNED BY "public"."wms_cart_model"."id";
-SELECT setval('"public"."wms_cart_model_id_seq"', 3, true);
-
--- ----------------------------
--- Alter sequences owned by
--- ----------------------------
-ALTER SEQUENCE "public"."wms_location_location_id_seq"
-OWNED BY "public"."wms_location"."id";
-SELECT setval('"public"."wms_location_location_id_seq"', 78, true);
-
--- ----------------------------
--- Alter sequences owned by
--- ----------------------------
-ALTER SEQUENCE "public"."wms_point_id_seq"
-OWNED BY "public"."wms_point"."id";
-SELECT setval('"public"."wms_point_id_seq"', 438, true);
-
--- ----------------------------
--- Alter sequences owned by
--- ----------------------------
-SELECT setval('"public"."wms_rcs_task_id_seq"', 1, false);
-
--- ----------------------------
--- Alter sequences owned by
--- ----------------------------
-SELECT setval('"public"."wms_rcs_task_lifecycle_id_seq"', 1, false);
 
 -- ----------------------------
 -- Indexes structure for table api_request_log

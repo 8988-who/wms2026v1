@@ -70,6 +70,8 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
         Assert.isTrue(aisle.getStatus() == 1, "所属巷道已停用，无法新增点位");
         WmsLocation location = wmsLocationService.getById(aisle.getLocationId());
         Assert.notNull(location, "所属区域不存在");
+        // P0-3 修复：补充校验所属区域启用状态，避免向停用区域下的巷道挂入点位
+        Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法新增点位");
 
         dto.setFloor(location.getFloor());
         dto.setPlantCode(location.getPlantCode());
@@ -112,6 +114,8 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
             Assert.isTrue(aisle.getStatus() == 1, "所属巷道已停用，无法将点位切换到该巷道");
             WmsLocation location = wmsLocationService.getById(aisle.getLocationId());
             Assert.notNull(location, "所属区域不存在");
+            // P0-3 修复：补充校验所属区域启用状态
+            Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法将点位切换到该巷道");
 
             dto.setFloor(location.getFloor());
             dto.setPlantCode(location.getPlantCode());
@@ -177,6 +181,8 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
     public boolean batchUpdateStatus(BatchStatusForm batchStatusForm) {
         List<Long> ids = batchStatusForm.getIds();
         Integer status = batchStatusForm.getStatus();
+        // P1-2 修复：防御 Service 层被内部调用时 status 为空（HTTP 入口已有 @NotNull + @Valid 拦截）
+        Assert.notNull(status, "状态不能为空");
         if (ids == null || ids.isEmpty()) {
             return false;
         }

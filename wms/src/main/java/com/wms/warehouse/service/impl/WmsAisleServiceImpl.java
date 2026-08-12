@@ -90,26 +90,12 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
         WmsAisle existing = this.getById(id);
         Assert.notNull(existing, "巷道不存在");
 
-        if (!dto.getLocationId().equals(existing.getLocationId())) {
-            WmsLocation location = wmsLocationService.getById(dto.getLocationId());
-            Assert.notNull(location, "所属区域不存在");
-            Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法将巷道切换到该区域");
+        // P0-2 修复：禁止切换所属区域，防止下级点位编码链断裂与冗余字段失准
+        Assert.isTrue(dto.getLocationId().equals(existing.getLocationId()),
+                "所属区域不可变更，如需迁移请删除该巷道及下级后重建");
 
-            dto.setFloor(location.getFloor());
-
-            String aisleCode = wmsCodeGeneratorService.generateAisleCode(location.getLocationCode(), "A", () -> {
-                WmsAisle max = this.getOne(new LambdaQueryWrapper<WmsAisle>()
-                        .likeRight(WmsAisle::getAisleCode, location.getLocationCode() + "-A")
-                        .select(WmsAisle::getAisleCode)
-                        .orderByDesc(WmsAisle::getAisleCode)
-                        .last("LIMIT 1"));
-                return max != null ? WmsCodeGeneratorService.extractSeq(max.getAisleCode(), location.getLocationCode() + "-A") : 0;
-            });
-            dto.setAisleCode(aisleCode);
-        } else {
-            dto.setAisleCode(existing.getAisleCode());
-            dto.setFloor(existing.getFloor());
-        }
+        dto.setAisleCode(existing.getAisleCode());
+        dto.setFloor(existing.getFloor());
 
         WmsAisle entity = wmsAisleConverter.toEntity(dto);
         entity.setId(id);
@@ -143,6 +129,8 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     public boolean batchUpdateStatus(BatchStatusForm batchStatusForm) {
         List<Long> ids = batchStatusForm.getIds();
         Integer status = batchStatusForm.getStatus();
+        // P1-2 修复：防御 Service 层被内部调用时 status 为空（HTTP 入口已有 @NotNull + @Valid 拦截）
+        Assert.notNull(status, "状态不能为空");
         if (ids == null || ids.isEmpty()) {
             return false;
         }

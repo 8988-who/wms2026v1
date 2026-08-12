@@ -23,7 +23,7 @@ public class WmsLocationVO {
     @Schema(description = "厂区编码")
     private String plantCode;
 
-    @Schema(description = "厂区名称")
+    @Schema(description = "厂区名称（预留：分页SQL未映射，恒为null，前端未使用；如需展示需在 WmsLocationMapper.xml 补 sys_dept 按 plant_code 子查询）")
     private String plantName;
 
     @Schema(description = "库位/区域编码")
@@ -35,7 +35,7 @@ public class WmsLocationVO {
     @Schema(description = "库位/区域类型")
     private String locationType;
 
-    @Schema(description = "库位/区域类型描述")
+    @Schema(description = "库位/区域类型描述（预留：分页SQL未映射，恒为null，前端未使用；如需展示需在 SQL 中 CASE WHEN 映射 TURNOVER/DRY_ZONE/DRY_ROOM/BUFFER/PROD_LINE）")
     private String locationTypeLabel;
 
     @Schema(description = "父节点ID")
@@ -50,7 +50,7 @@ public class WmsLocationVO {
     @Schema(description = "状态(1:启用；0:禁用)")
     private Integer status;
 
-    @Schema(description = "状态描述")
+    @Schema(description = "状态描述（预留：分页SQL未映射，恒为null，前端未使用；如需展示需在 SQL 中 CASE WHEN status 转换启用/停用）")
     private String statusLabel;
 
     @Schema(description = "备注")
