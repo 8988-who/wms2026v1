@@ -3,7 +3,7 @@ package com.wms.warehouse.model.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.wms.common.base.BaseEntity;
+import com.wms.common.base.WmsBaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @TableName("wms_aisle")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class WmsAisle extends BaseEntity {
+public class WmsAisle extends WmsBaseEntity {
 
     @TableField(value = "created_time", fill = FieldFill.INSERT)
     @JsonInclude(value = JsonInclude.Include.NON_NULL)

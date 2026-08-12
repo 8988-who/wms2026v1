@@ -13,7 +13,7 @@ export interface CartModelQueryParams extends BaseQueryParams {
 
 /** 料车型号表单对象 */
 export interface CartModelForm {
-  id?: number;
+  id?: string;
   modelCode?: string;
   modelName?: string;
   maxCapacity?: number;
@@ -23,7 +23,7 @@ export interface CartModelForm {
 
 /** 料车型号列表项 */
 export interface CartModelItem {
-  id?: number;
+  id?: string;
   modelCode?: string;
   modelName?: string;
   maxCapacity?: number;

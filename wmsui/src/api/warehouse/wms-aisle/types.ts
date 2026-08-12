@@ -17,9 +17,9 @@ export interface WmsAisleQueryParams extends BaseQueryParams {
 
 /** 巷道表单对象 */
 export interface WmsAisleForm {
-  id?: number;
+  id?: string;
   plantCode?: string;
-  locationId?: number;
+  locationId?: string;
   aisleCode?: string;
   aisleName?: string;
   floor?: string;
@@ -32,9 +32,9 @@ export interface WmsAisleForm {
 
 /** 巷道列表项 */
 export interface WmsAisleItem {
-  id?: number;
+  id?: string;
   plantCode?: string;
-  locationId?: number;
+  locationId?: string;
   locationCode?: string;
   aisleCode?: string;
   aisleName?: string;
@@ -53,7 +53,7 @@ export interface WmsAisleItem {
 
 /** 区域下拉选项 */
 export interface WmsAisleLocationOption {
-  id: number;
+  id: string;
   code: string;
   name: string;
   floor: string;

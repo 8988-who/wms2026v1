@@ -31,8 +31,8 @@ public class RcsTaskLifecycleEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /** 主键ID（自增） */
-    @TableId(type = IdType.AUTO)
+    /** 主键ID（雪花算法生成，写入时回填） */
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /** 关联 wms_rcs_task.id */

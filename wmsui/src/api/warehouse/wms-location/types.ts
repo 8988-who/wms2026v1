@@ -16,12 +16,12 @@ export interface WmsLocationQueryParams extends BaseQueryParams {
 
 /** 库位/区域表单对象 */
 export interface WmsLocationForm {
-  id?: number;
+  id?: string;
   plantCode?: string;
   locationCode?: string;
   locationName?: string;
   locationType?: string;
-  parentId?: number;
+  parentId?: string;
   floor?: string;
   sortOrder?: number;
   status?: number;
@@ -33,12 +33,12 @@ export type WmsLocationDetail = WmsLocationItem & WmsLocationForm;
 
 /** 库位/区域列表项 */
 export interface WmsLocationItem {
-  id?: number;
+  id?: string;
   plantCode?: string;
   locationCode?: string;
   locationName?: string;
   locationType?: string;
-  parentId?: number;
+  parentId?: string;
   floor?: string;
   sortOrder?: number;
   status?: number;

@@ -8,15 +8,15 @@ import type { BaseQueryParams } from "@/api/common";
 export interface CartQueryParams extends BaseQueryParams {
   keyword?: string;
   status?: number;
-  modelId?: number;
+  modelId?: string;
   area?: string;
 }
 
 /** 料车表单对象 */
 export interface CartForm {
-  id?: number;
+  id?: string;
   cartCode?: string;
-  modelId?: number;
+  modelId?: string;
   area?: string;
   bindWorker?: string;
   actualCapacity?: number;
@@ -24,9 +24,9 @@ export interface CartForm {
 
 /** 料车列表项 */
 export interface CartItem {
-  id?: number;
+  id?: string;
   cartCode?: string;
-  modelId?: number;
+  modelId?: string;
   modelCode?: string;
   modelName?: string;
   maxCapacity?: number;
@@ -43,7 +43,7 @@ export interface CartItem {
 
 /** 型号下拉选项 */
 export interface CartModelOption {
-  id: number;
+  id: string;
   modelCode: string;
   modelName: string;
   maxCapacity: number;

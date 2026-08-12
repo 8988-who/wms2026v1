@@ -10,14 +10,14 @@ export interface WmsPointQueryParams extends BaseQueryParams {
   locationCode?: string;
   aisleCode?: string;
   status?: number;
-  aisleId?: number;
+  aisleId?: string;
 }
 
 export interface WmsPointForm {
-  id?: number;
+  id?: string;
   plantCode?: string;
-  locationId?: number;
-  aisleId?: number;
+  locationId?: string;
+  aisleId?: string;
   pointCode?: string;
   pointName?: string;
   barcode?: string;
@@ -29,12 +29,12 @@ export interface WmsPointForm {
 }
 
 export interface WmsPointItem {
-  id?: number;
+  id?: string;
   plantCode?: string;
-  locationId?: number;
+  locationId?: string;
   locationCode?: string;
   locationName?: string;
-  aisleId?: number;
+  aisleId?: string;
   aisleCode?: string;
   aisleName?: string;
   pointCode?: string;
@@ -52,7 +52,7 @@ export interface WmsPointItem {
 }
 
 export interface WmsPointLocationOption {
-  id: number;
+  id: string;
   code: string;
   name: string;
   floor: string;
@@ -60,10 +60,10 @@ export interface WmsPointLocationOption {
 }
 
 export interface WmsPointAisleOption {
-  id: number;
+  id: string;
   code: string;
   name: string;
-  locationId: number;
+  locationId: string;
   label: string;
 }
 
@@ -75,6 +75,6 @@ export interface WmsPointFormOptions {
 
 /** 批量状态更新表单 */
 export interface WmsPointBatchStatusForm {
-  ids: number[];
+  ids: string[];
   status: number;
 }

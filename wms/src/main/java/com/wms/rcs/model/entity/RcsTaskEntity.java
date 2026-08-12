@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.wms.common.base.BaseEntity;
+import com.wms.common.base.WmsBaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -27,7 +27,7 @@ import java.util.Map;
 @TableName(value = "wms_rcs_task", autoResultMap = true)
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class RcsTaskEntity extends BaseEntity {
+public class RcsTaskEntity extends WmsBaseEntity {
 
     @TableField(value = "created_time", fill = FieldFill.INSERT)
     @JsonInclude(value = JsonInclude.Include.NON_NULL)

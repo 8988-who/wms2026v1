@@ -3,7 +3,7 @@ package com.wms.warehouse.model.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.wms.common.base.BaseEntity;
+import com.wms.common.base.WmsBaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @TableName("wms_location")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class WmsLocation extends BaseEntity {
+public class WmsLocation extends WmsBaseEntity {
 
     /**
      * 创建时间（覆盖父类，映射数据库 created_time）

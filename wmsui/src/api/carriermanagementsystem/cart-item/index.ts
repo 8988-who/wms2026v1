@@ -34,7 +34,7 @@ const CartItemAPI = {
     });
   },
   /** 修改明细 */
-  update(id: number, data: CartItemForm) {
+  update(id: string, data: CartItemForm) {
     return request({
       url: `${CART_ITEM_BASE_URL}/${id}`,
       method: "put",
@@ -56,14 +56,14 @@ const CartItemAPI = {
     });
   },
   /** 取走单件物品 */
-  take(id: number) {
+  take(id: string) {
     return request({
       url: `${CART_ITEM_BASE_URL}/${id}/take`,
       method: "put",
     });
   },
   /** 批量取走物品 */
-  batchTake(ids: number[]) {
+  batchTake(ids: string[]) {
     return request({
       url: `${CART_ITEM_BASE_URL}/batch-take`,
       method: "put",
@@ -71,7 +71,7 @@ const CartItemAPI = {
     });
   },
   /** 按料车ID查询 */
-  getByCartId(cartId: number) {
+  getByCartId(cartId: string) {
     return request<unknown, CartItemRecord[]>({
       url: `${CART_ITEM_BASE_URL}/by-cart/${cartId}`,
       method: "get",

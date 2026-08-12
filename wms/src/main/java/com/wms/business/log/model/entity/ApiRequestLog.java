@@ -3,7 +3,7 @@ package com.wms.business.log.model.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.wms.common.base.BaseEntity;
+import com.wms.common.base.WmsBaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @TableName("api_request_log")
 @EqualsAndHashCode(callSuper = true)
 @Schema(description = "接口请求日志实体")
-public class ApiRequestLog extends BaseEntity {
+public class ApiRequestLog extends WmsBaseEntity {
 
     @Schema(description = "接口编码")
     private String apiCode;
