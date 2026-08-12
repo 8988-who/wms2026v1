@@ -654,7 +654,7 @@ COMMENT ON COLUMN "public"."wms_aisle"."updated_by" IS '更新人ID（关联sys_
 COMMENT ON COLUMN "public"."wms_aisle"."updated_time" IS '更新时间';
 COMMENT ON COLUMN "public"."wms_aisle"."aisle_purpose" IS '巷道用途：FULL-满架优先，EMPTY-空架优先，MIXED-混合（用于周转区优先存放规则）';
 COMMENT ON COLUMN "public"."wms_aisle"."is_handover_point" IS '是否交接点巷道：0-否，1-是';
-COMMENT ON COLUMN "public"."wms_aisle"."point_count" IS '绑定的点位数量（冗余计数，由触发器自动维护，用于列表快速展示）';
+COMMENT ON COLUMN "public"."wms_aisle"."point_count" IS '绑定的点位数量（冗余计数，由业务代码维护，用于列表快速展示）';
 COMMENT ON TABLE "public"."wms_aisle" IS '巷道/通道表：区域下一级物理划分，用于AGV路径规划和库存精细化管理';
 
 -- ----------------------------
@@ -915,20 +915,6 @@ COMMENT ON COLUMN "public"."wms_rcs_task_lifecycle"."operator_id" IS '操作者�
 COMMENT ON COLUMN "public"."wms_rcs_task_lifecycle"."remark" IS '变更备注';
 COMMENT ON COLUMN "public"."wms_rcs_task_lifecycle"."created_time" IS '状态变更时间';
 COMMENT ON TABLE "public"."wms_rcs_task_lifecycle" IS '任务状态变更历史表（记录任务状态全生命周期）';
-
--- ----------------------------
--- Function structure for update_updated_at_column
--- ----------------------------
-DROP FUNCTION IF EXISTS "public"."update_updated_at_column"();
-CREATE FUNCTION "public"."update_updated_at_column"()
-  RETURNS "pg_catalog"."trigger" AS $BODY$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$BODY$
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
 
 -- ----------------------------
 -- Alter sequences owned by
@@ -1308,6 +1294,10 @@ CREATE INDEX "idx_point_status" ON "public"."wms_point" USING btree (
 CREATE UNIQUE INDEX "uk_point_plant_code" ON "public"."wms_point" USING btree (
   "plant_code" COLLATE "pg_catalog"."default" "pg_catalog"."text_ops" ASC NULLS LAST,
   "point_code" COLLATE "pg_catalog"."default" "pg_catalog"."text_ops" ASC NULLS LAST
+);
+CREATE UNIQUE INDEX "uk_point_barcode" ON "public"."wms_point" USING btree (
+  "plant_code" COLLATE "pg_catalog"."default" "pg_catalog"."text_ops" ASC NULLS LAST,
+  "barcode" COLLATE "pg_catalog"."default" "pg_catalog"."text_ops" ASC NULLS LAST
 );
 
 -- ----------------------------

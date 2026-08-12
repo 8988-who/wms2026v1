@@ -77,6 +77,14 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
         dto.setPlantCode(location.getPlantCode());
         dto.setLocationId(location.getId());
 
+        // P1-6 修复：barcode 厂区内唯一校验（空值跳过，DB 唯一索引兜底）
+        if (StrUtil.isNotBlank(dto.getBarcode())) {
+            long dupCount = this.count(new LambdaQueryWrapper<WmsPoint>()
+                    .eq(WmsPoint::getPlantCode, dto.getPlantCode())
+                    .eq(WmsPoint::getBarcode, dto.getBarcode()));
+            Assert.isTrue(dupCount == 0, "该厂区下点位条码已存在：" + dto.getBarcode());
+        }
+
         String pointCode = wmsCodeGeneratorService.generatePointCode(aisle.getAisleCode(), () -> {
             WmsPoint max = this.getOne(new LambdaQueryWrapper<WmsPoint>()
                     .likeRight(WmsPoint::getPointCode, aisle.getAisleCode() + "-P")
@@ -135,6 +143,15 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
             dto.setPlantCode(existing.getPlantCode());
             dto.setLocationId(existing.getLocationId());
             dto.setPointCode(existing.getPointCode());
+        }
+
+        // P1-6 修复：barcode 厂区内唯一校验（空值跳过，排除自身，DB 唯一索引兜底）
+        if (StrUtil.isNotBlank(dto.getBarcode())) {
+            long dupCount = this.count(new LambdaQueryWrapper<WmsPoint>()
+                    .eq(WmsPoint::getPlantCode, dto.getPlantCode())
+                    .eq(WmsPoint::getBarcode, dto.getBarcode())
+                    .ne(WmsPoint::getId, id));
+            Assert.isTrue(dupCount == 0, "该厂区下点位条码已存在：" + dto.getBarcode());
         }
 
         WmsPoint entity = wmsPointConverter.toEntity(dto);
