@@ -54,6 +54,7 @@ export interface WmsPointItem {
 export interface WmsPointLocationOption {
   id: string;
   code: string;
+  plantCode?: string;
   name: string;
   floor: string;
   label: string;
@@ -75,6 +76,6 @@ export interface WmsPointFormOptions {
 
 /** 批量状态更新表单 */
 export interface WmsPointBatchStatusForm {
-  ids: string[];
+  ids: number[];
   status: number;
 }

@@ -250,17 +250,26 @@
                 </el-form-item>
 
                 <el-form-item label="区域类型" prop="locationType">
-                      <el-input
+                      <el-select
                           v-model="formData.locationType"
-                          placeholder="请输入区域类型（如：TURNOVER、DRY_ZONE、DRY_ROOM、BUFFER、PROD_LINE）"
-                      />
+                          placeholder="请选择区域类型（如：TURNOVER、DRY_ZONE、DRY_ROOM、BUFFER、PROD_LINE）"
+                          clearable
+                      >
+                        <el-option
+                            v-for="item in formOptions.locationTypes"
+                            :key="item"
+                            :label="item"
+                            :value="item"
+                        />
+                      </el-select>
                 </el-form-item>
 
                 <el-form-item label="父级区域" prop="parentId">
                       <el-input
                           v-model="formData.parentId"
                           type="number"
-                          placeholder="0表示顶级，其他填父区域ID"
+                          :disabled="true"
+                          placeholder="0表示顶级"
                       />
                 </el-form-item>
 
@@ -328,7 +337,8 @@
   const { toggle: toggleFullscreen } = useFullscreen(tableWrapperRef);
 
   const initialFormData = reactive({} as WmsLocationForm);
-  Object.assign(initialFormData, {} as WmsLocationForm);
+  // R-6 业务固化：区域仅单层使用（parent_id 恒为 0，不建子区域），表单父级区域固定 0 只读
+  Object.assign(initialFormData, { parentId: "0" } as WmsLocationForm);
 
   // 库位/区域表格数据
   const { loading, list, total, params, fetchData, handleQuery, handleResetQuery } = usePageTable<
@@ -352,6 +362,20 @@
     floors: [] as string[],
     updatedByNames: [] as string[],
   });
+
+  // R-7 启用：表单下拉选项（区域类型，来自后端 form-options，与 P1-3 用途语义固化一致）
+  const formOptions = reactive({
+    locationTypes: [] as string[],
+  });
+
+  async function loadFormOptions(): Promise<void> {
+    try {
+      const data = await WmsLocationAPI.getFormOptions();
+      formOptions.locationTypes = data.locationTypes || [];
+    } catch {
+      // 加载失败不影响主功能
+    }
+  }
 
   async function loadFilterOptions(plantCode?: string, floor?: string): Promise<void> {
     try {
@@ -398,7 +422,7 @@
   const rules: FormRules = {
                       plantCode: [{ required: true, message: "请输入厂区编码", trigger: "blur" }],
                       locationName: [{ required: true, message: "请输入区域名称", trigger: "blur" }],
-                      locationType: [{ required: true, message: "请输入区域类型", trigger: "blur" }],
+                      locationType: [{ required: true, message: "请选择区域类型", trigger: "change" }],
                       parentId: [{ required: true, message: "请输入父级区域ID", trigger: "blur" }],
                       sortOrder: [{ required: true, message: "请输入排序号", trigger: "blur" }],
                       status: [{ required: true, message: "请选择状态", trigger: "change" }],
@@ -499,7 +523,8 @@
   }
 
   async function handleBatchStatus(status: number, actionText: string): Promise<void> {
-    const ids = selectedIds.value;
+    // 统一 ids 为 number 类型（selectedIds 为 string | number，map(Number) 收敛）
+    const ids = selectedIds.value.map(Number);
     if (!ids || ids.length === 0) {
       ElMessage.warning("请勾选需要操作的数据项");
       return;
@@ -562,6 +587,7 @@
   }
 
   onMounted(() => {
+    loadFormOptions();
     loadFilterOptions();
     handleQuery();
   });

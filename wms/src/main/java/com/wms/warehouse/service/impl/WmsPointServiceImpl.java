@@ -232,6 +232,7 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
             java.util.Map<String, Object> item = new java.util.LinkedHashMap<>();
             item.put("id", loc.getId());
             item.put("code", loc.getLocationCode());
+            item.put("plantCode", loc.getPlantCode());
             item.put("name", loc.getLocationName());
             item.put("floor", loc.getFloor());
             item.put("label", loc.getLocationCode() + " - " + loc.getLocationName());

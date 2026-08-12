@@ -61,7 +61,7 @@ const WmsLocationAPI = {
     },
     /** 获取表单下拉选项（厂区编码、区域类型） */
     getFormOptions() {
-        return request<unknown, { plantCodes: string[]; locationTypes: { id: string; label: string }[] }>({
+        return request<unknown, { plantCodes: string[]; locationTypes: string[] }>({
             url: `${WMS_LOCATION_BASE_URL}/form-options`,
             method: "get",
         });

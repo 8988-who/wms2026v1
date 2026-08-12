@@ -55,6 +55,7 @@ export interface WmsAisleItem {
 export interface WmsAisleLocationOption {
   id: string;
   code: string;
+  plantCode?: string;
   name: string;
   floor: string;
   label: string;

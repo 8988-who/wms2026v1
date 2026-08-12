@@ -4,8 +4,10 @@ import cn.hutool.core.util.StrUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -27,6 +29,15 @@ public class WmsCodeGeneratorService {
     private StringRedisTemplate stringRedisTemplate;
 
     private static final String REDIS_KEY_PREFIX = "code:seq:";
+
+    /**
+     * 编码序列初始化 CAS 脚本（R-5 修复）：仅当序列仍为初始值 "0" 时，才覆写为库内最大序号。
+     * 若序号已被其他线程 INCR 分发过（值 != "0"）则放弃覆写，避免已分发的序号被覆盖回退，
+     * 消除"SETNX("0") 后再 set(maxSeq)"两段式非原子的竞态窗口。
+     */
+    private static final DefaultRedisScript<Boolean> INIT_SEQ_CAS_SCRIPT = new DefaultRedisScript<>(
+            "if redis.call('get', KEYS[1]) == '0' then redis.call('set', KEYS[1], ARGV[1]) return 1 else return 0 end",
+            Boolean.class);
 
     /**
      * 生成库位/区域编码
@@ -83,7 +94,9 @@ public class WmsCodeGeneratorService {
     /**
      * 如果 Redis key 不存在，则从数据库初始化序号
      * <p>
-     * setIfAbsent 是原子操作，多线程并发时只有一个线程会初始化成功。
+     * setIfAbsent 是原子操作，多线程并发时只有一个线程会初始化成功；
+     * 初始化成功后以 Lua CAS 将序号覆写为库内最大值（仅当仍为初始值 "0" 时），
+     * 与并发 INCR 竞态时放弃覆写（R-5 修复）。
      * </p>
      */
     private void initSeqIfAbsent(String key, Supplier<Integer> maxSeqSupplier) {
@@ -91,7 +104,8 @@ public class WmsCodeGeneratorService {
         if (Boolean.TRUE.equals(notExist) && maxSeqSupplier != null) {
             Integer maxSeq = maxSeqSupplier.get();
             if (maxSeq != null && maxSeq > 0) {
-                stringRedisTemplate.opsForValue().set(key, String.valueOf(maxSeq));
+                // R-5 修复：Lua CAS 原子覆写，杜绝"并发线程已 INCR 分发后又被 set 覆盖"的窗口
+                stringRedisTemplate.execute(INIT_SEQ_CAS_SCRIPT, List.of(key), String.valueOf(maxSeq));
                 log.debug("初始化编码序列: key={}, maxSeq={}", key, maxSeq);
             }
         }

@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * 巷道业务服务实现
  * <p>
- * 实现巷道的分页查询、新增（自动生成编码、校验区域状态）、修改（区域变更时重新生成编码）、
+ * 实现巷道的分页查询、新增（自动生成编码、校验区域状态）、修改（锁定所属区域、停用时级联停用点位）、
  * 删除、批量状态更新（级联停用点位）及表单/筛选选项等功能。
  * </p>
  *
@@ -68,6 +68,8 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
         Assert.notNull(location, "所属区域不存在");
         Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法新增巷道");
 
+        // R-2 修复：巷道 plantCode 冗余字段从所属区域下推（与 saveWmsPoint 一致）
+        dto.setPlantCode(location.getPlantCode());
         dto.setFloor(location.getFloor());
 
         String aisleCode = wmsCodeGeneratorService.generateAisleCode(location.getLocationCode(), "A", () -> {
@@ -94,12 +96,24 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
         Assert.isTrue(dto.getLocationId().equals(existing.getLocationId()),
                 "所属区域不可变更，如需迁移请删除该巷道及下级后重建");
 
+        // R-2 修复：plantCode 冗余字段从所属区域下推（与 saveWmsPoint 一致）
+        WmsLocation location = wmsLocationService.getById(existing.getLocationId());
+        Assert.notNull(location, "所属区域不存在");
+        dto.setPlantCode(location.getPlantCode());
+
         dto.setAisleCode(existing.getAisleCode());
         dto.setFloor(existing.getFloor());
 
         WmsAisle entity = wmsAisleConverter.toEntity(dto);
         entity.setId(id);
-        return this.updateById(entity);
+        boolean result = this.updateById(entity);
+
+        // R-1 修复：单条编辑停用时级联停用其下点位（与 updateWmsLocation 行为对齐）
+        if (result && dto.getStatus() != null && dto.getStatus() == 0) {
+            wmsCascadeService.cascadeDisableAisles(List.of(id));
+        }
+
+        return result;
     }
 
     @Override
@@ -169,6 +183,7 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
             java.util.Map<String, Object> item = new java.util.LinkedHashMap<>();
             item.put("id", loc.getId());
             item.put("code", loc.getLocationCode());
+            item.put("plantCode", loc.getPlantCode());
             item.put("name", loc.getLocationName());
             item.put("floor", loc.getFloor());
             item.put("label", loc.getLocationCode() + " - " + loc.getLocationName());

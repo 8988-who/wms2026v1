@@ -55,7 +55,7 @@ public class WmsLocation extends WmsBaseEntity {
     private String locationName;
 
     /**
-     * 库位/区域类型（如：厂区、区域、货架、库位等）
+     * 区域用途类型（预留，如 TURNOVER/DRY_ZONE/DRY_ROOM/BUFFER/PROD_LINE，当前不参与业务逻辑）
      */
     private String locationType;
 

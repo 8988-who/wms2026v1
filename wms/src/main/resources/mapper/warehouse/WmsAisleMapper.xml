@@ -64,6 +64,9 @@
             <if test="queryParams.locationCode != null and queryParams.locationCode != ''">
                 AND l.location_code LIKE '%' || #{queryParams.locationCode} || '%'
             </if>
+            <if test="queryParams.locationId != null">
+                AND a.location_id = #{queryParams.locationId}
+            </if>
             <if test="queryParams.aislePurpose != null and queryParams.aislePurpose != ''">
                 AND a.aisle_purpose = #{queryParams.aislePurpose}
             </if>

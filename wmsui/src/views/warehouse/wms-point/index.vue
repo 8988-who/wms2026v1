@@ -442,7 +442,7 @@
     const selectedPlant = formData.plantCode;
     if (selectedPlant) {
       formOptions.filteredLocations = formOptions.locations.filter(
-        (loc) => loc.code?.startsWith(selectedPlant)
+        (loc) => loc.plantCode === selectedPlant
       );
     } else {
       formOptions.filteredLocations = formOptions.locations;
@@ -472,7 +472,7 @@
       if (selected) {
         const location = formOptions.filteredLocations.find((loc) => loc.id === selected.locationId);
         formData.floor = location?.floor || '';
-        formData.plantCode = location?.code?.split('-')[0] || '';
+        formData.plantCode = location?.plantCode || '';
       }
     }
   }
@@ -542,7 +542,7 @@
     // 编辑时根据已有值级联过滤下拉选项（不重置 formData）
     if (formData.plantCode) {
       formOptions.filteredLocations = formOptions.locations.filter(
-        (loc) => loc.code?.startsWith(formData.plantCode)
+        (loc) => loc.plantCode === formData.plantCode
       );
     }
     if (formData.locationId) {
@@ -596,7 +596,8 @@
   }
 
   async function handleBatchStatus(status: number, actionText: string): Promise<void> {
-    const ids = selectedIds.value;
+    // 统一 ids 为 number 类型（selectedIds 为 string | number，map(Number) 收敛）
+    const ids = selectedIds.value.map(Number);
     if (!ids || ids.length === 0) {
       ElMessage.warning("请勾选需要操作的数据项");
       return;

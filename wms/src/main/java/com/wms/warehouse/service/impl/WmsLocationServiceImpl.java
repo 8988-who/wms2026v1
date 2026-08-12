@@ -24,11 +24,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 库位/区域业务服务实现
  * <p>
- * 实现库位/区域的分页查询、新增（自动生成编码）、修改（厂区变更时重新生成编码）、
+ * 实现库位/区域的分页查询、新增（自动生成编码）、修改（厂区编码不可变更，P0-1 已锁定）、
  * 删除、批量状态更新（级联停用巷道和点位）及级联筛选选项等功能。
  * </p>
  *
@@ -84,7 +85,7 @@ public class WmsLocationServiceImpl extends ServiceImpl<WmsLocationMapper, WmsLo
         Assert.notNull(existing, "库位/区域不存在");
 
         // P0-1 修复：禁止修改厂区编码，防止下级巷道/点位编码链断裂与冗余字段失准
-        Assert.isTrue(dto.getPlantCode().equals(existing.getPlantCode()),
+        Assert.isTrue(Objects.equals(dto.getPlantCode(), existing.getPlantCode()),
                 "厂区编码不可修改，如需迁移请删除该区域及下级后重建");
 
         dto.setLocationCode(existing.getLocationCode());
