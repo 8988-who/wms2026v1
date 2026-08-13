@@ -79,7 +79,10 @@
           height="100%"
           border
           highlight-current-row
-          @selection-change="(rows) => (selectedIds = rows.map((r) => r.id!))"
+          @selection-change="(rows) => {
+            selectedRows = rows as CartItemRecord[];
+            selectedIds = rows.map((r) => r.id!);
+          }"
         >
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column key="sortOrder" label="装货顺序" prop="sortOrder" width="60" align="center" />
@@ -160,7 +163,8 @@
     >
       <el-form ref="dataFormRef" :model="formData" :rules="rules" label-width="100px">
         <el-form-item label="料车编号" prop="cartId">
-          <el-select v-model="formData.cartId" placeholder="请选择料车" filterable style="width: 100%">
+          <!-- 编辑态禁用：后端 updateCartItem 不支持修改 cartId（硬约束），避免"以为换车实际没换" -->
+          <el-select v-model="formData.cartId" placeholder="请选择料车" filterable style="width: 100%" :disabled="dialog.isEdit">
             <el-option
               v-for="item in carts"
               :key="item.id"
@@ -254,6 +258,8 @@
 
   // 雪花 ID 为字符串（后端 Long 序列化为 string），保持字符串避免 Number 丢精度
   const selectedIds = ref<string[]>([]);
+  // 勾选行对象（用于批量操作按目标状态过滤：取走=在车(1)、删除=已取走(2)）
+  const selectedRows = ref<CartItemRecord[]>([]);
   const submitLoading = ref(false);
 
   // 下拉选项
@@ -403,11 +409,22 @@
   }
 
   async function handleBatchTake(): Promise<void> {
-    if (selectedIds.value.length === 0) return;
+    // 方案 A：前端过滤目标状态（在车 status=1），已取走/无关行自动忽略
+    const takeIds = selectedRows.value
+      .filter((r) => r.status === 1)
+      .map((r) => r.id!)
+      .filter((id): id is string => Boolean(id));
+    if (takeIds.length === 0) {
+      ElMessage.warning("勾选中没有可批量取走的在车明细");
+      return;
+    }
+    const skipped = selectedRows.value.length - takeIds.length;
 
     try {
       await ElMessageBox.confirm(
-        `确认将选中的 ${selectedIds.value.length} 件物品取走？`,
+        skipped > 0
+          ? `将取走勾选中 ${takeIds.length} 件在车物品，另有 ${skipped} 件已取走记录将被忽略。`
+          : `确认将选中的 ${takeIds.length} 件物品取走？`,
         "警告",
         { confirmButtonText: "确定", cancelButtonText: "取消", type: "warning" },
       );
@@ -418,9 +435,10 @@
 
     submitLoading.value = true;
     try {
-      await CartItemAPI.batchTake(selectedIds.value);
+      await CartItemAPI.batchTake(takeIds);
       ElMessage.success("批量取走成功");
       selectedIds.value = [];
+      selectedRows.value = [];
       handleQuery();
     } catch (e: unknown) {
       const msg = (e as { msg?: string })?.msg || "批量取走失败";
@@ -455,11 +473,22 @@
   }
 
   async function handleBatchDelete(): Promise<void> {
-    if (selectedIds.value.length === 0) return;
+    // 方案 A：前端过滤目标状态（已取走 status=2），在车记录自动忽略
+    const delIds = selectedRows.value
+      .filter((r) => r.status === 2)
+      .map((r) => r.id!)
+      .filter((id): id is string => Boolean(id));
+    if (delIds.length === 0) {
+      ElMessage.warning("勾选中没有可删除的已取走记录");
+      return;
+    }
+    const skipped = selectedRows.value.length - delIds.length;
 
     try {
       await ElMessageBox.confirm(
-        `确认删除选中的 ${selectedIds.value.length} 条记录？仅允许删除已取走的记录。`,
+        skipped > 0
+          ? `将删除勾选中 ${delIds.length} 条已取走记录，另有 ${skipped} 条在车记录将被忽略（不允许删除）。`
+          : `确认删除选中的 ${delIds.length} 条记录？仅允许删除已取走的记录。`,
         "警告",
         { confirmButtonText: "确定", cancelButtonText: "取消", type: "warning" },
       );
@@ -470,9 +499,10 @@
 
     loading.value = true;
     try {
-      await CartItemAPI.deleteByIds(selectedIds.value.join(","));
+      await CartItemAPI.deleteByIds(delIds.join(","));
       ElMessage.success("删除成功");
       selectedIds.value = [];
+      selectedRows.value = [];
       handleQuery();
     } finally {
       loading.value = false;

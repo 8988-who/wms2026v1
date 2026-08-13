@@ -1,5 +1,6 @@
 package com.wms.carriermanagementsystem.cartitem.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,6 +18,8 @@ import com.wms.carriermanagementsystem.cartitem.service.CartItemService;
 import com.wms.carriermanagementsystem.cartmodel.mapper.CartModelMapper;
 import com.wms.carriermanagementsystem.cartmodel.model.entity.CartModel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> implements CartItemService {
 
     private final CartItemMapper cartItemMapper;
@@ -91,6 +95,18 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
             }
         }
 
+        // 如果修改了 layerNo，校验不能超过型号配置的层数（与 saveCartItem 层号校验口径一致）
+        if (dto.getLayerNo() != null && !dto.getLayerNo().equals(entity.getLayerNo())) {
+            Cart cart = cartMapper.selectById(entity.getCartId());
+            if (cart != null) {
+                CartModel layerModel = cartModelMapper.selectById(cart.getModelId());
+                if (layerModel != null && layerModel.getLayerCount() != null
+                        && dto.getLayerNo() > layerModel.getLayerCount()) {
+                    throw new RuntimeException("该型号最多 " + layerModel.getLayerCount() + " 层，当前层号 " + dto.getLayerNo() + " 超出范围");
+                }
+            }
+        }
+
         // 使用 LambdaUpdateWrapper 显式指定需要更新的字段
         LambdaUpdateWrapper<CartItem> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(CartItem::getId, id);
@@ -118,7 +134,16 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
             wrapper.set(CartItem::getRemark, dto.getRemark());
         }
 
-        return update(wrapper);
+        try {
+            return update(wrapper);
+        } catch (DuplicateKeyException e) {
+            // 并发窗口下唯一索引兜底冲突：应用层查重已通过，但被并发写入抢先
+            if (e.getMessage() != null && e.getMessage().contains("uk_item_cart_sort")) {
+                throw new RuntimeException("该料车已存在顺序号为 " + dto.getSortOrder() + " 的物品");
+            }
+            log.warn("并发修改条码冲突，productCode={}", dto.getProductCode(), e);
+            throw new RuntimeException("货品条码 " + dto.getProductCode() + " 已存在，不允许重复");
+        }
     }
 
     @Override
@@ -176,8 +201,22 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
         if (entity.getLayerNo() == null) {
             entity.setLayerNo(1);
         }
+
+        // ⑥ 层号校验：不能超过型号配置的层数（entity.getLayerNo() 已有默认值 1）
+        CartModel layerModel = cartModelMapper.selectById(cart.getModelId());
+        if (layerModel != null && layerModel.getLayerCount() != null
+                && entity.getLayerNo() > layerModel.getLayerCount()) {
+            throw new RuntimeException("该型号最多 " + layerModel.getLayerCount() + " 层，当前层号 " + entity.getLayerNo() + " 超出范围");
+        }
         
-        boolean saved = save(entity);
+        boolean saved;
+        try {
+            saved = save(entity);
+        } catch (DuplicateKeyException e) {
+            // 并发装车窗口：应用层查重通过后唯一索引兜底，提示友好错误而非 500
+            log.warn("并发装车条码冲突，productCode={}", dto.getProductCode(), e);
+            throw new RuntimeException("货品条码 " + dto.getProductCode() + " 已存在，不允许重复装车");
+        }
 
         if (saved) {
             // 手动维护料车数量与状态（双保险：实时计算 + 手动维护）
@@ -199,6 +238,12 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
         }
 
         Long cartId = item.getCartId();
+
+        // 维修车不参与业务：拦截取走（防御性校验，正常流程下维修车已强制空车）
+        Cart cart = cartMapper.selectById(cartId);
+        if (cart != null && cart.getStatus() != null && cart.getStatus() == 4) {
+            throw new RuntimeException("料车维修中，不可取走物品");
+        }
 
         // 标记已取走
         item.setStatus(2);
@@ -233,21 +278,25 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
 
         // 仅允许删除已取走的记录
         List<CartItem> items = listByIds(idList);
-        Long cartId = null;
         for (CartItem item : items) {
             if (item.getStatus() != 2) {
                 throw new RuntimeException("物品（条码：" + item.getProductCode() + "）尚未取走，不允许删除");
-            }
-            if (cartId == null) {
-                cartId = item.getCartId();
             }
         }
 
         boolean removed = removeByIds(idList);
 
-        if (removed && cartId != null) {
-            // 手动维护料车数量与状态（双保险：实时计算 + 手动维护）
-            updateCartAfterChange(cartId);
+        if (removed) {
+            // 手动维护料车数量与状态（双保险：实时计算 + 手动维护）；
+            // 跨车批量删除时对涉及的所有料车逐一维护（Q-4 修复，原实现仅维护第一辆车）
+            List<Long> cartIds = items.stream()
+                    .map(CartItem::getCartId)
+                    .filter(cartId -> cartId != null)
+                    .distinct()
+                    .collect(Collectors.toList());
+            for (Long cartId : cartIds) {
+                updateCartAfterChange(cartId);
+            }
         }
 
         return removed;
@@ -260,8 +309,9 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
 
     @Override
     public List<Cart> getFormOptions() {
+        // 仅返回可装车候选：空闲(1)/使用中(2)；满载(3)/维修(4)不可装，从下拉源头过滤（与 availableCarts 同语义）
         return cartMapper.selectList(new LambdaQueryWrapper<Cart>()
-                .ne(Cart::getStatus, 4)
+                .in(Cart::getStatus, 1, 2)
                 .orderByAsc(Cart::getCartCode));
     }
 
@@ -280,6 +330,14 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean loadByBarcode(String cartCode, String productCode, String productModel) {
+        // 条码机直连参数防御：缺参给出可读提示，避免插入 null 触发数据库 NOT NULL 异常
+        if (StrUtil.isBlank(cartCode) || StrUtil.isBlank(productCode)) {
+            throw new RuntimeException("扫码参数缺失：料车编号、货品条码不能为空");
+        }
+        if (StrUtil.isBlank(productModel)) {
+            throw new RuntimeException("扫码参数缺失：货品型号不能为空");
+        }
+
         // cartCode → 查 cartId
         Cart cart = cartMapper.selectOne(
                 new LambdaQueryWrapper<Cart>()

@@ -17,7 +17,7 @@
         <result column="updated_time" property="updatedTime"/>
     </resultMap>
 
-    <!-- 分页查询型号列表（左联 wms_cart 统计关联料车数） -->
+    <!-- 分页查询型号列表（左联 wms_cart 统计关联料车数，左联 sys_user 取创建/更新人） -->
     <select id="selectCartModelList" resultMap="CartModelVOMap">
         SELECT
             m.id,
@@ -27,7 +27,9 @@
             m.layer_count,
             m.remark,
             COALESCE(c.cart_count, 0) AS cart_count,
+            su1.nickname AS created_name,
             m.created_time,
+            su2.nickname AS updated_name,
             m.updated_time
         FROM wms_cart_model m
         LEFT JOIN (
@@ -35,6 +37,8 @@
             FROM wms_cart
             GROUP BY model_id
         ) c ON m.id = c.model_id
+        LEFT JOIN sys_user su1 ON m.created_by = su1.id
+        LEFT JOIN sys_user su2 ON m.updated_by = su2.id
         <where>
             <if test="query.modelCode != null and query.modelCode != ''">
                 AND m.model_code LIKE '%' || #{query.modelCode} || '%'

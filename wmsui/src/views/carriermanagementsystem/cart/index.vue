@@ -47,19 +47,14 @@
           >新增</el-button>
           <el-button
             v-hasPerm="['carriermanagementsystem:cart:update']"
-            :disabled="selectedIds.length === 0"
-            @click="handleBatchStatus(2)"
-          >标记使用中</el-button>
-          <el-button
-            v-hasPerm="['carriermanagementsystem:cart:update']"
-            :disabled="selectedIds.length === 0"
-            @click="handleBatchStatus(1)"
-          >标记空闲</el-button>
-          <el-button
-            v-hasPerm="['carriermanagementsystem:cart:update']"
-            :disabled="selectedIds.length === 0"
-            @click="handleBatchStatus(4)"
+            :disabled="!hasIdleSelected"
+            @click="handleBatchStatus(4, '维修')"
           >标记维修</el-button>
+          <el-button
+            v-hasPerm="['carriermanagementsystem:cart:update']"
+            :disabled="!hasRepairSelected"
+            @click="handleBatchStatus(1, '空闲（解除维修）')"
+          >解除维修</el-button>
         </div>
         <div class="page-toolbar__right">
           <el-tooltip content="刷新" placement="top">
@@ -84,7 +79,10 @@
           height="100%"
           border
           highlight-current-row
-          @selection-change="(rows) => (selectedIds = rows.map((r) => r.id!))"
+          @selection-change="(rows) => {
+            selectedRows = rows as CartItem[];
+            selectedIds = rows.map((r) => r.id!);
+          }"
         >
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column key="cartCode" label="料车编号" prop="cartCode" min-width="130" align="center" />
@@ -180,7 +178,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, onMounted } from "vue";
+  import { ref, reactive, computed, onMounted } from "vue";
   import { useFullscreen } from "@vueuse/core";
   import {
     ElMessage,
@@ -205,6 +203,10 @@
 
   // 雪花 ID 为字符串（后端 Long 序列化为 string），保持字符串避免 Number 丢精度
   const selectedIds = ref<string[]>([]);
+  // 勾选行对象（用于维修状态按钮可用性判断：标记维修=含空闲车、解除维修=含维修车）
+  const selectedRows = ref<CartItem[]>([]);
+  const hasIdleSelected = computed(() => selectedRows.value.some((r) => r.status === 1));
+  const hasRepairSelected = computed(() => selectedRows.value.some((r) => r.status === 4));
 
   // 下拉选项
   const formOptions = ref<CartModelOption[]>([]);
@@ -324,13 +326,12 @@
     }
   }
 
-  async function handleBatchStatus(status: number): Promise<void> {
+  async function handleBatchStatus(status: number, label: string): Promise<void> {
     if (selectedIds.value.length === 0) return;
 
-    const statusMap: Record<number, string> = { 1: "空闲", 2: "使用中", 4: "维修" };
     try {
       await ElMessageBox.confirm(
-        `确认将选中的 ${selectedIds.value.length} 辆料车标记为「${statusMap[status]}」？`,
+        `确认将选中的 ${selectedIds.value.length} 辆料车标记为「${label}」？`,
         "警告",
         { confirmButtonText: "确定", cancelButtonText: "取消", type: "warning" },
       );
@@ -344,6 +345,7 @@
       await CartAPI.batchUpdateStatus(selectedIds.value, status);
       ElMessage.success("状态更新成功");
       selectedIds.value = [];
+      selectedRows.value = [];
       handleQuery();
     } finally {
       loading.value = false;
