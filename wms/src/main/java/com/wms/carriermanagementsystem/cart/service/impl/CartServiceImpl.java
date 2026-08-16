@@ -120,14 +120,23 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         // 料车编号唯一性前置查重（修改时排除自身）
         checkCartCodeUnique(dto.getCartCode(), id);
 
-        Cart entity = cartConverter.toEntity(dto);
-        entity.setId(id);
+        // 增量映射：仅把表单字段叠加到已存在实体 current 上，status/currentQuantity 等冗余状态字段保持原值，
+        // 不依赖 MyBatis-Plus "默认跳过 null" 策略（M-1 加固）
+        cartConverter.updateEntity(current, dto);
+        current.setId(id);
+        boolean ok;
         try {
-            return updateById(entity);
+            ok = updateById(current);
         } catch (DuplicateKeyException e) {
             log.warn("并发修改料车编号冲突，cartCode={}", dto.getCartCode(), e);
             throw new RuntimeException("料车编号 " + dto.getCartCode() + " 已存在");
         }
+
+        // 容量或型号变化时，重算冗余 status/currentQuantity（改小可能满载、改大可能解除满载，M-2）
+        if (ok && (dto.getActualCapacity() != null || dto.getModelId() != null)) {
+            recalcCartStatus(id);
+        }
+        return ok;
     }
 
     @Override
@@ -211,5 +220,46 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         return list(new LambdaQueryWrapper<Cart>()
                 .in(Cart::getStatus, 1, 2)
                 .orderByAsc(Cart::getCartCode));
+    }
+
+    /**
+     * 重算并回写料车的 currentQuantity 与 status（双保险机制的写入侧维护）。
+     * <p>
+     * 与 {@code CartItemServiceImpl.updateCartAfterChange} 口径一致：只统计在车明细（status=1），
+     * 维修态（status=4）不参与重算。用于容量/型号变更后同步冗余状态字段（M-2）。
+     * 使用独立 {@code new Cart()} 仅更新 id/currentQuantity/status 三字段，不影响其他字段。
+     * </p>
+     */
+    private void recalcCartStatus(Long cartId) {
+        Cart cart = getById(cartId);
+        if (cart == null || (cart.getStatus() != null && cart.getStatus() == 4)) {
+            return;
+        }
+        // 计算有效容量：COALESCE(actual_capacity, model.max_capacity)
+        int effectiveCapacity;
+        if (cart.getActualCapacity() != null && cart.getActualCapacity() > 0) {
+            effectiveCapacity = cart.getActualCapacity();
+        } else {
+            CartModel model = cartModelMapper.selectById(cart.getModelId());
+            effectiveCapacity = model != null && model.getMaxCapacity() != null ? model.getMaxCapacity() : 0;
+        }
+        // 实时计算当前在车数量
+        Long inCart = cartItemMapper.selectCount(
+                new LambdaQueryWrapper<CartItem>()
+                        .eq(CartItem::getCartId, cartId)
+                        .eq(CartItem::getStatus, 1));
+        int count = inCart != null ? inCart.intValue() : 0;
+
+        Cart update = new Cart();
+        update.setId(cartId);
+        update.setCurrentQuantity(count);
+        if (count == 0) {
+            update.setStatus(1);  // 空闲
+        } else if (effectiveCapacity > 0 && count >= effectiveCapacity) {
+            update.setStatus(3);  // 满载
+        } else {
+            update.setStatus(2);  // 使用中
+        }
+        updateById(update);
     }
 }
