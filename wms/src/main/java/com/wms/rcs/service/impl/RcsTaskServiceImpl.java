@@ -12,7 +12,9 @@ import com.wms.common.exception.BusinessException;
 import com.wms.common.result.Result;
 import com.wms.common.result.ResultCode;
 import com.wms.rcs.enums.RcsOperatorTypeEnum;
+import com.wms.rcs.enums.RcsTaskPriorityEnum;
 import com.wms.rcs.enums.RcsTaskStatusEnum;
+import com.wms.rcs.enums.RcsTaskTypeEnum;
 import com.wms.rcs.mapper.RcsTaskLifecycleMapper;
 import com.wms.rcs.mapper.RcsTaskMapper;
 import com.wms.rcs.model.dto.RcsTaskDTO;
@@ -73,7 +75,14 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     @Override
     public IPage<RcsTaskVO> getRcsTaskPage(RcsTaskQueryDTO queryParams) {
         Page<RcsTaskVO> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
-        return this.getBaseMapper().getRcsTaskPage(page, queryParams);
+        IPage<RcsTaskVO> result = this.getBaseMapper().getRcsTaskPage(page, queryParams);
+        // XML 分页查询未包含枚举描述字段，此处按枚举补齐（与 getRcsTaskDetail 的 converter 口径一致）
+        result.getRecords().forEach(vo -> {
+            vo.setStatusLabel(RcsTaskStatusEnum.getLabelByValue(vo.getStatus()));
+            vo.setTaskTypeLabel(RcsTaskTypeEnum.getLabelByValue(vo.getTaskType()));
+            vo.setPriorityLabel(RcsTaskPriorityEnum.getLabelByValue(vo.getPriority()));
+        });
+        return result;
     }
 
     @Override
@@ -118,7 +127,7 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     public Long saveAndSubmitRcsTask(RcsTaskDTO dto) {
         // 先本地建单（独立事务提交，确保下发远程调用前任务已落库）
         Long taskId = self.saveRcsTask(dto);
-        // 建单成功后立即下发；下发失败不影响已建的任务（任务会被置为异常，可后续重试）
+        // 建单成功后立即下发；下发失败不影响已建的任务（任务会被置为异常，可经 submitRcsTask 重试下发或取消）
         submitRcsTask(taskId);
         return taskId;
     }
@@ -130,8 +139,12 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     public boolean submitRcsTask(Long id) {
         RcsTaskEntity task = this.getById(id);
         Assert.notNull(task, "任务不存在");
-        Assert.isTrue(RcsTaskStatusEnum.PENDING.getValue().equals(task.getStatus()),
-                "仅待执行状态的任务可下发，当前任务[" + task.getTaskCode() + "]状态不允许下发");
+        // 待执行任务首次下发；异常任务允许重试下发（沿用原 taskCode 作 reqCode，RCS 侧幂等去重不会重复作业，
+        // 成功后经 changeStatus 由 EXCEPTION→ASSIGNED，矩阵已放行）
+        Integer submitStatus = task.getStatus();
+        Assert.isTrue(RcsTaskStatusEnum.PENDING.getValue().equals(submitStatus)
+                        || RcsTaskStatusEnum.EXCEPTION.getValue().equals(submitStatus),
+                "仅待执行/异常状态的任务可下发，当前任务[" + task.getTaskCode() + "]状态不允许下发");
 
         Result<Object> result;
         try {
@@ -192,21 +205,22 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         Assert.notNull(task, "任务不存在");
         Integer status = task.getStatus();
 
-        // 终态任务不可取消
+        // 仅已完成/已取消为不可逆终态；异常任务允许取消（EXCEPTION→CANCELLED，矩阵已放行）
         Assert.isTrue(!RcsTaskStatusEnum.FINISHED.getValue().equals(status)
-                        && !RcsTaskStatusEnum.CANCELLED.getValue().equals(status)
-                        && !RcsTaskStatusEnum.EXCEPTION.getValue().equals(status),
+                        && !RcsTaskStatusEnum.CANCELLED.getValue().equals(status),
                 "任务[" + task.getTaskCode() + "]已处于终态，不能取消");
 
         String remark = StrUtil.isBlank(reason) ? "手动取消任务" : "手动取消任务：" + reason;
 
-        // 待执行任务从未下发到 RCS，本地直接取消，无需远程调用
-        if (RcsTaskStatusEnum.PENDING.getValue().equals(status)) {
+        // 从未到达 RCS 的任务（待执行，或下发失败无外部任务号的异常任务）：本地直接取消，无需远程调用
+        boolean neverReachedRcs = RcsTaskStatusEnum.PENDING.getValue().equals(status)
+                || (RcsTaskStatusEnum.EXCEPTION.getValue().equals(status) && StrUtil.isBlank(task.getRcsTaskId()));
+        if (neverReachedRcs) {
             self.applyCancelled(id, remark);
             return true;
         }
 
-        // 已派发/执行中：先联动 RCS 取消，成功后再落库
+        // 已派发/执行中、或已到达 RCS 后异常（有外部任务号）：先联动 RCS 取消，成功后再落库
         try {
             Result<Object> result = agvService.commonRequest(ApiEnum.AGV_cancelTask, buildCancelParams(task));
             if (result == null || !ResultCode.SUCCESS.getCode().equals(result.getCode())) {

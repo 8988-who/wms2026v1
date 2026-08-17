@@ -2,6 +2,7 @@ package com.wms.framework.web.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.module.SimpleModule;
@@ -32,6 +33,7 @@ public class JacksonConfig {
      * 行为的唯一入口。</p>
      */
     @Bean
+    @Primary
     public JsonMapper objectMapper() {
         return JsonMapper.builder()
                 .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)

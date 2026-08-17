@@ -49,7 +49,11 @@ public interface RcsTaskService extends IService<RcsTaskEntity> {
     Long saveAndSubmitRcsTask(RcsTaskDTO dto);
 
     /**
-     * 将指定的"待执行"任务下发给 RCS（可对建单后未成功下发的任务重试）
+     * 将"待执行"或"异常"任务下发给 RCS
+     * <p>
+     * 待执行任务首次下发；异常任务（含建单后下发失败者）可重试下发，沿用原任务编号作 reqCode，
+     * RCS 侧按请求编号幂等去重，不会重复作业。下发成功流转为"已派发"，失败流转为"异常"。
+     * </p>
      *
      * @return 下发是否成功
      */
@@ -58,8 +62,9 @@ public interface RcsTaskService extends IService<RcsTaskEntity> {
     /**
      * 取消任务（联动 RCS）
      * <p>
-     * 待执行任务本地直接取消；已派发/执行中的任务先调用 RCS 任务取消接口 AGV_cancelTask，
-     * 成功后再流转为"已取消"。终态（已完成/已取消/异常）任务不可取消。
+     * 未到达 RCS 的任务（待执行、或下发失败无外部任务号的异常任务）本地直接取消；
+     * 已派发/执行中、或已到达 RCS 后异常（有外部任务号）的任务先调用 RCS 任务取消接口 AGV_cancelTask，
+     * 成功后再流转为"已取消"。仅不可逆终态（已完成/已取消）不可取消。
      * </p>
      *
      * @param id     任务ID

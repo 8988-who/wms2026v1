@@ -3684,7 +3684,7 @@ CREATE TABLE "public"."wms_rcs_task_lifecycle" (
   "status_to" int4 NOT NULL,
   "operator_type" varchar(20) COLLATE "pg_catalog"."default",
   "operator_id" varchar(64) COLLATE "pg_catalog"."default",
-  "remark" varchar(255) COLLATE "pg_catalog"."default",
+  "remark" text COLLATE "pg_catalog"."default",
   "created_time" timestamp(6) DEFAULT CURRENT_TIMESTAMP
 )
 ;
