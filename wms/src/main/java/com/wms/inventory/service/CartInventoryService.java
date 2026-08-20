@@ -37,9 +37,9 @@ public interface CartInventoryService extends IService<CartInventory> {
     List<AvailableCartVO> availableCarts();
 
     /**
-     * 可用点位下拉（空位且未锁定）
+     * 可用点位下拉（空位且未锁定），可按区域/巷道联动筛选后局部加载
      */
-    List<AvailablePointVO> availablePoints();
+    List<AvailablePointVO> availablePoints(Long locationId, Long aisleId);
 
     /**
      * 搜索筛选下拉（区域列表 + 巷道列表）

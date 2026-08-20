@@ -58,11 +58,13 @@ public class CartInventoryController {
         return Result.success(cartInventoryService.availableCarts());
     }
 
-    @Operation(summary = "可用点位下拉（空位且未锁定）")
+    @Operation(summary = "可用点位下拉（空位且未锁定，可按区域/巷道联动筛选）")
     @GetMapping("/available-points")
     @PreAuthorize("@ss.hasPerm('inventory:cart-inventory:list')")
-    public Result<List<AvailablePointVO>> getAvailablePoints() {
-        return Result.success(cartInventoryService.availablePoints());
+    public Result<List<AvailablePointVO>> getAvailablePoints(
+            @RequestParam(required = false) Long locationId,
+            @RequestParam(required = false) Long aisleId) {
+        return Result.success(cartInventoryService.availablePoints(locationId, aisleId));
     }
 
     @Operation(summary = "搜索筛选下拉（区域列表 + 巷道列表）")

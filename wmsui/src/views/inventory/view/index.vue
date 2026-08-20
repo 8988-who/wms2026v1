@@ -88,6 +88,11 @@
               <span>{{ scope.row.arriveTime || '-' }}</span>
             </template>
           </el-table-column>
+          <el-table-column key="lastTaskCode" label="最近任务" min-width="150" align="center" show-overflow-tooltip>
+            <template #default="scope">
+              <span>{{ scope.row.lastTaskCode || '-' }}</span>
+            </template>
+          </el-table-column>
           <el-table-column key="quantity" label="装载(当前/落位)" min-width="130" align="center">
             <template #default="scope">
               <span v-if="scope.row.cartId">

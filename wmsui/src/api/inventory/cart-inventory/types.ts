@@ -23,6 +23,7 @@ export interface CartInventoryItem {
   aisleName?: string;
   cartCode?: string;
   arriveTime?: string;
+  lastTaskCode?: string;
   arriveQuantity?: number;
   currentQuantity?: number;
   lockStatus?: number;
@@ -45,6 +46,12 @@ export interface AvailablePointOption {
   pointName?: string;
   locationName?: string;
   aisleName?: string;
+}
+
+/** 可用点位下拉查询参数（可按区域/巷道联动筛选） */
+export interface AvailablePointQueryParams {
+  locationId?: string;
+  aisleId?: string;
 }
 
 /** 区域筛选下拉项 */

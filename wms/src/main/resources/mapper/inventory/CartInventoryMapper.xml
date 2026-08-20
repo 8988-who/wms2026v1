@@ -13,6 +13,7 @@
         <result column="cart_code" property="cartCode"/>
         <result column="arrive_time" property="arriveTime"/>
         <result column="arrive_quantity" property="arriveQuantity"/>
+        <result column="last_task_code" property="lastTaskCode"/>
         <result column="current_quantity" property="currentQuantity"/>
         <result column="lock_status" property="lockStatus"/>
         <result column="remark" property="remark"/>
@@ -32,6 +33,7 @@
             c.cart_code,
             i.arrive_time,
             i.arrive_quantity,
+            i.last_task_code,
             -- 实时装载量：一次聚合在车(status=1)数量，替代逐行子查询
             COALESCE(ci.cnt, 0) AS current_quantity,
             i.lock_status,
@@ -79,7 +81,7 @@
         ORDER BY c.cart_code ASC
     </select>
 
-    <!-- 可用点位下拉：空位且未锁定（含区域/巷道名称） -->
+    <!-- 可用点位下拉：空位且未锁定（含区域/巷道名称），可按区域/巷道联动筛选后局部加载 -->
     <select id="selectAvailablePoints" resultType="com.wms.inventory.model.vo.AvailablePointVO">
         SELECT i.point_id,
                i.point_code,
@@ -92,6 +94,12 @@
         LEFT JOIN wms_aisle    a ON a.id = i.aisle_id
         WHERE i.cart_id IS NULL
           AND i.lock_status = 0
+        <if test="locationId != null">
+            AND i.location_id = #{locationId}
+        </if>
+        <if test="aisleId != null">
+            AND i.aisle_id = #{aisleId}
+        </if>
         ORDER BY i.aisle_id ASC, i.point_code ASC
     </select>
 

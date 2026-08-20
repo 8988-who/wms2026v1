@@ -39,9 +39,10 @@ public interface CartInventoryMapper extends BaseMapper<CartInventory> {
     List<AvailableCartVO> selectAvailableCarts();
 
     /**
-     * 可用点位下拉：空位且未锁定的点位（含区域/巷道名称）
+     * 可用点位下拉：空位且未锁定的点位（含区域/巷道名称），可按区域/巷道联动筛选，点位量大时局部加载
      */
-    List<AvailablePointVO> selectAvailablePoints();
+    List<AvailablePointVO> selectAvailablePoints(@Param("locationId") Long locationId,
+                                                 @Param("aisleId") Long aisleId);
 
     /**
      * 区域筛选下拉（id + 名称）

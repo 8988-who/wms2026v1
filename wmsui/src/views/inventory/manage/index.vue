@@ -90,6 +90,11 @@
               <span>{{ scope.row.arriveTime || '-' }}</span>
             </template>
           </el-table-column>
+          <el-table-column key="lastTaskCode" label="最近任务" min-width="150" align="center" show-overflow-tooltip>
+            <template #default="scope">
+              <span>{{ scope.row.lastTaskCode || '-' }}</span>
+            </template>
+          </el-table-column>
           <el-table-column key="lockStatus" label="库存锁定" min-width="90" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.lockStatus === 1 ? 'danger' : 'success'">
@@ -158,6 +163,32 @@
     <!-- 绑定弹窗：可从空位行进入（点位固定），也可从「绑定」按钮进入（点位+料车都选） -->
     <el-dialog v-model="dialog.visible" title="绑定料车" width="520px" @close="closeBindDialog">
       <el-form ref="bindFormRef" :model="bindForm" :rules="bindRules" label-width="100px">
+        <el-form-item label="区域" prop="pointLocationId">
+          <el-select
+            v-model="pointFilter.locationId"
+            placeholder="全部区域"
+            clearable
+            filterable
+            @change="handlePointLocationChange"
+          >
+            <el-option
+              v-for="item in filterOptions.locations"
+              :key="item.id"
+              :label="item.locationName"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="巷道" prop="pointAisleId">
+          <el-select v-model="pointFilter.aisleId" placeholder="全部巷道" clearable filterable @change="loadAvailablePoints">
+            <el-option
+              v-for="item in filteredPointAisles"
+              :key="item.id"
+              :label="item.aisleName"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="点位" prop="pointId">
           <el-select
             v-model="bindForm.pointId"
@@ -165,6 +196,7 @@
             filterable
             clearable
             :disabled="!!bindForm.fixedPointId"
+            :loading="pointsLoading"
           >
             <el-option
               v-for="item in availablePoints"
@@ -276,6 +308,16 @@
 
   const availableCarts = ref<AvailableCartOption[]>([]);
   const availablePoints = ref<AvailablePointOption[]>([]);
+  const pointsLoading = ref(false);
+
+  /** 点位下拉的区域/巷道联动筛选条件 */
+  const pointFilter = reactive<{ locationId?: string; aisleId?: string }>({});
+  const filteredPointAisles = computed(() => {
+    if (!pointFilter.locationId) {
+      return filterOptions.aisles;
+    }
+    return filterOptions.aisles.filter((aisle) => aisle.locationId === pointFilter.locationId);
+  });
 
   const bindRules: FormRules = {
     pointId: [{ required: true, message: "请选择点位", trigger: "change" }],
@@ -288,17 +330,38 @@
     Object.keys(bindForm).forEach((key) => {
       delete (bindForm as Record<string, unknown>)[key];
     });
+    pointFilter.locationId = undefined;
+    pointFilter.aisleId = undefined;
+  }
+
+  /** 按当前区域/巷道筛选条件局部加载可用点位 */
+  async function loadAvailablePoints(): Promise<void> {
+    pointsLoading.value = true;
+    try {
+      availablePoints.value =
+        (await CartInventoryAPI.getAvailablePoints({
+          locationId: pointFilter.locationId,
+          aisleId: pointFilter.aisleId,
+        })) || [];
+    } catch {
+      ElMessage.error("加载可用点位失败");
+    } finally {
+      pointsLoading.value = false;
+    }
+  }
+
+  /** 切换区域时联动清空巷道并重新加载点位 */
+  function handlePointLocationChange(): void {
+    pointFilter.aisleId = undefined;
+    void loadAvailablePoints();
   }
 
   /** 打开绑定弹窗：row 为空表示从「绑定」按钮进入（点位+料车都选）；有 row 表示从空位行进入（点位固定） */
   async function handleBindClick(row?: CartInventoryItem): Promise<void> {
     try {
-      const [carts, points] = await Promise.all([
-        CartInventoryAPI.getAvailableCarts(),
-        CartInventoryAPI.getAvailablePoints(),
-      ]);
+      const [carts] = await Promise.all([CartInventoryAPI.getAvailableCarts()]);
       availableCarts.value = carts || [];
-      availablePoints.value = points || [];
+      await loadAvailablePoints();
     } catch {
       ElMessage.error("加载可绑定数据失败");
       return;

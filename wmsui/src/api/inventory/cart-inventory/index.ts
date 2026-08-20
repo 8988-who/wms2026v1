@@ -2,6 +2,7 @@ import request from "@/utils/request";
 import type {
   AvailableCartOption,
   AvailablePointOption,
+  AvailablePointQueryParams,
   CartInventoryFilterOptions,
   CartInventoryItem,
   CartInventoryQueryParams,
@@ -11,6 +12,7 @@ import type { PageResult } from "@/api/common";
 export type {
   AvailableCartOption,
   AvailablePointOption,
+  AvailablePointQueryParams,
   CartInventoryFilterOptions,
   CartInventoryItem,
   CartInventoryQueryParams,
@@ -34,11 +36,12 @@ const CartInventoryAPI = {
       method: "get",
     });
   },
-  /** 获取可用点位下拉（空位且未锁定） */
-  getAvailablePoints() {
+  /** 获取可用点位下拉（空位且未锁定，可按区域/巷道联动筛选后局部加载） */
+  getAvailablePoints(params?: AvailablePointQueryParams) {
     return request<unknown, AvailablePointOption[]>({
       url: `${CART_INVENTORY_BASE_URL}/available-points`,
       method: "get",
+      params,
     });
   },
   /** 获取搜索筛选下拉（区域列表 + 巷道列表） */
