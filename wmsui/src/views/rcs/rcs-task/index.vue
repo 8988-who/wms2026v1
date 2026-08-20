@@ -170,37 +170,55 @@
       width="600px"
       @close="closeDialog"
     >
-      <el-form ref="dataFormRef" :model="formData" :rules="rules" label-width="110px">
+      <el-form ref="dataFormRef" :model="formData" :rules="rules" label-width="100px">
         <el-form-item label="任务类型" prop="taskType">
-          <el-select v-model="formData.taskType" placeholder="请选择任务类型" style="width: 100%">
+          <el-select v-model="formData.taskType" placeholder="请选择任务类型" style="width: 100%" @change="handleTaskTypeChange">
             <el-option v-for="opt in TASK_TYPE_OPTIONS" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="任务标题" prop="taskTitle">
-          <el-input v-model="formData.taskTitle" placeholder="请输入任务标题" />
+          <el-input v-model="formData.taskTitle" placeholder="留空自动生成，如「搬运：P001 → P002」" />
         </el-form-item>
         <el-form-item label="源位置" prop="fromLocation">
-          <el-input v-model="formData.fromLocation" placeholder="请输入源位置编码" />
+          <el-select
+            v-model="formData.fromLocation"
+            filterable
+            clearable
+            placeholder="请选择源位置"
+            style="width: 100%"
+          >
+            <el-option v-for="p in pointOptions" :key="p.value" :label="p.label" :value="p.value" />
+          </el-select>
         </el-form-item>
         <el-form-item label="目标位置" prop="toLocation">
-          <el-input v-model="formData.toLocation" placeholder="请输入目标位置编码" />
+          <el-select
+            v-model="formData.toLocation"
+            filterable
+            clearable
+            placeholder="请选择目标位置"
+            style="width: 100%"
+          >
+            <el-option v-for="p in pointOptions" :key="p.value" :label="p.label" :value="p.value" />
+          </el-select>
         </el-form-item>
         <el-form-item label="关联料车" prop="cartCode">
-          <el-input v-model="formData.cartCode" placeholder="请输入关联料车编码" />
+          <el-select
+            v-model="formData.cartCode"
+            filterable
+            clearable
+            placeholder="请选择关联料车"
+            style="width: 100%"
+          >
+            <el-option v-for="c in cartOptions" :key="c.value" :label="c.label" :value="c.value" />
+          </el-select>
         </el-form-item>
         <el-form-item label="优先级" prop="priority">
           <el-select v-model="formData.priority" placeholder="留空使用默认优先级" clearable style="width: 100%">
             <el-option v-for="opt in PRIORITY_OPTIONS" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="扩展参数" prop="payloadText">
-          <el-input
-            v-model="payloadText"
-            type="textarea"
-            :rows="3"
-            placeholder='JSON 格式，如 {"material":"M001"}，可留空'
-          />
-        </el-form-item>
+        <!-- 扩展参数：高级选项折叠 + JSON 模式（非技术人员默认无需展开） -->
+        <task-param-form ref="paramFormRef" :target-route="targetRoute" @change="handlePayloadChange" />
         <el-form-item label="备注" prop="remark">
           <el-input v-model="formData.remark" type="textarea" :rows="2" placeholder="请输入备注" />
         </el-form-item>
@@ -219,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, watch, onMounted } from "vue";
+  import { ref, reactive, computed, watch, onMounted } from "vue";
   import { useFullscreen } from "@vueuse/core";
   import {
     ElMessage,
@@ -231,34 +249,22 @@
   import { usePageTable } from "@/composables";
   import RcsTaskAPI from "@/api/rcs/rcs-task";
   import type { RcsTaskItem, RcsTaskForm, RcsTaskQueryParams } from "@/api/rcs/rcs-task";
+  import WmsPointAPI from "@/api/warehouse/wms-point";
+  import CartAPI from "@/api/carriermanagementsystem/cart";
   import TaskDetailDrawer from "./components/TaskDetailDrawer.vue";
+  import TaskParamForm from "./components/TaskParamForm.vue";
+  import {
+    TASK_TYPE_OPTIONS,
+    STATUS_OPTIONS,
+    PRIORITY_OPTIONS,
+    buildTargetRoute,
+    parseTargetRoute,
+  } from "./constants";
 
   defineOptions({
     name: "RcsTask",
     inheritAttrs: false,
   });
-
-  // ===== 枚举字典（对齐后端 RcsTaskStatusEnum 与 DTO Schema）=====
-  const TASK_TYPE_OPTIONS = [
-    { value: 1, label: "搬运" },
-    { value: 2, label: "充电" },
-    { value: 3, label: "调度" },
-    { value: 4, label: "巡检" },
-  ];
-  const STATUS_OPTIONS = [
-    { value: 0, label: "待执行" },
-    { value: 1, label: "已派发" },
-    { value: 2, label: "执行中" },
-    { value: 3, label: "已完成" },
-    { value: 4, label: "已取消" },
-    { value: 5, label: "异常" },
-  ];
-  const PRIORITY_OPTIONS = [
-    { value: 1, label: "低" },
-    { value: 2, label: "中" },
-    { value: 3, label: "高" },
-    { value: 4, label: "紧急" },
-  ];
 
   const queryFormRef = ref<FormInstance>();
   const dataFormRef = ref<FormInstance>();
@@ -299,9 +305,75 @@
     visible: false,
   });
 
-  // 表单数据 + payload 文本
+  // 扩展参数子组件
+  const paramFormRef = ref<InstanceType<typeof TaskParamForm>>();
+
+  // 表单数据
   const formData = reactive<RcsTaskForm>({} as RcsTaskForm);
-  const payloadText = ref("");
+
+  // ===== 下拉数据源（点位 / 料车编码，复用分页接口取全量）=====
+  const pointOptions = ref<{ label: string; value: string }[]>([]);
+  const cartOptions = ref<{ label: string; value: string }[]>([]);
+
+  /** 加载点位编码下拉（启用状态优先，数据量小一次性取） */
+  async function loadPointOptions(): Promise<void> {
+    if (pointOptions.value.length > 0) return;
+    const res = await WmsPointAPI.getPage({ pageNum: 1, pageSize: 1000 } as never);
+    pointOptions.value = (res.list ?? [])
+      .filter((p) => p.pointCode)
+      .map((p) => ({
+        value: p.pointCode!,
+        label: p.pointName ? `${p.pointCode}（${p.pointName}）` : p.pointCode!,
+      }));
+  }
+
+  /** 加载料车编码下拉 */
+  async function loadCartOptions(): Promise<void> {
+    if (cartOptions.value.length > 0) return;
+    const res = await CartAPI.getPage({ pageNum: 1, pageSize: 1000 } as never);
+    cartOptions.value = (res.list ?? [])
+      .filter((c) => c.cartCode)
+      .map((c) => ({ value: c.cartCode!, label: c.cartCode! }));
+  }
+
+  // ===== targetRoute：由源/目标位置自动生成（搬运主场景，用户无感）=====
+  const targetRoute = computed(() =>
+    buildTargetRoute(formData.fromLocation, formData.toLocation),
+  );
+
+  // ===== 任务标题自动生成（用户手动改过则不再覆盖）=====
+  const titleManuallyEdited = ref(false);
+  const autoTitle = computed(() => {
+    const typeLabel = TASK_TYPE_OPTIONS.find((t) => t.value === formData.taskType)?.label ?? "任务";
+    const from = formData.fromLocation;
+    const to = formData.toLocation;
+    return from || to ? `${typeLabel}：${from || "?"} → ${to || "?"}` : `${typeLabel}任务`;
+  });
+  watch(autoTitle, (val) => {
+    if (!titleManuallyEdited.value) formData.taskTitle = val;
+  });
+  // 用户手动改标题后停止自动覆盖
+  watch(
+    () => formData.taskTitle,
+    (val) => {
+      if (val && val !== autoTitle.value) titleManuallyEdited.value = true;
+    },
+  );
+
+  /** 子组件抛出的 payload 缓存（提交时合并 targetRoute 后使用） */
+  const payloadCache = ref<Record<string, unknown> | undefined>(undefined);
+  function handlePayloadChange(payload: Record<string, unknown> | undefined): void {
+    payloadCache.value = payload;
+  }
+
+  /** 切换任务类型：清空扩展参数，避免类型间串值 */
+  function handleTaskTypeChange(): void {
+    if (payloadCache.value && Object.keys(payloadCache.value).some((k) => k !== "targetRoute")) {
+      ElMessage.info("已清空高级扩展参数，请按新任务类型重新填写");
+    }
+    paramFormRef.value?.reset();
+    payloadCache.value = undefined;
+  }
 
   // 表单校验规则（taskType 为唯一必填）
   const rules: FormRules = {
@@ -370,30 +442,41 @@
     Object.keys(formData).forEach((key) => {
       delete (formData as Record<string, unknown>)[key];
     });
-    payloadText.value = "";
+    paramFormRef.value?.reset();
+    payloadCache.value = undefined;
+    titleManuallyEdited.value = false;
   }
 
   function handleCreateClick(): void {
     dialog.title = "新增任务";
+    void loadPointOptions();
+    void loadCartOptions();
     openDialog();
   }
 
   async function handleEditClick(id: string): Promise<void> {
     dialog.title = "修改任务";
+    void loadPointOptions();
+    void loadCartOptions();
     const data = await RcsTaskAPI.getDetail(id);
+    // targetRoute 优先反推源/目标位置，缺失时回退实体 fromLocation/toLocation
+    const parsed = parseTargetRoute(data.payload?.targetRoute);
     Object.assign(formData, {
       id: data.id,
       taskType: data.taskType,
       taskTitle: data.taskTitle,
-      fromLocation: data.fromLocation,
-      toLocation: data.toLocation,
+      fromLocation: parsed.fromLocation ?? data.fromLocation,
+      toLocation: parsed.toLocation ?? data.toLocation,
       cartCode: data.cartCode,
       priority: data.priority,
       remark: data.remark,
-      payload: data.payload,
     });
-    payloadText.value = data.payload ? JSON.stringify(data.payload) : "";
+    // 回显后标题按已有值处理（视为手动，不被自动生成覆盖）
+    titleManuallyEdited.value = true;
     openDialog();
+    // 弹窗打开后回填扩展参数（子组件已挂载）
+    await Promise.resolve();
+    paramFormRef.value?.setPayload(data.payload);
   }
 
   async function handleSubmit(): Promise<void> {
@@ -403,17 +486,8 @@
     );
     if (!valid) return;
 
-    // 解析 payload 文本
-    if (payloadText.value.trim()) {
-      try {
-        formData.payload = JSON.parse(payloadText.value) as Record<string, unknown>;
-      } catch {
-        ElMessage.error("扩展参数不是合法 JSON");
-        return;
-      }
-    } else {
-      formData.payload = undefined;
-    }
+    // 组装 payload：子组件缓存（含 targetRoute/高级字段/extra）为准，为空则不传
+    formData.payload = paramFormRef.value?.buildPayload();
 
     loading.value = true;
     try {

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wms.inventory.mapper.CartInventoryMapper">
+
+    <!-- 料车库存列表映射：名称字段 JOIN 主数据表实时取，装载量实时聚合 -->
+    <resultMap id="CartInventoryVOMap" type="com.wms.inventory.model.vo.CartInventoryVO">
+        <id column="point_id" property="pointId"/>
+        <result column="cart_id" property="cartId"/>
+        <result column="point_code" property="pointCode"/>
+        <result column="point_name" property="pointName"/>
+        <result column="location_name" property="locationName"/>
+        <result column="aisle_name" property="aisleName"/>
+        <result column="cart_code" property="cartCode"/>
+        <result column="arrive_time" property="arriveTime"/>
+        <result column="arrive_quantity" property="arriveQuantity"/>
+        <result column="current_quantity" property="currentQuantity"/>
+        <result column="lock_status" property="lockStatus"/>
+        <result column="remark" property="remark"/>
+        <result column="updated_by_name" property="updatedByName"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 分页查询料车库存列表（装载量通过一次 GROUP BY 聚合 + LEFT JOIN 实时计算，占用表行数=点位数，走主键 JOIN，毫秒级） -->
+    <select id="selectCartInventoryPage" resultMap="CartInventoryVOMap">
+        SELECT
+            i.point_id,
+            i.cart_id,
+            i.point_code,
+            p.point_name,
+            l.location_name,
+            a.aisle_name,
+            c.cart_code,
+            i.arrive_time,
+            i.arrive_quantity,
+            -- 实时装载量：一次聚合在车(status=1)数量，替代逐行子查询
+            COALESCE(ci.cnt, 0) AS current_quantity,
+            i.lock_status,
+            i.remark,
+            su.nickname AS updated_by_name,
+            i.updated_time
+        FROM wms_cart_inventory i
+        LEFT JOIN wms_location l ON l.id = i.location_id
+        LEFT JOIN wms_aisle    a ON a.id = i.aisle_id
+        LEFT JOIN wms_point    p ON p.id = i.point_id
+        LEFT JOIN wms_cart     c ON c.id = i.cart_id
+        LEFT JOIN sys_user     su ON su.id = i.updated_by
+        LEFT JOIN (
+            SELECT cart_id, COUNT(*) AS cnt
+            FROM wms_cart_item WHERE status = 1
+            GROUP BY cart_id
+        ) ci ON ci.cart_id = i.cart_id
+        <where>
+            <if test="query.locationId != null">
+                AND i.location_id = #{query.locationId}
+            </if>
+            <if test="query.aisleId != null">
+                AND i.aisle_id = #{query.aisleId}
+            </if>
+            <if test="query.pointCode != null and query.pointCode != ''">
+                AND i.point_code LIKE '%' || #{query.pointCode} || '%'
+            </if>
+            <if test="query.cartCode != null and query.cartCode != ''">
+                AND c.cart_code LIKE '%' || #{query.cartCode} || '%'
+            </if>
+            <if test="query.lockStatus != null">
+                AND i.lock_status = #{query.lockStatus}
+            </if>
+        </where>
+        ORDER BY i.aisle_id ASC, i.point_code ASC
+    </select>
+
+    <!-- 可用料车下拉：不在任何点位（LEFT JOIN 无匹配）且非维修状态 -->
+    <select id="selectAvailableCarts" resultType="com.wms.inventory.model.vo.AvailableCartVO">
+        SELECT c.id, c.cart_code, c.status
+        FROM wms_cart c
+        LEFT JOIN wms_cart_inventory i ON i.cart_id = c.id
+        WHERE i.id IS NULL
+          AND c.status &lt;&gt; 4
+        ORDER BY c.cart_code ASC
+    </select>
+
+    <!-- 可用点位下拉：空位且未锁定（含区域/巷道名称） -->
+    <select id="selectAvailablePoints" resultType="com.wms.inventory.model.vo.AvailablePointVO">
+        SELECT i.point_id,
+               i.point_code,
+               p.point_name,
+               l.location_name,
+               a.aisle_name
+        FROM wms_cart_inventory i
+        JOIN wms_point     p ON p.id = i.point_id
+        LEFT JOIN wms_location l ON l.id = i.location_id
+        LEFT JOIN wms_aisle    a ON a.id = i.aisle_id
+        WHERE i.cart_id IS NULL
+          AND i.lock_status = 0
+        ORDER BY i.aisle_id ASC, i.point_code ASC
+    </select>
+
+    <!-- 区域筛选下拉 -->
+    <select id="selectLocationOptions" resultType="com.wms.inventory.model.vo.LocationOptionVO">
+        SELECT l.id, l.location_name
+        FROM wms_location l
+        ORDER BY l.location_code ASC
+    </select>
+
+    <!-- 巷道筛选下拉（含所属区域，前端做区域级联过滤） -->
+    <select id="selectAisleOptions" resultType="com.wms.inventory.model.vo.AisleOptionVO">
+        SELECT a.id, a.aisle_name, a.location_id
+        FROM wms_aisle a
+        ORDER BY a.aisle_code ASC
+    </select>
+
+</mapper>

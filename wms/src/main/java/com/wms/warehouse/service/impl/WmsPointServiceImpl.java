@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.wms.inventory.model.entity.CartInventory;
+import com.wms.inventory.service.CartInventoryService;
 import com.wms.warehouse.utils.WmsPointConverter;
 import com.wms.warehouse.mapper.WmsPointMapper;
 import com.wms.warehouse.model.entity.WmsAisle;
@@ -48,6 +50,7 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
     private final WmsLocationService wmsLocationService;
     private final WmsAisleService wmsAisleService;
     private final WmsCodeGeneratorService wmsCodeGeneratorService;
+    private final CartInventoryService cartInventoryService;
 
     @Override
     public IPage<WmsPointVO> getWmsPointPage(WmsPointQueryDTO queryParams) {
@@ -103,6 +106,15 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
                     .eq(WmsAisle::getId, dto.getAisleId())
                     .setSql("point_count = point_count + 1")
                     .update();
+
+            // 库存联动：新增点位 → 占用表自动插入空位记录（cart_id=NULL），与点位新增同事务
+            CartInventory inventory = new CartInventory();
+            inventory.setPointId(entity.getId());
+            inventory.setPointCode(dto.getPointCode());
+            inventory.setLocationId(dto.getLocationId());
+            inventory.setAisleId(dto.getAisleId());
+            inventory.setLockStatus(0);
+            cartInventoryService.save(inventory);
         }
 
         return result;
@@ -169,6 +181,16 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
                     .update();
         }
 
+        // 库存联动：点位编辑后同步占用表冗余字段（point_code/location_id/aisle_id），与点位编辑同事务
+        if (result) {
+            cartInventoryService.lambdaUpdate()
+                    .eq(CartInventory::getPointId, id)
+                    .set(CartInventory::getPointCode, dto.getPointCode())
+                    .set(CartInventory::getLocationId, dto.getLocationId())
+                    .set(CartInventory::getAisleId, dto.getAisleId())
+                    .update();
+        }
+
         return result;
     }
 
@@ -183,7 +205,18 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
             Long pointId = Long.parseLong(idStr);
             WmsPoint entity = this.getById(pointId);
             Assert.notNull(entity, "点位不存在：" + pointId);
+
+            // 库存联动：点位下存在停靠料车时禁止删除
+            CartInventory inventory = cartInventoryService.getOne(new LambdaQueryWrapper<CartInventory>()
+                    .eq(CartInventory::getPointId, pointId));
+            Assert.isTrue(inventory == null || inventory.getCartId() == null,
+                    "点位下存在停靠料车，无法删除：" + entity.getPointCode());
+
             this.removeById(pointId);
+
+            // 库存联动：同步删除该点位的占用记录（空位记录随点位一起清理）
+            cartInventoryService.remove(new LambdaQueryWrapper<CartInventory>()
+                    .eq(CartInventory::getPointId, pointId));
 
             wmsAisleService.lambdaUpdate()
                     .eq(WmsAisle::getId, entity.getAisleId())
