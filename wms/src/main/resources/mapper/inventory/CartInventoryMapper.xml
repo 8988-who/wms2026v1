@@ -12,7 +12,6 @@
         <result column="aisle_name" property="aisleName"/>
         <result column="cart_code" property="cartCode"/>
         <result column="arrive_time" property="arriveTime"/>
-        <result column="arrive_quantity" property="arriveQuantity"/>
         <result column="last_task_code" property="lastTaskCode"/>
         <result column="current_quantity" property="currentQuantity"/>
         <result column="lock_status" property="lockStatus"/>
@@ -32,7 +31,6 @@
             a.aisle_name,
             c.cart_code,
             i.arrive_time,
-            i.arrive_quantity,
             i.last_task_code,
             -- 实时装载量：一次聚合在车(status=1)数量，替代逐行子查询
             COALESCE(ci.cnt, 0) AS current_quantity,

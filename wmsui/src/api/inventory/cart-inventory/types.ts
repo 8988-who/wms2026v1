@@ -24,7 +24,6 @@ export interface CartInventoryItem {
   cartCode?: string;
   arriveTime?: string;
   lastTaskCode?: string;
-  arriveQuantity?: number;
   currentQuantity?: number;
   lockStatus?: number;
   remark?: string;

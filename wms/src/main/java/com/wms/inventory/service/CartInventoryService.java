@@ -52,7 +52,7 @@ public interface CartInventoryService extends IService<CartInventory> {
     void bind(CartInventoryBindDTO dto);
 
     /**
-     * 解绑：料车离位（清空 cart_id/arrive_time/arrive_quantity）
+     * 解绑：料车离位（清空 cart_id/arrive_time）
      */
     void unbind(Long pointId);
 

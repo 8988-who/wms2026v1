@@ -54,9 +54,6 @@ public class CartInventory extends WmsBaseEntity {
     /** 料车进入当前点位的时刻（cart_id 为空时为空） */
     private LocalDateTime arriveTime;
 
-    /** 落位时装载量快照（绑定时刻 COUNT 在车货品，之后不维护） */
-    private Integer arriveQuantity;
-
     /** 最近一次搬运任务编号（溯源用） */
     private String lastTaskCode;
 

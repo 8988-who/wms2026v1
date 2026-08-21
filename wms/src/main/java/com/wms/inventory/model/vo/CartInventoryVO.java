@@ -47,9 +47,6 @@ public class CartInventoryVO {
     @Schema(description = "最近搬运任务编号（溯源用，手动绑定为空）")
     private String lastTaskCode;
 
-    @Schema(description = "落位时装载量快照")
-    private Integer arriveQuantity;
-
     @Schema(description = "实时装载量")
     private Integer currentQuantity;
 

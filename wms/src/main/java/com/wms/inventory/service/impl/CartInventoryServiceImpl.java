@@ -1,12 +1,9 @@
 package com.wms.inventory.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.wms.carriermanagementsystem.cartitem.mapper.CartItemMapper;
-import com.wms.carriermanagementsystem.cartitem.model.entity.CartItem;
 import com.wms.common.exception.BusinessException;
 import com.wms.framework.security.util.SecurityUtils;
 import com.wms.inventory.mapper.CartInventoryMapper;
@@ -45,7 +42,6 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
         implements CartInventoryService {
 
     private final CartInventoryMapper cartInventoryMapper;
-    private final CartItemMapper cartItemMapper;
 
     @Override
     public IPage<CartInventoryVO> page(CartInventoryQueryDTO queryParams) {
@@ -85,21 +81,14 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     @Transactional(rollbackFor = Exception.class)
     public void bind(CartInventoryBindDTO dto) {
         Long userId = SecurityUtils.getUserId();
-        // 1. 取料车装载快照（同一事务内）
-        Long arriveQuantity = cartItemMapper.selectCount(
-                new LambdaQueryWrapper<CartItem>()
-                        .eq(CartItem::getCartId, dto.getCartId())
-                        .eq(CartItem::getStatus, 1));
 
-        // 2. 条件原子更新：仅当点位仍为空位时才能绑上；
+        // 条件原子更新：仅当点位仍为空位时才能绑上；
         //    若该料车已停在其他点位，uk_inventory_cart 唯一索引会在 UPDATE 时立即抛冲突
         try {
             int rows = cartInventoryMapper.update(null,
                     new LambdaUpdateWrapper<CartInventory>()
                             .set(CartInventory::getCartId, dto.getCartId())
                             .set(CartInventory::getArriveTime, LocalDateTime.now())
-                            .set(CartInventory::getArriveQuantity,
-                                    arriveQuantity != null ? arriveQuantity.intValue() : 0)
                             .set(CartInventory::getLockStatus, 0)
                             .set(CartInventory::getUpdateBy, userId)
                             .set(CartInventory::getUpdateTime, LocalDateTime.now())
@@ -117,7 +106,7 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     /**
      * 解绑：料车离位。
      * <p>
-     * 显式 set(null) 清除 cart_id/arrive_time/arrive_quantity（MyBatis-Plus updateById 会跳过 null，必须用 Wrapper 显式置空）。
+     * 显式 set(null) 清除 cart_id/arrive_time（MyBatis-Plus updateById 会跳过 null，必须用 Wrapper 显式置空）。
      * 解绑同时将 lock_status 置回 0（正常）：锁定→解绑→维修→重绑 流程中，料车解下后点位即恢复空闲可重绑。
      * </p>
      */
@@ -128,7 +117,6 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
                 new LambdaUpdateWrapper<CartInventory>()
                         .set(CartInventory::getCartId, null)
                         .set(CartInventory::getArriveTime, null)
-                        .set(CartInventory::getArriveQuantity, null)
                         .set(CartInventory::getLockStatus, 0)
                         .set(CartInventory::getUpdateBy, SecurityUtils.getUserId())
                         .set(CartInventory::getUpdateTime, LocalDateTime.now())

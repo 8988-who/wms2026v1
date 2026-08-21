@@ -93,11 +93,9 @@
               <span>{{ scope.row.lastTaskCode || '-' }}</span>
             </template>
           </el-table-column>
-          <el-table-column key="quantity" label="装载(当前/落位)" min-width="130" align="center">
+          <el-table-column key="currentQuantity" label="装载(当前)" prop="currentQuantity" min-width="90" align="center">
             <template #default="scope">
-              <span v-if="scope.row.cartId">
-                {{ scope.row.currentQuantity ?? 0 }}/{{ scope.row.arriveQuantity ?? 0 }}
-              </span>
+              <span v-if="scope.row.cartId">{{ scope.row.currentQuantity ?? 0 }}</span>
               <span v-else>-</span>
             </template>
           </el-table-column>
