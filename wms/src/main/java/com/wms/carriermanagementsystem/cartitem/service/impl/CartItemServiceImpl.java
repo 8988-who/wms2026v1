@@ -83,11 +83,12 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
             }
         }
 
-        // 如果修改了 sortOrder，检查是否与同车其他物品冲突
+        // 如果修改了 sortOrder，检查是否与同车在车物品冲突（已取走的不占位置）
         if (dto.getSortOrder() != null && !dto.getSortOrder().equals(entity.getSortOrder())) {
             Long conflictCount = cartItemMapper.selectCount(
                     new LambdaQueryWrapper<CartItem>()
                             .eq(CartItem::getCartId, entity.getCartId())
+                            .eq(CartItem::getStatus, 1)
                             .eq(CartItem::getSortOrder, dto.getSortOrder())
                             .ne(CartItem::getId, id));
             if (conflictCount != null && conflictCount > 0) {

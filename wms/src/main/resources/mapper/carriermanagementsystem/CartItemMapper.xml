@@ -123,6 +123,7 @@
         SELECT COALESCE(MAX(ci.sort_order), 0)
         FROM wms_cart_item ci
         WHERE ci.cart_id = #{cartId}
+          AND ci.status = 1
     </select>
 
 </mapper>
