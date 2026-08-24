@@ -128,6 +128,59 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     }
 
     /**
+     * 预绑定：RCS 任务创建时调用，预占点位。
+     * <p>
+     * 与 bind() 的区别：不写 arrive_time（车还没到），留空表示在途。
+     * 容量判断 cart_id IS NOT NULL 天然包含预占，防止在途车辆被漏算。
+     * </p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void preBind(CartInventoryBindDTO dto) {
+        Long userId = SecurityUtils.getUserId();
+        try {
+            int rows = cartInventoryMapper.update(null,
+                    new LambdaUpdateWrapper<CartInventory>()
+                            .set(CartInventory::getCartId, dto.getCartId())
+                            .set(CartInventory::getArriveTime, null)
+                            .set(CartInventory::getLockStatus, 0)
+                            .set(CartInventory::getUpdateBy, userId)
+                            .set(CartInventory::getUpdateTime, LocalDateTime.now())
+                            .eq(CartInventory::getPointId, dto.getPointId())
+                            .isNull(CartInventory::getCartId));
+            if (rows == 0) {
+                throw new BusinessException("点位已被占用或不存在，请刷新后重试");
+            }
+        } catch (DuplicateKeyException e) {
+            log.warn("并发预绑定料车冲突，cartId={}, pointId={}", dto.getCartId(), dto.getPointId(), e);
+            throw new BusinessException("该料车已停在其他点位，请先解绑");
+        }
+    }
+
+    /**
+     * 确认到达：RCS 回调/车到达时补写 arrive_time。
+     * <p>
+     * 仅当点位已预绑定（cart_id IS NOT NULL）且 arrive_time 仍为空时才更新，
+     * 防止重复回调覆盖已记录的到达时间。
+     * </p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmArrive(Long pointId) {
+        int rows = cartInventoryMapper.update(null,
+                new LambdaUpdateWrapper<CartInventory>()
+                        .set(CartInventory::getArriveTime, LocalDateTime.now())
+                        .set(CartInventory::getUpdateBy, SecurityUtils.getUserId())
+                        .set(CartInventory::getUpdateTime, LocalDateTime.now())
+                        .eq(CartInventory::getPointId, pointId)
+                        .isNotNull(CartInventory::getCartId)
+                        .isNull(CartInventory::getArriveTime));
+        if (rows == 0) {
+            throw new BusinessException("该点位无在途料车或已确认到达");
+        }
+    }
+
+    /**
      * 锁定库存：条件带 lock_status=0 比较，防止覆盖别人的操作。
      */
     @Override
