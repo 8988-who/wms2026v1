@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.wms.inventory.mapper.CartInventoryMapper">
 
-    <!-- 料车库存列表映射：名称字段 JOIN 主数据表实时取，装载量实时聚合 -->
+    <!-- 料车库存列表映射：名称字段 JOIN 主数据表实时取，装载量读 wms_cart.current_quantity 存储列 -->
     <resultMap id="CartInventoryVOMap" type="com.wms.inventory.model.vo.CartInventoryVO">
         <id column="point_id" property="pointId"/>
         <result column="cart_id" property="cartId"/>
@@ -11,6 +11,7 @@
         <result column="location_name" property="locationName"/>
         <result column="aisle_name" property="aisleName"/>
         <result column="cart_code" property="cartCode"/>
+        <result column="cart_status" property="cartStatus"/>
         <result column="arrive_time" property="arriveTime"/>
         <result column="last_task_code" property="lastTaskCode"/>
         <result column="current_quantity" property="currentQuantity"/>
@@ -20,7 +21,7 @@
         <result column="updated_time" property="updatedTime"/>
     </resultMap>
 
-    <!-- 分页查询料车库存列表（装载量通过一次 GROUP BY 聚合 + LEFT JOIN 实时计算，占用表行数=点位数，走主键 JOIN，毫秒级） -->
+    <!-- 分页查询料车库存列表（装载量读 wms_cart.current_quantity 存储列，空位无料车时兜底 0） -->
     <select id="selectCartInventoryPage" resultMap="CartInventoryVOMap">
         SELECT
             i.point_id,
@@ -30,10 +31,10 @@
             l.location_name,
             a.aisle_name,
             c.cart_code,
+            c.status AS cart_status,
             i.arrive_time,
             i.last_task_code,
-            -- 实时装载量：一次聚合在车(status=1)数量，替代逐行子查询
-            COALESCE(ci.cnt, 0) AS current_quantity,
+            COALESCE(c.current_quantity, 0) AS current_quantity,
             i.lock_status,
             i.remark,
             su.nickname AS updated_by_name,
@@ -44,11 +45,6 @@
         LEFT JOIN wms_point    p ON p.id = i.point_id
         LEFT JOIN wms_cart     c ON c.id = i.cart_id
         LEFT JOIN sys_user     su ON su.id = i.updated_by
-        LEFT JOIN (
-            SELECT cart_id, COUNT(*) AS cnt
-            FROM wms_cart_item WHERE status = 1
-            GROUP BY cart_id
-        ) ci ON ci.cart_id = i.cart_id
         <where>
             <if test="query.locationId != null">
                 AND i.location_id = #{query.locationId}

@@ -22,6 +22,7 @@ export interface CartInventoryItem {
   locationName?: string;
   aisleName?: string;
   cartCode?: string;
+  cartStatus?: number;
   arriveTime?: string;
   lastTaskCode?: string;
   currentQuantity?: number;

@@ -83,6 +83,15 @@
               <span>{{ scope.row.cartCode || '-' }}</span>
             </template>
           </el-table-column>
+          <el-table-column key="cartStatus" label="料车状态" prop="cartStatus" min-width="90" align="center">
+            <template #default="scope">
+              <el-tag v-if="scope.row.cartStatus === 1" type="success">空闲</el-tag>
+              <el-tag v-else-if="scope.row.cartStatus === 2" type="primary">使用中</el-tag>
+              <el-tag v-else-if="scope.row.cartStatus === 3" type="warning">已满载</el-tag>
+              <el-tag v-else-if="scope.row.cartStatus === 4" type="danger">维修</el-tag>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column key="arriveTime" label="料车进入时刻" prop="arriveTime" min-width="150" align="center">
             <template #default="scope">
               <span>{{ scope.row.arriveTime || '-' }}</span>

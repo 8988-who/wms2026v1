@@ -35,8 +35,7 @@ public class CartItemDTO {
     @NotBlank(message = "货品型号不能为空")
     private String productModel;
 
-    @Schema(description = "装货顺序号", example = "1")
-    @NotNull(message = "装货顺序不能为空")
+    @Schema(description = "装货顺序号（留空则自动递增）", example = "1")
     private Integer sortOrder;
 
     @Schema(description = "批次号/工单号", example = "BATCH-01")

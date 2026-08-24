@@ -21,7 +21,7 @@
         <result property="updatedTime" column="updated_time"/>
     </resultMap>
 
-    <!-- 分页查询料车列表（装载数量/状态通过一次性 GROUP BY 聚合 + LEFT JOIN 实时计算，替代逐行子查询，适配千台料车量级；维修状态保持数据库值） -->
+    <!-- 分页查询料车列表（current_quantity/status 读 wms_cart 存储列，由 updateCartAfterChange 在装车/取货时维护） -->
     <select id="selectCartList" resultMap="CartVOMap">
         SELECT
             c.id,
@@ -30,13 +30,12 @@
             m.model_code,
             m.model_name,
             COALESCE(c.actual_capacity, m.max_capacity) AS max_capacity,
-            -- 实时计算 current_quantity：一次聚合在车(status=1)数量，替代逐行子查询
-            COALESCE(ci.cnt, 0) AS current_quantity,
-            -- 实时计算 status（维修状态保持数据库值，其他状态基于聚合结果计算）
-            CASE 
+            c.current_quantity,
+            -- status：维修状态保持数据库值，其他状态基于 current_quantity 计算
+            CASE
                 WHEN c.status = 4 THEN 4
-                WHEN COALESCE(ci.cnt, 0) = 0 THEN 1
-                WHEN COALESCE(ci.cnt, 0) >= COALESCE(c.actual_capacity, m.max_capacity) THEN 3
+                WHEN c.current_quantity = 0 THEN 1
+                WHEN c.current_quantity >= COALESCE(c.actual_capacity, m.max_capacity) THEN 3
                 ELSE 2
             END AS status,
             c.area,
@@ -48,12 +47,6 @@
             c.updated_time
         FROM wms_cart c
         LEFT JOIN wms_cart_model m ON c.model_id = m.id
-        LEFT JOIN (
-            SELECT cart_id, COUNT(*) AS cnt
-            FROM wms_cart_item
-            WHERE status = 1
-            GROUP BY cart_id
-        ) ci ON ci.cart_id = c.id
         LEFT JOIN sys_user su1 ON c.created_by = su1.id
         LEFT JOIN sys_user su2 ON c.updated_by = su2.id
         <where>
@@ -68,12 +61,12 @@
                         AND c.status = 4
                     </when>
                     <otherwise>
-                        -- 其他状态基于聚合结果实时计算匹配
+                        -- 其他状态基于 current_quantity 计算
                         AND (
-                            CASE 
+                            CASE
                                 WHEN c.status = 4 THEN 4
-                                WHEN COALESCE(ci.cnt, 0) = 0 THEN 1
-                                WHEN COALESCE(ci.cnt, 0) >= COALESCE(c.actual_capacity, m.max_capacity) THEN 3
+                                WHEN c.current_quantity = 0 THEN 1
+                                WHEN c.current_quantity >= COALESCE(c.actual_capacity, m.max_capacity) THEN 3
                                 ELSE 2
                             END
                         ) = #{query.status}

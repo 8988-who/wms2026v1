@@ -180,7 +180,7 @@
           <el-input v-model="formData.productModel" placeholder="输入货品型号" />
         </el-form-item>
         <el-form-item label="装货顺序" prop="sortOrder">
-          <el-input-number v-model="formData.sortOrder" :min="1" :max="99999" style="width: 100%" />
+          <el-input-number v-model="formData.sortOrder" :min="1" :max="99999" placeholder="留空则自动递增" style="width: 100%" />
         </el-form-item>
         <el-form-item label="批次号" prop="batchNo">
           <el-input v-model="formData.batchNo" placeholder="批次号/工单号" />
@@ -311,7 +311,7 @@
     cartId: [{ required: true, message: "请选择料车", trigger: "change" }],
     productCode: [{ required: true, message: "请输入货品条码", trigger: "blur" }],
     productModel: [{ required: true, message: "请输入货品型号", trigger: "blur" }],
-    sortOrder: [{ required: true, message: "请输入装货顺序", trigger: "blur" }],
+    sortOrder: [{ required: false }],
   };
 
   async function loadOptions(): Promise<void> {

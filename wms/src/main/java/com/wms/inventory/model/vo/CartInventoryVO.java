@@ -40,6 +40,9 @@ public class CartInventoryVO {
     @Schema(description = "料车编号")
     private String cartCode;
 
+    @Schema(description = "料车状态：1-空闲 2-使用中 3-已满载 4-维修")
+    private Integer cartStatus;
+
     @Schema(description = "料车进入当前点位时刻")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime arriveTime;

@@ -167,11 +167,19 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
             throw new RuntimeException("货品条码已存在，不允许重复装车");
         }
 
-        // ③ sortOrder 在同一车内唯一
-        Integer maxSort = cartItemMapper.getMaxSortOrderByCartId(dto.getCartId());
-        if (maxSort == null) maxSort = 0;
-        if (dto.getSortOrder() == null || dto.getSortOrder() <= maxSort) {
-            throw new RuntimeException("装货顺序号必须大于当前最大顺序号（当前最大：" + maxSort + "）");
+        // ③ sortOrder：未填写则自增（当前最大+1），填写则校验在车内唯一
+        if (dto.getSortOrder() == null) {
+            Integer maxSort = cartItemMapper.getMaxSortOrderByCartId(dto.getCartId());
+            dto.setSortOrder((maxSort != null ? maxSort : 0) + 1);
+        } else {
+            Long sortConflict = cartItemMapper.selectCount(
+                    new LambdaQueryWrapper<CartItem>()
+                            .eq(CartItem::getCartId, dto.getCartId())
+                            .eq(CartItem::getStatus, 1)
+                            .eq(CartItem::getSortOrder, dto.getSortOrder()));
+            if (sortConflict != null && sortConflict > 0) {
+                throw new RuntimeException("该料车已存在顺序号为 " + dto.getSortOrder() + " 的在车物品");
+            }
         }
 
         // ④ 计算有效容量（COALESCE(actual_capacity, model.max_capacity)）
@@ -423,5 +431,17 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
             cart.setStatus(2);  // 使用中
         }
         cartMapper.updateById(cart);
+    }
+
+    @Override
+    public void syncAllCartsStatus() {
+        List<Cart> carts = cartMapper.selectList(null);
+        int updated = 0;
+        for (Cart cart : carts) {
+            // updateCartAfterChange 内部会跳过 status=4（维修）的料车
+            updateCartAfterChange(cart.getId());
+            updated++;
+        }
+        log.info("定时同步料车状态完成，共处理 {} 辆料车", updated);
     }
 }

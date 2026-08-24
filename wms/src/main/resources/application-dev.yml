@@ -93,6 +93,12 @@ mybatis-plus:
     # 这个配置会将执行的sql打印出来，在开发或测试的时候可以用
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
+# 料车装载量和状态定时同步
+cart:
+  sync:
+    enabled: true       # 定时同步开关
+    fixed-rate: 6000000   # 同步间隔（毫秒），6000000=10分钟
+
 # 接口限流
 rate-limit:
   default-limit: 60

@@ -87,4 +87,9 @@ public interface CartItemService {
      * 扫码批量取走：productCodes 列表 → 逐个查 itemId → 调 batchTakeCartItems
      */
     boolean batchTakeByBarcodes(List<String> productCodes);
+
+    /**
+     * 定时同步所有料车的 current_quantity 和 status
+     */
+    void syncAllCartsStatus();
 }
