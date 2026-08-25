@@ -41,12 +41,14 @@ public class AgvServiceImpl implements AgvService {
         if (StringUtils.isEmpty(result)) {
             return Result.failed("AGV系统返回空响应");
         }
-        // 解析出data
+        // 解析响应：RCS 返回 code="SUCCESS"/success=true，兼容旧系统 code="0"
         JSONObject resJsonObj = JSONObject.parse(result);
         String code = resJsonObj.getString("code");
         String msg = resJsonObj.getString("message");
         Object data = resJsonObj.get("data");
-        if ("0".equals(code)) {
+        Boolean success = resJsonObj.getBoolean("success");
+        boolean isOk = (success != null && success) || "0".equals(code) || "SUCCESS".equals(code);
+        if (isOk) {
             return Result.success(data, msg);
         } else {
             return Result.failed("AGV系统" + msg);

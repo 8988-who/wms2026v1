@@ -151,9 +151,11 @@ public class ApiRequestUtils {
         if (StringUtils.isNotEmpty(requestLog.getResParams())) {
             JSONObject resParams = JSONObject.parse(requestLog.getResParams());
             String resCode = resParams.getString("code");
-            // 如需按模块定制解析逻辑，可在此添加 if-else 分支
+            // 兼容 RCS code="SUCCESS" 和旧系统 code="0" 两种成功标识
+            Boolean success = resParams.getBoolean("success");
+            boolean isOk = (success != null && success) || "0".equals(resCode) || "SUCCESS".equals(resCode);
             requestLog.setResCode(resCode);
-            requestLog.setIsSuccess("0".equals(resCode) ? "Y" : "N");
+            requestLog.setIsSuccess(isOk ? "Y" : "N");
         }
     }
 
