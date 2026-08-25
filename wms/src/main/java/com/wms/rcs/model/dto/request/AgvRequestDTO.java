@@ -1,4 +1,4 @@
-package com.wms.rcs.model.dto;
+package com.wms.rcs.model.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * @BelongsProject: wms
- * @BelongsPackage: com.wms.rcs.model.dto
+ * @BelongsPackage: com.wms.rcs.model.dto.request
  * @Author: YangZheng
  * @CreateTime: 2026-07-31 10:36
  * @Description: AGV请求DTO（所有 AGV 出站接口请求 DTO 的公共父类，承载幂等请求编号）

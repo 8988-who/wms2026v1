@@ -1,8 +1,7 @@
 package com.wms.common.enums;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.wms.business.agv.*;
-import com.wms.rcs.model.dto.AgvRequestDTO;
+import com.wms.rcs.model.dto.request.*;
 import lombok.Getter;
 
 /**
