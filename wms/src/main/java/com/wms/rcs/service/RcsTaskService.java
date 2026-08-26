@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.wms.rcs.model.dto.RcsTaskDTO;
 import com.wms.rcs.model.dto.RcsTaskQueryDTO;
-import com.wms.rcs.model.dto.RcsTaskReportDTO;
-import com.wms.rcs.model.dto.RcsTaskWarningDTO;
+import com.wms.rcs.model.dto.callback.RcsTaskReportDTO;
+import com.wms.rcs.model.dto.callback.RcsTaskWarningDTO;
 import com.wms.rcs.model.entity.RcsTaskEntity;
 import com.wms.rcs.model.vo.RcsTaskVO;
 

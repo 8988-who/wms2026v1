@@ -19,8 +19,9 @@ import com.wms.rcs.mapper.RcsTaskLifecycleMapper;
 import com.wms.rcs.mapper.RcsTaskMapper;
 import com.wms.rcs.model.dto.RcsTaskDTO;
 import com.wms.rcs.model.dto.RcsTaskQueryDTO;
-import com.wms.rcs.model.dto.RcsTaskReportDTO;
-import com.wms.rcs.model.dto.RcsTaskWarningDTO;
+import com.wms.rcs.model.dto.callback.RcsTaskReportDTO;
+import com.wms.rcs.model.dto.callback.RcsTaskWarningDTO;
+import com.wms.rcs.model.dto.request.AgvSubmitTaskDTO;
 import com.wms.rcs.model.entity.RcsTaskEntity;
 import com.wms.rcs.model.entity.RcsTaskLifecycleEntity;
 import com.wms.rcs.model.vo.RcsTaskLifecycleVO;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -539,33 +541,74 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     }
 
     /**
-     * 组装下发给 RCS 的请求参数。
+     * 组装下发给 RCS 的请求参数（DTO 形式，字段名编译期正确）。
      * <p>
      * reqCode 使用本地任务编号，保证同一任务重复下发时 RCS 侧可幂等去重；
-     * 其余字段按任务信息填充，扩展参数（payload）平铺进请求体。
+     * targetRoute 按"源点位取车 → 目标点位放车"两步组装，与已验证的 RCS 下发格式对齐。
      * </p>
      */
-    private Map<String, Object> buildSubmitParams(RcsTaskEntity task) {
-        Map<String, Object> params = new HashMap<>();
+    private AgvSubmitTaskDTO buildSubmitParams(RcsTaskEntity task) {
+        AgvSubmitTaskDTO dto = new AgvSubmitTaskDTO();
         // 请求编号（唯一，重复提交沿用同一编号）
-        params.put("reqCode", task.getTaskCode());
-        params.put("taskCode", task.getTaskCode());
-        params.put("taskType", task.getTaskType());
-        params.put("priority", task.getPriority());
+        dto.setReqCode(task.getTaskCode());
+        // 任务类型：按本地类型枚举映射为 RCS 协议 taskType
+        dto.setTaskType(mapTaskType(task.getTaskType()));
+        // 执行步骤：源点位取车 → 目标点位放车（type=SITE 固定，code 为点位编码）
+        List<Map<String, Object>> route = new ArrayList<>();
         if (StrUtil.isNotBlank(task.getFromLocation())) {
-            params.put("fromLocation", task.getFromLocation());
+            route.add(routeStep("SITE", task.getFromLocation()));
         }
         if (StrUtil.isNotBlank(task.getToLocation())) {
-            params.put("toLocation", task.getToLocation());
+            route.add(routeStep("SITE", task.getToLocation()));
         }
-        if (StrUtil.isNotBlank(task.getCartCode())) {
-            params.put("cartCode", task.getCartCode());
+        dto.setTargetRoute(route);
+        // 初始优先级（1-低 2-中 3-高 4-紧急 → 30/50/80/120，与成功下发包一致基准）
+        dto.setInitPriority(mapPriority(task.getPriority()));
+        return dto;
+    }
+
+    /**
+     * 组装单步执行步骤
+     */
+    private Map<String, Object> routeStep(String type, String code) {
+        Map<String, Object> step = new HashMap<>();
+        step.put("type", type);
+        step.put("code", code);
+        return step;
+    }
+
+    /**
+     * 本地任务类型(1-搬运 2-充电 3-调度 4-巡检) → RCS 协议 taskType 字符串
+     * <p>
+     * 目前仅 1-搬运 经实测确认（PF-LMR-COMMON 潜伏车）；其余类型的 RCS 编码待厂商确认后补充。
+     * </p>
+     */
+    private String mapTaskType(Integer taskType) {
+        if (taskType == null) {
+            return "PF-LMR-COMMON";
         }
-        // 扩展参数平铺（如物料信息、路径约束等），不覆盖上述固定字段
-        if (task.getPayload() != null) {
-            task.getPayload().forEach(params::putIfAbsent);
+        return switch (taskType) {
+            case 1 -> "PF-LMR-COMMON";   // 搬运-潜伏车（已实测确认）
+            case 2 -> "PF-LMR-COMMON";   // 充电：RCS 编码待厂商确认，暂按搬运
+            case 3 -> "PF-LMR-COMMON";   // 调度：RCS 编码待厂商确认，暂按搬运
+            case 4 -> "PF-LMR-COMMON";   // 巡检：RCS 编码待厂商确认，暂按搬运
+            default -> "PF-LMR-COMMON";
+        };
+    }
+
+    /**
+     * 本地优先级(1-4) → RCS 初始优先级(1~120)，数值越大优先级越高
+     */
+    private Integer mapPriority(Integer priority) {
+        if (priority == null) {
+            return 50;
         }
-        return params;
+        return switch (priority) {
+            case 1 -> 30;   // 低
+            case 3 -> 80;   // 高
+            case 4 -> 120;  // 紧急
+            default -> 50;  // 中（含默认）
+        };
     }
 
     /**

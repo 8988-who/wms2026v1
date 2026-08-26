@@ -16,4 +16,9 @@ import java.util.Map;
 public interface AgvService {
     Result<Object> commonRequest(String methodName, Map<String, Object> params);
     Result<Object> commonRequest(ApiEnum apiEnum, Map<String, Object> params);
+
+    /**
+     * 出站请求 DTO 形式（字段名编译期正确，推荐业务层直接构造 DTO 调用）
+     */
+    Result<Object> commonRequest(ApiEnum apiEnum, Object params);
 }

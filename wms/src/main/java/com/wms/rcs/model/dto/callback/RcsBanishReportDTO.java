@@ -1,4 +1,4 @@
-package com.wms.rcs.model.dto;
+package com.wms.rcs.model.dto.callback;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

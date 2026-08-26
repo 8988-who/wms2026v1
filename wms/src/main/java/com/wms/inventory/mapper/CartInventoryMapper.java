@@ -53,4 +53,14 @@ public interface CartInventoryMapper extends BaseMapper<CartInventory> {
      * 巷道筛选下拉（id + 名称 + 所属区域）
      */
     List<AisleOptionVO> selectAisleOptions();
+
+    /**
+     * 按料车ID查询料车编码（wms_cart.cart_code），用于组装 RCS 载具绑定/解绑请求
+     */
+    String selectCartCodeByCartId(@Param("cartId") Long cartId);
+
+    /**
+     * 按点位ID查询点位编码（wms_cart_inventory.point_code 冗余列），用于组装 RCS 站点绑定/解绑请求
+     */
+    String selectPointCodeByPointId(@Param("pointId") Long pointId);
 }

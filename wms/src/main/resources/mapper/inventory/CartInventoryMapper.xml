@@ -111,4 +111,14 @@
         ORDER BY a.aisle_code ASC
     </select>
 
+    <!-- 按料车ID查料车编码（RCS carrierCode） -->
+    <select id="selectCartCodeByCartId" resultType="java.lang.String">
+        SELECT cart_code FROM wms_cart WHERE id = #{cartId}
+    </select>
+
+    <!-- 按点位ID查点位编码（RCS siteCode，取 wms_cart_inventory 冗余列） -->
+    <select id="selectPointCodeByPointId" resultType="java.lang.String">
+        SELECT point_code FROM wms_cart_inventory WHERE point_id = #{pointId}
+    </select>
+
 </mapper>

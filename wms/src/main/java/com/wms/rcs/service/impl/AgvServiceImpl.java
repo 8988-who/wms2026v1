@@ -1,5 +1,6 @@
 package com.wms.rcs.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.wms.common.util.ApiRequestUtils;
 import com.wms.common.util.StringUtils;
@@ -28,6 +29,16 @@ public class AgvServiceImpl implements AgvService {
         // 获取接口枚举
         ApiEnum apiEnum = ApiEnum.getApiEnumByModuleAndMethodName("rcs", methodName);
         return commonRequest(apiEnum, params);
+    }
+
+    /**
+     * 通用请求接口（DTO 形式）：DTO → Map（忽略 null）后再走统一请求链路。
+     * 业务层直接构造出站 DTO 调用，字段名在编译期即正确。
+     */
+    @Override
+    public Result<Object> commonRequest(ApiEnum apiEnum, Object params) {
+        Map<String, Object> map = BeanUtil.beanToMap(params, false, true);
+        return commonRequest(apiEnum, map);
     }
 
     /**
