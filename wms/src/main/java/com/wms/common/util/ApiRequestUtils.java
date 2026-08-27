@@ -174,6 +174,8 @@ public class ApiRequestUtils {
 
     private static HttpResponse doPost(String url, Map<String, String> headers, Map<String, Object> params) {
         HttpRequest request = HttpUtil.createPost(url);
+        // RCS 经 nginx 反代可能返回 301/302/307 重定向（如 http→https 或路径跳转），默认跟随并保留 POST 请求体
+        request.setFollowRedirects(true);
         if (!CollectionUtils.isEmpty(headers)) {
             request.headerMap(headers, true);
         }

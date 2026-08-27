@@ -84,4 +84,9 @@
         ORDER BY t.submit_time DESC NULLS LAST, t.id DESC
     </select>
 
+    <!-- 按点位编码查地图坐标（RCS 下发 targetRoute.code 实际取值：wms_point.coordinate 地图坐标） -->
+    <select id="selectCoordinateByPointCode" resultType="java.lang.String">
+        SELECT coordinate FROM wms_point WHERE point_code = #{pointCode} LIMIT 1
+    </select>
+
 </mapper>

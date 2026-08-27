@@ -264,15 +264,6 @@
                       </el-select>
                 </el-form-item>
 
-                <el-form-item label="父级区域" prop="parentId">
-                      <el-input
-                          v-model="formData.parentId"
-                          type="number"
-                          :disabled="true"
-                          placeholder="0表示顶级"
-                      />
-                </el-form-item>
-
                 <el-form-item label="楼层" prop="floor">
                       <el-input
                           v-model="formData.floor"
@@ -423,7 +414,6 @@
                       plantCode: [{ required: true, message: "请输入厂区编码", trigger: "blur" }],
                       locationName: [{ required: true, message: "请输入区域名称", trigger: "blur" }],
                       locationType: [{ required: true, message: "请选择区域类型", trigger: "change" }],
-                      parentId: [{ required: true, message: "请输入父级区域ID", trigger: "blur" }],
                       sortOrder: [{ required: true, message: "请输入排序号", trigger: "blur" }],
                       status: [{ required: true, message: "请选择状态", trigger: "change" }],
 

@@ -15,6 +15,7 @@ import com.wms.rcs.enums.RcsOperatorTypeEnum;
 import com.wms.rcs.enums.RcsTaskPriorityEnum;
 import com.wms.rcs.enums.RcsTaskStatusEnum;
 import com.wms.rcs.enums.RcsTaskTypeEnum;
+import com.wms.rcs.event.RcsTaskInventoryEvent;
 import com.wms.rcs.mapper.RcsTaskLifecycleMapper;
 import com.wms.rcs.mapper.RcsTaskMapper;
 import com.wms.rcs.model.dto.RcsTaskDTO;
@@ -31,6 +32,7 @@ import com.wms.rcs.service.RcsTaskService;
 import com.wms.rcs.utils.RcsTaskConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -63,6 +65,8 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     private RcsTaskLifecycleMapper rcsTaskLifecycleMapper;
     @Autowired
     private AgvService agvService;
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     /**
      * 自身代理引用：下发成功/失败后的库写操作需经代理触发 @Transactional(REQUIRES_NEW)，
@@ -183,6 +187,8 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         }
         changeStatus(task, RcsTaskStatusEnum.ASSIGNED.getValue(),
                 RcsOperatorTypeEnum.SYSTEM, null, "任务已下发至RCS");
+        // 库存闭环：下发成功 → 预占目标点位（事件在事务提交后由 inventory 监听执行）
+        publishInventoryEvent(RcsTaskInventoryEvent.Action.PRE_BIND, task.getCartCode(), task.getToLocation());
     }
 
     /**
@@ -249,8 +255,14 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         if (task == null) {
             return;
         }
+        Integer fromStatus = task.getStatus();
         changeStatus(task, RcsTaskStatusEnum.CANCELLED.getValue(),
                 RcsOperatorTypeEnum.ADMIN, null, remark);
+        // 库存闭环：已下发/执行中（目标点位已预占）的任务取消后释放预占
+        if (RcsTaskStatusEnum.ASSIGNED.getValue().equals(fromStatus)
+                || RcsTaskStatusEnum.EXECUTING.getValue().equals(fromStatus)) {
+            publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND, task.getCartCode(), task.getToLocation());
+        }
     }
 
     @Override
@@ -329,6 +341,15 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         // 回填执行AGV编号（若回馈带上）
         if (StrUtil.isNotBlank(report.getAgvCode())) {
             task.setAgvCode(report.getAgvCode());
+        }
+        // 库存闭环（事件在事务提交后由 inventory 监听执行）：
+        //   取货(PICK) → 解绑源点位；完成(FINISHED) → 确认目标点位到达
+        if (RcsTaskStatusEnum.EXECUTING.getValue().equals(targetStatus)
+                && StrUtil.isNotBlank(report.getMethod())
+                && report.getMethod().toUpperCase().contains("PICK")) {
+            publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND, task.getCartCode(), task.getFromLocation());
+        } else if (RcsTaskStatusEnum.FINISHED.getValue().equals(targetStatus)) {
+            publishInventoryEvent(RcsTaskInventoryEvent.Action.CONFIRM_ARRIVE, task.getCartCode(), task.getToLocation());
         }
         String remark = buildReportRemark(report);
         changeStatus(task, targetStatus, RcsOperatorTypeEnum.EXTERNAL, report.getAgvCode(), remark);
@@ -533,6 +554,17 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     }
 
     /**
+     * 发布库存闭环事件（携带编码，由 inventory 模块监听执行，保持 rcs 不反向依赖业务）。
+     * 仅当关联料车与点位编码均存在时发布（有料车搬运才涉及绑定关系）。
+     */
+    private void publishInventoryEvent(RcsTaskInventoryEvent.Action action, String cartCode, String locationCode) {
+        if (StrUtil.isBlank(cartCode) || StrUtil.isBlank(locationCode)) {
+            return;
+        }
+        eventPublisher.publishEvent(RcsTaskInventoryEvent.of(action, cartCode, locationCode));
+    }
+
+    /**
      * 生成任务编号：RCS + 时间戳 + 4位随机，保证全局唯一
      */
     private String generateTaskCode() {
@@ -553,18 +585,34 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         dto.setReqCode(task.getTaskCode());
         // 任务类型：按本地类型枚举映射为 RCS 协议 taskType
         dto.setTaskType(mapTaskType(task.getTaskType()));
-        // 执行步骤：源点位取车 → 目标点位放车（type=SITE 固定，code 为点位编码）
+        // 执行步骤：源点位取车 → 目标点位放车（type=SITE 固定，code 为点位地图坐标）
         List<Map<String, Object>> route = new ArrayList<>();
         if (StrUtil.isNotBlank(task.getFromLocation())) {
-            route.add(routeStep("SITE", task.getFromLocation()));
+            route.add(routeStep("SITE", toRcsSiteCode(task.getFromLocation())));
         }
         if (StrUtil.isNotBlank(task.getToLocation())) {
-            route.add(routeStep("SITE", task.getToLocation()));
+            route.add(routeStep("SITE", toRcsSiteCode(task.getToLocation())));
         }
         dto.setTargetRoute(route);
         // 初始优先级（1-低 2-中 3-高 4-紧急 → 30/50/80/120，与成功下发包一致基准）
         dto.setInitPriority(mapPriority(task.getPriority()));
         return dto;
+    }
+
+    /**
+     * 点位编码 → RCS 站点编码（地图坐标）：下发 targetRoute.code 以 wms_point.coordinate 为准；
+     * 查不到坐标时回退使用点位编码原值，避免历史数据/非点位编码导致下发中断。
+     */
+    private String toRcsSiteCode(String locationCode) {
+        if (StrUtil.isBlank(locationCode)) {
+            return locationCode;
+        }
+        String coordinate = this.getBaseMapper().selectCoordinateByPointCode(locationCode);
+        if (StrUtil.isBlank(coordinate)) {
+            log.warn("RCS下发：点位编码[{}]未匹配到地图坐标(wms_point.coordinate)，按原值下发", locationCode);
+            return locationCode;
+        }
+        return coordinate;
     }
 
     /**

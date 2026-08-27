@@ -40,6 +40,9 @@ public class WmsAisleQueryDTO extends BaseQuery {
     @Schema(description = "巷道用途(FULL-满架优先 EMPTY-空架优先 MIXED-混合)")
     private String aislePurpose;
 
+    @Schema(description = "货架型号编码")
+    private String modelCode;
+
     @Schema(description = "状态(1->正常；0->禁用)")
     private Integer status;
 

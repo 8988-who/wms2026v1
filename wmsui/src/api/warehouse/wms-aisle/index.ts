@@ -1,8 +1,8 @@
 import request from "@/utils/request";
-import type { WmsAisleForm, WmsAisleQueryParams, WmsAisleItem, WmsAisleFormOptions } from "./types";
+import type { WmsAisleForm, WmsAisleQueryParams, WmsAisleItem, WmsAisleFormOptions, WmsAisleFilterOptions } from "./types";
 import type { PageResult } from "@/api/common";
 
-export type { WmsAisleForm, WmsAisleQueryParams, WmsAisleItem, WmsAisleLocationOption, WmsAisleFormOptions } from "./types";
+export type { WmsAisleForm, WmsAisleQueryParams, WmsAisleItem, WmsAisleLocationOption, WmsAisleFormOptions, WmsAisleFilterOptions, WmsAisleModelOption } from "./types";
 
 const WMS_AISLE_BASE_URL = "/api/v1/wms-aisle";
 
@@ -60,9 +60,9 @@ const WmsAisleAPI = {
       method: "get",
     });
   },
-  /** 获取搜索筛选下拉选项（巷道编码） */
+  /** 获取搜索筛选下拉选项（巷道编码、区域编码、货架型号） */
   getFilterOptions() {
-    return request<unknown, Record<string, string[]>>({
+    return request<unknown, WmsAisleFilterOptions>({
       url: `${WMS_AISLE_BASE_URL}/filter-options`,
       method: "get",
     });

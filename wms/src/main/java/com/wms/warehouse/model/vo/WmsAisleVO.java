@@ -43,8 +43,11 @@ public class WmsAisleVO {
     @Schema(description = "状态")
     private Integer status;
 
-    @Schema(description = "备注")
-    private String remark;
+    @Schema(description = "货架型号编码")
+    private String modelCode;
+
+    @Schema(description = "货架型号名称")
+    private String modelName;
 
     @Schema(description = "巷道用途(FULL/EMPTY/MIXED)")
     private String aislePurpose;

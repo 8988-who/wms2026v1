@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.wms.carriermanagementsystem.cartmodel.service.CartModelService;
 import com.wms.common.model.BatchStatusForm;
 import com.wms.warehouse.utils.WmsAisleConverter;
 import com.wms.warehouse.mapper.WmsAisleMapper;
@@ -47,6 +48,7 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
     private final WmsCascadeService wmsCascadeService;
     private final WmsCodeGeneratorService wmsCodeGeneratorService;
     private final WmsPointMapper wmsPointMapper;
+    private final CartModelService cartModelService;
 
     @Override
     public IPage<WmsAisleVO> getWmsAislePage(WmsAisleQueryDTO queryParams) {
@@ -193,7 +195,21 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
         java.util.Map<String, java.util.List<?>> result = new java.util.LinkedHashMap<>();
         result.put("plantCodes", new java.util.ArrayList<>(plantCodeSet));
         result.put("locations", locationList);
+        result.put("modelOptions", buildModelOptions());
         return result;
+    }
+
+    /** 构建货架型号下拉选项（来自料车型号配置 wms_cart_model） */
+    private java.util.List<java.util.Map<String, Object>> buildModelOptions() {
+        return cartModelService.formOptions().stream()
+                .map(m -> {
+                    java.util.Map<String, Object> item = new java.util.LinkedHashMap<>();
+                    item.put("modelCode", m.getModelCode());
+                    item.put("modelName", m.getModelName());
+                    item.put("label", m.getModelCode() + " - " + m.getModelName());
+                    return item;
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
@@ -214,6 +230,7 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
         java.util.Map<String, java.util.List<?>> result = new java.util.LinkedHashMap<>();
         result.put("aisleCodes", aisleCodes);
         result.put("locationCodes", locationCodes);
+        result.put("modelOptions", buildModelOptions());
         return result;
     }
 }

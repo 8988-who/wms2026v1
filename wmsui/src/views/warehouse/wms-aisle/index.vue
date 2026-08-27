@@ -26,6 +26,11 @@
             <el-option label="混合" value="MIXED" />
           </el-select>
         </el-form-item>
+        <el-form-item label="货架型号" prop="modelCode">
+          <el-select v-model="params.modelCode" placeholder="货架型号" clearable filterable>
+            <el-option v-for="item in filterOptions.modelOptions" :key="item.modelCode" :label="item.label" :value="item.modelCode" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery">搜索</el-button>
           <el-button @click="handleResetQuery">重置</el-button>
@@ -133,12 +138,16 @@
                 </template>
               </el-table-column>
               <el-table-column
-                key="remark"
-                label="备注"
-                prop="remark"
+                key="modelCode"
+                label="货架型号"
+                prop="modelCode"
                 min-width="150"
                 align="center"
-              />
+              >
+                <template #default="scope">
+                  {{ scope.row.modelName || scope.row.modelCode || '-' }}
+                </template>
+              </el-table-column>
               <el-table-column
                 key="aislePurpose"
                 label="巷道用途"
@@ -314,11 +323,15 @@
                       </el-select>
                 </el-form-item>
 
-                <el-form-item label="备注" prop="remark">
-                      <el-input
-                          v-model="formData.remark"
-                          placeholder="请输入备注"
-                      />
+                <el-form-item label="货架型号" prop="modelCode">
+                      <el-select
+                          v-model="formData.modelCode"
+                          placeholder="请选择货架型号"
+                          filterable
+                          clearable
+                      >
+                        <el-option v-for="item in formOptions.modelOptions" :key="item.modelCode" :label="item.label" :value="item.modelCode" />
+                      </el-select>
                 </el-form-item>
 
                 <el-form-item label="巷道用途" prop="aislePurpose">
@@ -359,7 +372,7 @@
   import { FullScreen, Refresh, ArrowDown } from "@element-plus/icons-vue";
   import { usePageTable, useTableSelection } from "@/composables";
   import WmsAisleAPI from "@/api/warehouse/wms-aisle";
-  import type { WmsAisleItem, WmsAisleForm, WmsAisleQueryParams, WmsAisleLocationOption } from "@/api/warehouse/wms-aisle";
+  import type { WmsAisleItem, WmsAisleForm, WmsAisleQueryParams, WmsAisleLocationOption, WmsAisleModelOption } from "@/api/warehouse/wms-aisle";
 
   defineOptions({
     name: "WmsAisle",
@@ -397,11 +410,12 @@
     }
   }
 
-  // 表单下拉选项（从 wms_location 加载）
+  // 表单下拉选项（从 wms_location / 料车型号配置加载）
   const formOptions = reactive({
     plantCodes: [] as string[],
     locations: [] as WmsAisleLocationOption[],
     filteredLocations: [] as WmsAisleLocationOption[],
+    modelOptions: [] as WmsAisleModelOption[],
   });
 
   async function loadFormOptions(): Promise<void> {
@@ -410,6 +424,7 @@
       formOptions.plantCodes = data.plantCodes || [];
       formOptions.locations = data.locations || [];
       formOptions.filteredLocations = data.locations || [];
+      formOptions.modelOptions = data.modelOptions || [];
     } catch {
       // 加载失败不影响主功能
     }
@@ -443,6 +458,7 @@
   const filterOptions = reactive({
     aisleCodes: [] as string[],
     locationCodes: [] as string[],
+    modelOptions: [] as WmsAisleModelOption[],
   });
 
   async function loadFilterOptions(): Promise<void> {
@@ -450,6 +466,7 @@
       const data = await WmsAisleAPI.getFilterOptions();
       filterOptions.aisleCodes = data.aisleCodes || [];
       filterOptions.locationCodes = data.locationCodes || [];
+      filterOptions.modelOptions = data.modelOptions || [];
     } catch {
       // 加载失败不影响主功能
     }

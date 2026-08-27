@@ -121,4 +121,19 @@
         SELECT point_code FROM wms_cart_inventory WHERE point_id = #{pointId}
     </select>
 
+    <!-- 按点位ID查地图坐标（RCS siteCode 实际取值：wms_point.coordinate 地图坐标） -->
+    <select id="selectCoordinateByPointId" resultType="java.lang.String">
+        SELECT coordinate FROM wms_point WHERE id = #{pointId}
+    </select>
+
+    <!-- 按料车编码反查料车ID（RCS 任务库存闭环） -->
+    <select id="selectCartIdByCartCode" resultType="java.lang.Long">
+        SELECT id FROM wms_cart WHERE cart_code = #{cartCode}
+    </select>
+
+    <!-- 按点位编码反查点位ID（RCS 任务库存闭环，取 wms_cart_inventory 冗余列，每个点位一条） -->
+    <select id="selectPointIdByPointCode" resultType="java.lang.Long">
+        SELECT point_id FROM wms_cart_inventory WHERE point_code = #{pointCode}
+    </select>
+
 </mapper>

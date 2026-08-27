@@ -63,4 +63,19 @@ public interface CartInventoryMapper extends BaseMapper<CartInventory> {
      * 按点位ID查询点位编码（wms_cart_inventory.point_code 冗余列），用于组装 RCS 站点绑定/解绑请求
      */
     String selectPointCodeByPointId(@Param("pointId") Long pointId);
+
+    /**
+     * 按点位ID查询地图坐标（wms_point.coordinate），RCS 站点编码 siteCode 以地图坐标为准
+     */
+    String selectCoordinateByPointId(@Param("pointId") Long pointId);
+
+    /**
+     * 按料车编码反查料车ID（wms_cart），用于 RCS 任务库存闭环
+     */
+    Long selectCartIdByCartCode(@Param("cartCode") String cartCode);
+
+    /**
+     * 按点位编码反查点位ID（wms_cart_inventory 冗余列，每个点位一条），用于 RCS 任务库存闭环
+     */
+    Long selectPointIdByPointCode(@Param("pointCode") String pointCode);
 }

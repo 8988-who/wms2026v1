@@ -12,6 +12,7 @@ export interface WmsAisleQueryParams extends BaseQueryParams {
   floor?: string;
   locationCode?: string;
   aislePurpose?: string;
+  modelCode?: string;
   status?: number;
 }
 
@@ -25,7 +26,7 @@ export interface WmsAisleForm {
   floor?: string;
   sortOrder?: number;
   status?: number;
-  remark?: string;
+  modelCode?: string;
   aislePurpose?: string;
   isHandoverPoint?: number;
 }
@@ -41,7 +42,8 @@ export interface WmsAisleItem {
   floor?: string;
   sortOrder?: number;
   status?: number;
-  remark?: string;
+  modelCode?: string;
+  modelName?: string;
   aislePurpose?: string;
   isHandoverPoint?: number;
   pointCount?: number;
@@ -49,6 +51,13 @@ export interface WmsAisleItem {
   createdTime?: string;
   updatedByName?: string;
   updatedTime?: string;
+}
+
+/** 货架型号下拉选项（来自料车型号配置） */
+export interface WmsAisleModelOption {
+  modelCode: string;
+  modelName: string;
+  label: string;
 }
 
 /** 区域下拉选项 */
@@ -65,4 +74,12 @@ export interface WmsAisleLocationOption {
 export interface WmsAisleFormOptions {
   plantCodes: string[];
   locations: WmsAisleLocationOption[];
+  modelOptions: WmsAisleModelOption[];
+}
+
+/** 搜索筛选下拉选项 */
+export interface WmsAisleFilterOptions {
+  aisleCodes: string[];
+  locationCodes: string[];
+  modelOptions: WmsAisleModelOption[];
 }

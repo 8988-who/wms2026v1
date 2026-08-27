@@ -48,8 +48,8 @@ public class WmsAisleDTO {
     @Range(min = 0, max = 1, message = "状态值不正确")
     private Integer status;
 
-    @Schema(description = "备注")
-    private String remark;
+    @Schema(description = "货架型号编码（关联料车型号配置 model_code）")
+    private String modelCode;
 
     @Schema(description = "巷道用途(FULL/EMPTY/MIXED)")
     private String aislePurpose;

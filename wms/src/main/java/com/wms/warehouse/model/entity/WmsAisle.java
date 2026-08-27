@@ -39,7 +39,7 @@ public class WmsAisle extends WmsBaseEntity {
     private String floor;
     private Integer sortOrder;
     private Integer status;
-    private String remark;
+    private String modelCode;
     private String aislePurpose;
     private Integer isHandoverPoint;
 

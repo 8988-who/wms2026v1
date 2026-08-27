@@ -84,7 +84,7 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
      * 绑定：料车入位（同步 RCS 载具绑定）。
      * <p>
      * 强一致方案：RCS 绑定成功才算绑定成功。
-     * 流程：本地状态预检 → RCS carrier/bind（carrierCode=料车编码, siteCode=点位编码）→
+     * 流程：本地状态预检 → RCS carrier/bind（carrierCode=料车编码, siteCode=点位地图坐标）→
      * 本地条件原子更新（仅空位可绑）→ 本地失败（并发被占）补偿 RCS carrier/unbind 释放。
      * RCS 调用在数据库事务外（本方法不开启事务），本地更新为单条原子语句。
      * </p>
@@ -109,10 +109,11 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
         if (cartCode == null) {
             throw new BusinessException("料车不存在");
         }
-        String pointCode = inv.getPointCode();
+        // RCS 站点编码以地图坐标为准（wms_point.coordinate），而非 wms_cart_inventory.point_code
+        String siteCode = cartInventoryMapper.selectCoordinateByPointId(inv.getPointId());
 
         // 2. RCS 绑定（事务外）：RCS 绑定成功才算绑定成功
-        rcsBind(cartCode, pointCode);
+        rcsBind(cartCode, siteCode);
 
         // 3. 本地条件原子更新：仅当点位仍为空位时才能绑上；
         //    若该料车已停在其他点位，uk_inventory_cart 唯一索引会在 UPDATE 时立即抛冲突
@@ -128,13 +129,13 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
                             .isNull(CartInventory::getCartId));
             if (rows == 0) {
                 // 并发下点位被抢先占用：补偿 RCS 解绑，保持两侧一致
-                rcsUnbindQuietly(cartCode, pointCode);
+                rcsUnbindQuietly(cartCode, siteCode);
                 throw new BusinessException("点位已被占用或不存在，请刷新后重试");
             }
         } catch (DuplicateKeyException e) {
             log.warn("并发绑定料车冲突，cartId={}, pointId={}", dto.getCartId(), dto.getPointId(), e);
             // 该料车已停在其他点位：补偿 RCS 解绑，保持两侧一致
-            rcsUnbindQuietly(cartCode, pointCode);
+            rcsUnbindQuietly(cartCode, siteCode);
             throw new BusinessException("该料车已停在其他点位，请先解绑");
         }
     }
@@ -158,10 +159,11 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
         if (cartCode == null) {
             throw new BusinessException("料车不存在，无法同步解绑");
         }
-        String pointCode = inv.getPointCode();
+        // RCS 站点编码以地图坐标为准（wms_point.coordinate），而非 wms_cart_inventory.point_code
+        String siteCode = cartInventoryMapper.selectCoordinateByPointId(inv.getPointId());
 
         // 2. 先 RCS 解绑（事务外）：失败则本地不动，可重试
-        rcsUnbind(cartCode, pointCode);
+        rcsUnbind(cartCode, siteCode);
 
         // 3. 本地条件原子更新：清空 cart_id/arrive_time，并将 lock_status 复位为 0
         int rows = cartInventoryMapper.update(null,
@@ -233,10 +235,11 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
         if (cartCode == null) {
             throw new BusinessException("料车不存在，无法同步绑定");
         }
-        String pointCode = inv.getPointCode();
+        // RCS 站点编码以地图坐标为准（wms_point.coordinate），而非 wms_cart_inventory.point_code
+        String siteCode = cartInventoryMapper.selectCoordinateByPointId(inv.getPointId());
 
         // 2. RCS 绑定（事务外）：RCS 绑定成功才算绑定成功
-        rcsBind(cartCode, pointCode);
+        rcsBind(cartCode, siteCode);
 
         // 3. 本地补写 arrive_time（条件仍带 cart_id 非空 + arrive_time 为空，防重复回调覆盖）
         int rows = cartInventoryMapper.update(null,
@@ -291,13 +294,16 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
 
     /**
      * 调 RCS 载具绑定（carrier/bind）：失败抛业务异常
+     * <p>
+     * 请求体仅 carrierCode/siteCode（可选 carrierDir），不携带 reqCode——
+     * 幂等由请求头 X-lr-request-id 保证，RCS 实测成功包无 reqCode 字段。
+     * </p>
      */
-    private void rcsBind(String cartCode, String pointCode) {
+    private void rcsBind(String cartCode, String siteCode) {
         AgvBindCarrierDTO dto = new AgvBindCarrierDTO();
-        dto.setReqCode(buildRcsReqCode("BIND"));
         dto.setCarrierCode(cartCode);
-        dto.setSiteCode(pointCode);
-        log.info("同步RCS绑定载具：carrierCode={}, siteCode={}, reqCode={}", cartCode, pointCode, dto.getReqCode());
+        dto.setSiteCode(siteCode);
+        log.info("同步RCS绑定载具：carrierCode={}, siteCode={}", cartCode, siteCode);
         Result<Object> result = agvService.commonRequest(ApiEnum.AGV_bindCarrier, dto);
         if (result == null || !ResultCode.SUCCESS.getCode().equals(result.getCode())) {
             String msg = result == null ? "RCS返回空结果" : result.getMsg();
@@ -308,12 +314,12 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     /**
      * 调 RCS 载具解绑（carrier/unbind）：失败抛业务异常
      */
-    private void rcsUnbind(String cartCode, String pointCode) {
+    private void rcsUnbind(String cartCode, String siteCode) {
         AgvUnbindCarrierDTO dto = new AgvUnbindCarrierDTO();
         dto.setReqCode(buildRcsReqCode("UNBIND"));
         dto.setCarrierCode(cartCode);
-        dto.setSiteCode(pointCode);
-        log.info("同步RCS解绑载具：carrierCode={}, siteCode={}, reqCode={}", cartCode, pointCode, dto.getReqCode());
+        dto.setSiteCode(siteCode);
+        log.info("同步RCS解绑载具：carrierCode={}, siteCode={}, reqCode={}", cartCode, siteCode, dto.getReqCode());
         Result<Object> result = agvService.commonRequest(ApiEnum.AGV_unbindCarrier, dto);
         if (result == null || !ResultCode.SUCCESS.getCode().equals(result.getCode())) {
             String msg = result == null ? "RCS返回空结果" : result.getMsg();
@@ -324,11 +330,11 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     /**
      * 补偿性 RCS 解绑：本地绑定失败后释放 RCS 侧绑定，异常仅记录不向上抛出
      */
-    private void rcsUnbindQuietly(String cartCode, String pointCode) {
+    private void rcsUnbindQuietly(String cartCode, String siteCode) {
         try {
-            rcsUnbind(cartCode, pointCode);
+            rcsUnbind(cartCode, siteCode);
         } catch (Exception e) {
-            log.error("补偿RCS解绑失败，请人工核对：carrierCode={}, siteCode={}", cartCode, pointCode, e);
+            log.error("补偿RCS解绑失败，请人工核对：carrierCode={}, siteCode={}", cartCode, siteCode, e);
         }
     }
 

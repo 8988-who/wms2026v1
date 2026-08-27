@@ -12,7 +12,8 @@
         <result property="floor" column="floor"/>
         <result property="sortOrder" column="sort_order"/>
         <result property="status" column="status"/>
-        <result property="remark" column="remark"/>
+        <result property="modelCode" column="model_code"/>
+        <result property="modelName" column="model_name"/>
         <result property="aislePurpose" column="aisle_purpose"/>
         <result property="isHandoverPoint" column="is_handover_point"/>
         <result property="pointCount" column="point_count"/>
@@ -33,7 +34,8 @@
             a.floor,
             a.sort_order,
             a.status,
-            a.remark,
+            a.model_code,
+            cm.model_name,
             a.aisle_purpose,
             a.is_handover_point,
             (SELECT COUNT(*) FROM wms_point WHERE wms_point.aisle_id = a.id) AS point_count,
@@ -43,6 +45,7 @@
             a.updated_time
         FROM wms_aisle a
         LEFT JOIN wms_location l ON a.location_id = l.id
+        LEFT JOIN wms_cart_model cm ON a.model_code = cm.model_code
         LEFT JOIN sys_user su1 ON a.created_by = su1.id
         LEFT JOIN sys_user su2 ON a.updated_by = su2.id
         <where>
@@ -69,6 +72,9 @@
             </if>
             <if test="queryParams.aislePurpose != null and queryParams.aislePurpose != ''">
                 AND a.aisle_purpose = #{queryParams.aislePurpose}
+            </if>
+            <if test="queryParams.modelCode != null and queryParams.modelCode != ''">
+                AND a.model_code = #{queryParams.modelCode}
             </if>
         </where>
         ORDER BY a.sort_order ASC, a.id ASC
