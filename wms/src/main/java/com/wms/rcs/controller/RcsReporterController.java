@@ -10,6 +10,7 @@ import com.wms.rcs.model.dto.callback.RcsHomingReportDTO;
 import com.wms.rcs.model.dto.callback.RcsResourceReportDTO;
 import com.wms.rcs.model.dto.callback.RcsTaskReportDTO;
 import com.wms.rcs.model.dto.callback.RcsTaskWarningDTO;
+import com.wms.rcs.service.RcsBindService;
 import com.wms.rcs.service.RcsTaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,7 +36,8 @@ import java.util.Map;
  *     <li>{@code POST /eqpt}：请求外设控制（对应 AGV_eqptReporter），当前仅落日志。</li>
  *     <li>{@code POST /zone/homing}：机器人归巢完成回馈（对应 AGV_homingZoneReporter），当前仅落日志。</li>
  *     <li>{@code POST /zone/banish}：区域驱离完成回馈（对应 AGV_banishZoneReporter），当前仅落日志。</li>
- *     <li>{@code POST /bind}：绑定解绑通知（对应 AGV_bindReporter），当前仅落日志。</li>
+ *     <li>{@code POST /bind}：绑定解绑通知（对应 AGV_bindReporter），记台账并纯本地同步
+ *         cart_inventory 绑定状态（RCS 事实为权威，不回环调 AGV 接口），异常回失败码触发重试。</li>
  * </ul>
  * </p>
  * <p>
@@ -60,6 +62,7 @@ import java.util.Map;
 public class RcsReporterController {
 
     private final RcsTaskService rcsTaskService;
+    private final RcsBindService rcsBindService;
 
     // TODO 接入生产前补充回调鉴权：校验固定 token（请求头 X-lr-* 或独立密钥）或来源 IP 白名单
 
@@ -134,9 +137,16 @@ public class RcsReporterController {
     @PostMapping("/bind")
     @Log(module = LogModuleEnum.RCS_TASK, value = ActionTypeEnum.OTHER)
     public Map<String, Object> bindReport(@RequestBody RcsBindReportDTO report) {
-        // TODO 接入绑定关系同步：按 invoke(BIND/UNBIND) 同步本地存储对象与搬运对象的绑定关系
+        // 绑定事实以 RCS 为权威：记台账（reqCode 幂等）+ 纯本地同步 cart_inventory，
+        // 不回环调 AGV 绑定/解绑接口；程序异常回失败码触发 RCS 重试（区别于 task 回调的总是成功）
         log.info("收到RCS绑定解绑通知：{}", report);
-        return reply(true);
+        try {
+            String result = rcsBindService.handleBindReport(report);
+            return reply(true, result);
+        } catch (Exception e) {
+            log.error("RCS绑定解绑通知处理失败：{}", report, e);
+            return replyFailure("处理失败，请重试");
+        }
     }
 
     /**
@@ -144,9 +154,26 @@ public class RcsReporterController {
      * <p>无论是否匹配到本地任务，均返回成功码，避免 RCS 侧重试风暴；未匹配情况已在 Service 层落日志。</p>
      */
     private Map<String, Object> reply(boolean matched) {
+        return reply(matched, null);
+    }
+
+    /**
+     * 构造 RCS 期望的回馈响应体（附带处理结果说明）
+     */
+    private Map<String, Object> reply(boolean matched, String message) {
         Map<String, Object> resp = new HashMap<>(4);
         resp.put("code", "0");
-        resp.put("message", matched ? "success" : "received");
+        resp.put("message", message != null ? message : (matched ? "success" : "received"));
+        return resp;
+    }
+
+    /**
+     * 构造失败响应体（非"0"码，触发 RCS 侧重试；具体失败码取值以联调为准）
+     */
+    private Map<String, Object> replyFailure(String message) {
+        Map<String, Object> resp = new HashMap<>(4);
+        resp.put("code", "1");
+        resp.put("message", message);
         return resp;
     }
 

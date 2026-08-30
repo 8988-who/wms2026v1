@@ -344,4 +344,62 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     private String buildRcsReqCode(String prefix) {
         return prefix + "_" + IdUtil.fastSimpleUUID();
     }
+
+    /**
+     * RCS绑定解绑回调同步（纯本地写库，零 RCS 调用）。
+     * <p>
+     * 与 bind()/unbind() 的区别：本方法由 RCS /bind 回调驱动，RCS 是绑定事实的权威方，
+     * 本地无条件服从——因此<b>绝不回环调用 AGV_bindCarrier/unbindCarrier</b>，避免通知死循环。
+     * 写入均带条件天然幂等：主动链路（confirmArrive/unbind）与回调链路先后到达时
+     * 写同一最终状态，后到者 no-op；迟到的旧事件被条件过滤。
+     * lock_status 语义与 unbind() 一致：车走后空位复位为 0；绑定时不触碰人工锁定。
+     * 注意：回调线程无登录上下文，不回填 update_by（保留原值），仅刷新 updated_time。
+     * </p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String syncExternalBind(Long pointId, Long cartId, boolean bind) {
+        LocalDateTime now = LocalDateTime.now();
+        if (bind) {
+            // 1. 清该车在其他点位的旧绑定（一车一位：RCS 事实覆盖本地全部历史落点）
+            cartInventoryMapper.update(null,
+                    new LambdaUpdateWrapper<CartInventory>()
+                            .set(CartInventory::getCartId, null)
+                            .set(CartInventory::getArriveTime, null)
+                            .set(CartInventory::getLockStatus, 0)
+                            .set(CartInventory::getUpdateTime, now)
+                            .eq(CartInventory::getCartId, cartId)
+                            .ne(CartInventory::getPointId, pointId));
+
+            // 2. 目标点位覆盖写入（RCS 事实赢）；预占被顶掉时告警（该预占任务将走异常路径）。
+            //    此处读取仅为产生告警信息，写入仍为按点位单条覆盖，不受读改竞态影响。
+            CartInventory existing = cartInventoryMapper.selectOne(
+                    new LambdaQueryWrapper<CartInventory>().eq(CartInventory::getPointId, pointId));
+            String warnMsg = "";
+            if (existing != null && existing.getCartId() != null
+                    && !existing.getCartId().equals(cartId) && existing.getArriveTime() == null) {
+                warnMsg = "，原在途预占(料车ID=" + existing.getCartId() + ")被RCS事实顶掉，相关任务将走异常路径";
+                log.warn("RCS绑定回调覆盖在途预占：pointId={}, 原料车={}, 新料车={}",
+                        pointId, existing.getCartId(), cartId);
+            }
+            cartInventoryMapper.update(null,
+                    new LambdaUpdateWrapper<CartInventory>()
+                            .set(CartInventory::getCartId, cartId)
+                            .set(CartInventory::getArriveTime, now)
+                            .set(CartInventory::getUpdateTime, now)
+                            .eq(CartInventory::getPointId, pointId));
+            return "绑定已同步" + warnMsg;
+        }
+
+        // 解绑：条件清空（点位+料车均匹配才生效），迟到事件 0 行命中自动 no-op
+        int rows = cartInventoryMapper.update(null,
+                new LambdaUpdateWrapper<CartInventory>()
+                        .set(CartInventory::getCartId, null)
+                        .set(CartInventory::getArriveTime, null)
+                        .set(CartInventory::getLockStatus, 0)
+                        .set(CartInventory::getUpdateTime, now)
+                        .eq(CartInventory::getPointId, pointId)
+                        .eq(CartInventory::getCartId, cartId));
+        return rows > 0 ? "解绑已同步" : "解绑幂等跳过（本地已无该绑定，疑似迟到事件）";
+    }
 }

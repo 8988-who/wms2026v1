@@ -31,8 +31,7 @@ public class WmsPointDTO {
     @NotNull(message = "区域ID不能为空")
     private Long locationId;
 
-    @Schema(description = "所属巷道ID", example = "1")
-    @NotNull(message = "巷道ID不能为空")
+    @Schema(description = "所属巷道ID（为空表示离散点位，直接归属区域）", example = "1")
     private Long aisleId;
 
     @Schema(description = "点位编码（系统自动生成）", example = "PLANT001-P001")
@@ -46,6 +45,7 @@ public class WmsPointDTO {
     private String barcode;
 
     @Schema(description = "坐标（AGV引擎定义格式）", example = "100,200,0")
+    @NotBlank(message = "地图坐标不能为空（RCS下发 targetRoute.code 依赖该字段）")
     private String coordinate;
 
     @Schema(description = "物理楼层", example = "1F")

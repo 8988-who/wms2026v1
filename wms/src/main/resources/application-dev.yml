@@ -1,5 +1,5 @@
 server:
-  port: 8900
+  port: 8000
   shutdown: graceful
   address: 0.0.0.0
 

@@ -1,6 +1,5 @@
 package com.wms.warehouse.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.wms.warehouse.mapper.WmsAisleMapper;
 import com.wms.warehouse.mapper.WmsPointMapper;
@@ -33,21 +32,19 @@ public class WmsCascadeServiceImpl implements WmsCascadeService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void cascadeDisableLocations(List<Long> locationIds) {
-        List<Long> aisleIds = wmsAisleMapper.selectList(
-                new LambdaQueryWrapper<WmsAisle>()
-                        .in(WmsAisle::getLocationId, locationIds)
-                        .select(WmsAisle::getId)
-        ).stream().map(WmsAisle::getId).collect(java.util.stream.Collectors.toList());
+        // 点位直接按区域命中（wms_point.location_id 对所有点位必有值），
+        // 覆盖巷道点位与不挂巷道的离散点位——若先查巷道再按 aisle_id 停用会漏掉离散点位
+        WmsPoint pointUpdate = new WmsPoint();
+        pointUpdate.setStatus(0);
+        wmsPointMapper.update(pointUpdate,
+                new LambdaUpdateWrapper<WmsPoint>()
+                        .in(WmsPoint::getLocationId, locationIds));
 
-        if (!aisleIds.isEmpty()) {
-            WmsAisle aisleUpdate = new WmsAisle();
-            aisleUpdate.setStatus(0);
-            wmsAisleMapper.update(aisleUpdate,
-                    new LambdaUpdateWrapper<WmsAisle>()
-                            .in(WmsAisle::getId, aisleIds));
-
-            cascadeDisablePoints(aisleIds);
-        }
+        WmsAisle aisleUpdate = new WmsAisle();
+        aisleUpdate.setStatus(0);
+        wmsAisleMapper.update(aisleUpdate,
+                new LambdaUpdateWrapper<WmsAisle>()
+                        .in(WmsAisle::getLocationId, locationIds));
     }
 
     @Override

@@ -48,7 +48,7 @@ public class CartInventory extends WmsBaseEntity {
     /** 冗余：点位所属区域ID（自 wms_point.location_id，点位属性，搬运不变） */
     private Long locationId;
 
-    /** 冗余：点位所属巷道ID（自 wms_point.aisle_id，点位属性，搬运不变，按巷道筛选用） */
+    /** 冗余：点位所属巷道ID（自 wms_point.aisle_id，点位属性，搬运不变，按巷道筛选用）；NULL 表示离散点位（不挂巷道） */
     private Long aisleId;
 
     /** 料车进入当前点位的时刻（cart_id 为空时为空） */

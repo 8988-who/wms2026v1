@@ -89,4 +89,13 @@
         SELECT coordinate FROM wms_point WHERE point_code = #{pointCode} LIMIT 1
     </select>
 
+    <!-- 按地图坐标反查点位（RCS 绑定回调 slotCode 为坐标口径；坐标正常唯一，多条说明基础数据重复，由调用方告警）。
+         列名保持 point_code 原样，依赖 map-underscore-to-camel-case 映射到 pointCode（PG 会折叠非引号别名大小写） -->
+    <select id="selectPointIdByCoordinate" resultType="com.wms.rcs.model.dto.RcsPointRef">
+        SELECT id, point_code
+        FROM wms_point
+        WHERE coordinate = #{coordinate}
+        ORDER BY id
+    </select>
+
 </mapper>

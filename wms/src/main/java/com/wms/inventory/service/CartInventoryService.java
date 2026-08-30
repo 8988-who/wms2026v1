@@ -75,4 +75,15 @@ public interface CartInventoryService extends IService<CartInventory> {
      * 解锁库存（仅锁定状态可解）
      */
     void unlock(Long pointId);
+
+    /**
+     * RCS绑定解绑回调同步：以 RCS 推送的绑定事实修正本地库存（纯本地写库，
+     * 绝不回调 AGV_bindCarrier/unbindCarrier，防止 WMS↔RCS 通知回环）。
+     *
+     * @param pointId   点位ID（由回调 slotCode 坐标反查）
+     * @param cartId    料车ID（由回调 carrierCode 反查）
+     * @param bind      true=绑定（覆盖式，RCS 事实赢）；false=解绑（条件清空，迟到事件 no-op）
+     * @return 处理说明（成功/幂等跳过/覆盖告警等信息，供台账记录）
+     */
+    String syncExternalBind(Long pointId, Long cartId, boolean bind);
 }

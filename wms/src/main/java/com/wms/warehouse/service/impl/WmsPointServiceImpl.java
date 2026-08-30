@@ -27,11 +27,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 点位业务服务实现
  * <p>
- * 实现点位的分页查询、新增（自动生成编码、校验巷道状态）、
+ * 实现点位的分页查询、新增（自动生成编码、校验巷道/区域状态，支持不挂巷道的离散点位）、
  * 修改（巷道变更时重新生成编码）、删除、
  * 批量状态更新及表单/筛选选项等功能。
  * 点位数量采用 SQL 实时计算 + 手动维护双保险机制：
@@ -68,13 +69,22 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean saveWmsPoint(WmsPointDTO dto) {
-        WmsAisle aisle = wmsAisleService.getById(dto.getAisleId());
-        Assert.notNull(aisle, "所属巷道不存在");
-        Assert.isTrue(aisle.getStatus() == 1, "所属巷道已停用，无法新增点位");
-        WmsLocation location = wmsLocationService.getById(aisle.getLocationId());
-        Assert.notNull(location, "所属区域不存在");
-        // P0-3 修复：补充校验所属区域启用状态，避免向停用区域下的巷道挂入点位
-        Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法新增点位");
+        WmsAisle aisle = null;
+        WmsLocation location;
+        if (dto.getAisleId() != null) {
+            aisle = wmsAisleService.getById(dto.getAisleId());
+            Assert.notNull(aisle, "所属巷道不存在");
+            Assert.isTrue(aisle.getStatus() == 1, "所属巷道已停用，无法新增点位");
+            location = wmsLocationService.getById(aisle.getLocationId());
+            Assert.notNull(location, "所属区域不存在");
+            // P0-3 修复：补充校验所属区域启用状态，避免向停用区域下的巷道挂入点位
+            Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法新增点位");
+        } else {
+            // 离散点位：不挂巷道（aisle_id=NULL），直接归属区域
+            location = wmsLocationService.getById(dto.getLocationId());
+            Assert.notNull(location, "所属区域不存在");
+            Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法新增点位");
+        }
 
         dto.setFloor(location.getFloor());
         dto.setPlantCode(location.getPlantCode());
@@ -88,26 +98,32 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
             Assert.isTrue(dupCount == 0, "该厂区下点位条码已存在：" + dto.getBarcode());
         }
 
-        String pointCode = wmsCodeGeneratorService.generatePointCode(aisle.getAisleCode(), () -> {
+        // 编码前缀：巷道点位用巷道编码，离散点位用区域编码
+        String codePrefix = aisle != null ? aisle.getAisleCode() : location.getLocationCode();
+        String pointCode = wmsCodeGeneratorService.generatePointCode(codePrefix, () -> {
             WmsPoint max = this.getOne(new LambdaQueryWrapper<WmsPoint>()
-                    .likeRight(WmsPoint::getPointCode, aisle.getAisleCode() + "-P")
+                    .likeRight(WmsPoint::getPointCode, codePrefix + "-P")
                     .select(WmsPoint::getPointCode)
                     .orderByDesc(WmsPoint::getPointCode)
                     .last("LIMIT 1"));
-            return max != null ? WmsCodeGeneratorService.extractSeq(max.getPointCode(), aisle.getAisleCode() + "-P") : 0;
+            return max != null ? WmsCodeGeneratorService.extractSeq(max.getPointCode(), codePrefix + "-P") : 0;
         });
         dto.setPointCode(pointCode);
 
         WmsPoint entity = wmsPointConverter.toEntity(dto);
         boolean result = this.save(entity);
 
-        if (result) {
+        // 巷道点位维护巷道计数（离散点位无巷道计数可维护）
+        if (result && aisle != null) {
             wmsAisleService.lambdaUpdate()
                     .eq(WmsAisle::getId, dto.getAisleId())
                     .setSql("point_count = point_count + 1")
                     .update();
+        }
 
-            // 库存联动：新增点位 → 占用表自动插入空位记录（cart_id=NULL），与点位新增同事务
+        // 库存联动：新增点位 → 占用表自动插入空位记录（cart_id=NULL），与点位新增同事务
+        // 离散点位（aisleId=NULL）同样要生成空位记录，仅 aisle_id 冗余列为 NULL
+        if (result) {
             CartInventory inventory = new CartInventory();
             inventory.setPointId(entity.getId());
             inventory.setPointCode(dto.getPointCode());
@@ -127,27 +143,40 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
         Assert.notNull(existing, "点位不存在");
 
         Long oldAisleId = existing.getAisleId();
+        Long newAisleId = dto.getAisleId();
+        boolean aisleChanged = !Objects.equals(newAisleId, oldAisleId);
 
-        if (!dto.getAisleId().equals(oldAisleId)) {
-            WmsAisle aisle = wmsAisleService.getById(dto.getAisleId());
-            Assert.notNull(aisle, "所属巷道不存在");
-            Assert.isTrue(aisle.getStatus() == 1, "所属巷道已停用，无法将点位切换到该巷道");
-            WmsLocation location = wmsLocationService.getById(aisle.getLocationId());
-            Assert.notNull(location, "所属区域不存在");
-            // P0-3 修复：补充校验所属区域启用状态
-            Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法将点位切换到该巷道");
+        if (aisleChanged) {
+            WmsAisle aisle = null;
+            WmsLocation location;
+            if (newAisleId != null) {
+                aisle = wmsAisleService.getById(newAisleId);
+                Assert.notNull(aisle, "所属巷道不存在");
+                Assert.isTrue(aisle.getStatus() == 1, "所属巷道已停用，无法将点位切换到该巷道");
+                location = wmsLocationService.getById(aisle.getLocationId());
+                Assert.notNull(location, "所属区域不存在");
+                // P0-3 修复：补充校验所属区域启用状态
+                Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法将点位切换到该巷道");
+            } else {
+                // 切换为离散点位：不挂巷道（aisle_id=NULL），沿用原区域（编辑页区域不可改）
+                location = wmsLocationService.getById(existing.getLocationId());
+                Assert.notNull(location, "所属区域不存在");
+                Assert.isTrue(location.getStatus() == 1, "所属区域已停用，无法修改点位");
+            }
 
             dto.setFloor(location.getFloor());
             dto.setPlantCode(location.getPlantCode());
             dto.setLocationId(location.getId());
 
-            String pointCode = wmsCodeGeneratorService.generatePointCode(aisle.getAisleCode(), () -> {
+            // 编码前缀：巷道点位用巷道编码，离散点位用区域编码
+            String codePrefix = aisle != null ? aisle.getAisleCode() : location.getLocationCode();
+            String pointCode = wmsCodeGeneratorService.generatePointCode(codePrefix, () -> {
                 WmsPoint max = this.getOne(new LambdaQueryWrapper<WmsPoint>()
-                        .likeRight(WmsPoint::getPointCode, aisle.getAisleCode() + "-P")
+                        .likeRight(WmsPoint::getPointCode, codePrefix + "-P")
                         .select(WmsPoint::getPointCode)
                         .orderByDesc(WmsPoint::getPointCode)
                         .last("LIMIT 1"));
-                return max != null ? WmsCodeGeneratorService.extractSeq(max.getPointCode(), aisle.getAisleCode() + "-P") : 0;
+                return max != null ? WmsCodeGeneratorService.extractSeq(max.getPointCode(), codePrefix + "-P") : 0;
             });
             dto.setPointCode(pointCode);
         } else {
@@ -170,15 +199,27 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
         entity.setId(id);
         boolean result = this.updateById(entity);
 
-        if (result && !dto.getAisleId().equals(oldAisleId)) {
-            wmsAisleService.lambdaUpdate()
-                    .eq(WmsAisle::getId, oldAisleId)
-                    .setSql("point_count = GREATEST(point_count - 1, 0)")
+        // updateById 的非空更新策略不会将 aisle_id 更新为 NULL，切换为离散点位时需显式置空
+        if (result && newAisleId == null) {
+            this.lambdaUpdate()
+                    .eq(WmsPoint::getId, id)
+                    .set(WmsPoint::getAisleId, null)
                     .update();
-            wmsAisleService.lambdaUpdate()
-                    .eq(WmsAisle::getId, dto.getAisleId())
-                    .setSql("point_count = point_count + 1")
-                    .update();
+        }
+
+        if (result && aisleChanged) {
+            if (oldAisleId != null) {
+                wmsAisleService.lambdaUpdate()
+                        .eq(WmsAisle::getId, oldAisleId)
+                        .setSql("point_count = GREATEST(point_count - 1, 0)")
+                        .update();
+            }
+            if (newAisleId != null) {
+                wmsAisleService.lambdaUpdate()
+                        .eq(WmsAisle::getId, newAisleId)
+                        .setSql("point_count = point_count + 1")
+                        .update();
+            }
         }
 
         // 库存联动：点位编辑后同步占用表冗余字段（point_code/location_id/aisle_id），与点位编辑同事务
@@ -218,10 +259,13 @@ public class WmsPointServiceImpl extends ServiceImpl<WmsPointMapper, WmsPoint> i
             cartInventoryService.remove(new LambdaQueryWrapper<CartInventory>()
                     .eq(CartInventory::getPointId, pointId));
 
-            wmsAisleService.lambdaUpdate()
-                    .eq(WmsAisle::getId, entity.getAisleId())
-                    .setSql("point_count = GREATEST(point_count - 1, 0)")
-                    .update();
+            // 离散点位（aisle_id=NULL）无巷道计数可维护
+            if (entity.getAisleId() != null) {
+                wmsAisleService.lambdaUpdate()
+                        .eq(WmsAisle::getId, entity.getAisleId())
+                        .setSql("point_count = GREATEST(point_count - 1, 0)")
+                        .update();
+            }
         }
         return true;
     }

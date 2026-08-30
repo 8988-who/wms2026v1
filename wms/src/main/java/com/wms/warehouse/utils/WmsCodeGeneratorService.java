@@ -77,18 +77,18 @@ public class WmsCodeGeneratorService {
     /**
      * 生成点位编码
      * <p>
-     * 格式：{aisleCode}-P{3位序号}（如 PLANT001-A001-P001）
+     * 格式：{前缀}-P{3位序号}（如巷道点位 PLANT001-A001-P001，离散点位 PLANT001-001-P001）
      *
-     * @param aisleCode         巷道编码
+     * @param codePrefix        编码前缀：巷道点位传巷道编码，离散点位传区域编码
      * @param maxSeqSupplier    最大已有序号供应器（首次初始化时使用）
      * @return 点位编码
      */
-    public String generatePointCode(String aisleCode, Supplier<Integer> maxSeqSupplier) {
-        String key = REDIS_KEY_PREFIX + "point:" + aisleCode;
+    public String generatePointCode(String codePrefix, Supplier<Integer> maxSeqSupplier) {
+        String key = REDIS_KEY_PREFIX + "point:" + codePrefix;
         initSeqIfAbsent(key, maxSeqSupplier);
         long seq = stringRedisTemplate.opsForValue().increment(key);
-        log.debug("生成点位编码: aisleCode={}, key={}, seq={}", aisleCode, key, seq);
-        return aisleCode + "-P" + String.format("%03d", seq);
+        log.debug("生成点位编码: codePrefix={}, key={}, seq={}", codePrefix, key, seq);
+        return codePrefix + "-P" + String.format("%03d", seq);
     }
 
     /**
