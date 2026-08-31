@@ -131,7 +131,7 @@ security:
     # - /api/v1/auth/sms/code # 发送登录短信验证码（接口已下线，接入厂商短信服务后再恢复放行）
     - /api/v1/auth/refresh-token # 刷新令牌接口
     - /api/v1/logs/** # 日志接口(访问日志列表)
-    - /api/v1/rcs/reporter/** # RCS 回调入站接口(外部RCS主动回馈,暂不鉴权;生产应改独立token/IP白名单)
+    - /api/robot/reporter/** # RCS 回调入站接口(外部RCS主动回馈,暂不鉴权;生产应改独立token/IP白名单)
   # 非安全端点路径，完全绕过 Spring Security 的过滤器
   unsecured-urls:
     - ${springdoc.swagger-ui.path}

@@ -23,8 +23,8 @@ public class RcsResourceReportDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** 请求编号（RCS 侧唯一，重复回调沿用同一编号） */
-    @Schema(description = "请求编号")
+    /** 请求编号（RCS 可空） */
+    @Schema(description = "请求编号（可空）")
     private String reqCode;
 
     /** 任务号 */

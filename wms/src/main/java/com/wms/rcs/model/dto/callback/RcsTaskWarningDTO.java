@@ -23,8 +23,8 @@ public class RcsTaskWarningDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** 请求编号（RCS 侧唯一） */
-    @Schema(description = "请求编号")
+    /** 请求编号（RCS 可空） */
+    @Schema(description = "请求编号（可空）")
     private String reqCode;
 
     /** 任务编号（首选反查键） */

@@ -30,6 +30,7 @@ import com.wms.rcs.model.vo.RcsTaskVO;
 import com.wms.rcs.service.AgvService;
 import com.wms.rcs.service.RcsTaskService;
 import com.wms.rcs.utils.RcsTaskConverter;
+import com.wms.system.service.ISysConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -67,6 +68,8 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     private AgvService agvService;
     @Autowired
     private ApplicationEventPublisher eventPublisher;
+    @Autowired
+    private ISysConfigService sysConfigService;
 
     /**
      * 自身代理引用：下发成功/失败后的库写操作需经代理触发 @Transactional(REQUIRES_NEW)，
@@ -628,20 +631,23 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     /**
      * 本地任务类型(1-搬运 2-充电 3-调度 4-巡检) → RCS 协议 taskType 字符串
      * <p>
-     * 目前仅 1-搬运 经实测确认（PF-LMR-COMMON 潜伏车）；其余类型的 RCS 编码待厂商确认后补充。
+     * 从系统配置表(sys_config)读取配置键 {@code wms.rcs.template.{taskType}}，如：
+     * <ul>
+     *     <li>wms.rcs.template.1 = PF-LMR-COMMON（搬运-潜伏车）</li>
+     *     <li>wms.rcs.template.2 = PF-LMR-CHARGE（充电）</li>
+     *     <li>wms.rcs.template.3 = PF-LMR-DISPATCH（调度）</li>
+     *     <li>wms.rcs.template.4 = PF-LMR-INSPECT（巡检）</li>
+     * </ul>
+     * 未配置时统一兜底返回 {@code PF-LMR-COMMON}。
      * </p>
      */
     private String mapTaskType(Integer taskType) {
         if (taskType == null) {
             return "PF-LMR-COMMON";
         }
-        return switch (taskType) {
-            case 1 -> "PF-LMR-COMMON";   // 搬运-潜伏车（已实测确认）
-            case 2 -> "PF-LMR-COMMON";   // 充电：RCS 编码待厂商确认，暂按搬运
-            case 3 -> "PF-LMR-COMMON";   // 调度：RCS 编码待厂商确认，暂按搬运
-            case 4 -> "PF-LMR-COMMON";   // 巡检：RCS 编码待厂商确认，暂按搬运
-            default -> "PF-LMR-COMMON";
-        };
+        String configKey = "wms.rcs.template." + taskType;
+        String template = sysConfigService.selectConfigByKey(configKey);
+        return StrUtil.isNotBlank(template) ? template : "PF-LMR-COMMON";
     }
 
     /**

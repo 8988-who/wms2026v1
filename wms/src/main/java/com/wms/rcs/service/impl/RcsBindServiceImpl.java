@@ -1,5 +1,6 @@
 package com.wms.rcs.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -148,7 +149,7 @@ public class RcsBindServiceImpl implements RcsBindService {
 
     private RcsBindRecordEntity buildRecord(RcsBindReportDTO report) {
         RcsBindRecordEntity record = new RcsBindRecordEntity();
-        record.setReqCode(report.getReqCode());
+        record.setReqCode(StrUtil.isNotBlank(report.getReqCode()) ? report.getReqCode() : IdUtil.fastSimpleUUID());
         record.setSlotCategory(report.getSlotCategory());
         record.setSlotCode(report.getSlotCode());
         record.setCarrierCategory(report.getCarrierCategory());

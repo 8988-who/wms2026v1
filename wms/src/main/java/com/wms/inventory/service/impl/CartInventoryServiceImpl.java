@@ -128,7 +128,15 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
                             .eq(CartInventory::getPointId, dto.getPointId())
                             .isNull(CartInventory::getCartId));
             if (rows == 0) {
-                // 并发下点位被抢先占用：补偿 RCS 解绑，保持两侧一致
+                // 区分"RCS回环先写了同一料车"和"真正被别的车占了"
+                CartInventory current = cartInventoryMapper.selectOne(
+                        new LambdaQueryWrapper<CartInventory>().eq(CartInventory::getPointId, dto.getPointId()));
+                if (current != null && dto.getCartId().equals(current.getCartId())) {
+                    // RCS 回调已先于本地更新写入同一料车，幂等返回，不补偿解绑
+                    log.info("RCS回环：绑定回调已先写入，本地幂等跳过：pointId={}, cartId={}", dto.getPointId(), dto.getCartId());
+                    return;
+                }
+                // 真正的竞争失败：补偿 RCS 解绑，保持两侧一致
                 rcsUnbindQuietly(cartCode, siteCode);
                 throw new BusinessException("点位已被占用或不存在，请刷新后重试");
             }
@@ -176,7 +184,14 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
                         .eq(CartInventory::getPointId, pointId)
                         .isNotNull(CartInventory::getCartId));
         if (rows == 0) {
-            // 并发下点位已被清空：RCS 已解绑、本地已为空，两侧一致，无需补偿
+            // 区分"RCS回环已清空"和"真正无料车"
+            CartInventory current = cartInventoryMapper.selectOne(
+                    new LambdaQueryWrapper<CartInventory>().eq(CartInventory::getPointId, pointId));
+            if (current != null && current.getCartId() == null) {
+                // RCS 回调已先于本地更新清空，幂等返回
+                log.info("RCS回环：解绑回调已先清空，本地幂等跳过：pointId={}", pointId);
+                return;
+            }
             throw new BusinessException("该点位当前无料车，无法解绑");
         }
     }
@@ -251,7 +266,14 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
                         .isNotNull(CartInventory::getCartId)
                         .isNull(CartInventory::getArriveTime));
         if (rows == 0) {
-            // 并发下已被确认到达：RCS 已绑定、本地已一致，仅提示
+            // 区分"RCS回环已补写arrive_time"和"真正无在途料车"
+            CartInventory current = cartInventoryMapper.selectOne(
+                    new LambdaQueryWrapper<CartInventory>().eq(CartInventory::getPointId, pointId));
+            if (current != null && current.getCartId() != null && current.getArriveTime() != null) {
+                // RCS 回调已先于本地更新补写 arrive_time，幂等返回
+                log.info("RCS回环：到达回调已先写入arrive_time，本地幂等跳过：pointId={}", pointId);
+                return;
+            }
             throw new BusinessException("该点位无在途料车或已确认到达");
         }
     }
