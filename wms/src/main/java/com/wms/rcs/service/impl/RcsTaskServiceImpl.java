@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.wms.common.enums.ApiEnum;
+import com.wms.rcs.enums.RcsApiEnum;
 import com.wms.common.exception.BusinessException;
 import com.wms.common.result.Result;
 import com.wms.common.result.ResultCode;
@@ -158,7 +158,7 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
 
         Result<Object> result;
         try {
-            result = agvService.commonRequest(ApiEnum.AGV_submitTask, buildSubmitParams(task));
+            result = agvService.commonRequest(RcsApiEnum.SUBMIT_TASK, buildSubmitParams(task));
         } catch (Exception e) {
             // 网络异常/RCS 抛错：置为异常态，记录错误信息，允许后续重试
             log.error("RCS任务下发异常, taskCode={}", task.getTaskCode(), e);
@@ -234,7 +234,7 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
 
         // 已派发/执行中、或已到达 RCS 后异常（有外部任务号）：先联动 RCS 取消，成功后再落库
         try {
-            Result<Object> result = agvService.commonRequest(ApiEnum.AGV_cancelTask, buildCancelParams(task));
+            Result<Object> result = agvService.commonRequest(RcsApiEnum.CANCEL_TASK, buildCancelParams(task));
             if (result == null || !ResultCode.SUCCESS.getCode().equals(result.getCode())) {
                 String msg = result == null ? "RCS返回空结果" : result.getMsg();
                 throw new BusinessException("RCS任务取消失败：" + msg);

@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.wms.common.enums.ApiEnum;
 import com.wms.common.exception.BusinessException;
+import com.wms.rcs.enums.RcsApiEnum;
 import com.wms.common.result.Result;
 import com.wms.common.result.ResultCode;
 import com.wms.framework.security.util.SecurityUtils;
@@ -326,7 +326,7 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
         dto.setCarrierCode(cartCode);
         dto.setSiteCode(siteCode);
         log.info("同步RCS绑定载具：carrierCode={}, siteCode={}", cartCode, siteCode);
-        Result<Object> result = agvService.commonRequest(ApiEnum.AGV_bindCarrier, dto);
+        Result<Object> result = agvService.commonRequest(RcsApiEnum.BIND_CARRIER, dto);
         if (result == null || !ResultCode.SUCCESS.getCode().equals(result.getCode())) {
             String msg = result == null ? "RCS返回空结果" : result.getMsg();
             throw new BusinessException("RCS绑定失败：{}", msg);
@@ -342,7 +342,7 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
         dto.setCarrierCode(cartCode);
         dto.setSiteCode(siteCode);
         log.info("同步RCS解绑载具：carrierCode={}, siteCode={}, reqCode={}", cartCode, siteCode, dto.getReqCode());
-        Result<Object> result = agvService.commonRequest(ApiEnum.AGV_unbindCarrier, dto);
+        Result<Object> result = agvService.commonRequest(RcsApiEnum.UNBIND_CARRIER, dto);
         if (result == null || !ResultCode.SUCCESS.getCode().equals(result.getCode())) {
             String msg = result == null ? "RCS返回空结果" : result.getMsg();
             throw new BusinessException("RCS解绑失败：{}", msg);
