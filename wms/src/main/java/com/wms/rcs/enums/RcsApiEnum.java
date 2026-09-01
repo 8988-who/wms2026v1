@@ -145,20 +145,26 @@ public enum RcsApiEnum {
             return UNKNOWN;
         }
         String p = path.trim();
-        // 1. 精确匹配完整路径
+        // 1. 完整路径精确匹配
         for (RcsApiEnum e : values()) {
             if (e != UNKNOWN && e.path != null && e.path.equals(p)) {
                 return e;
             }
         }
-        // 2. 双倍路径归一化：/api/robot/reporter/api/robot/reporter/task → 剥离一次前缀后重新匹配
+        // 2. 归一化：循环剥离 /api/robot/reporter 前缀（兼容平台把注册地址重复拼接成双倍路径），忽略尾部斜杠
         String prefix = "/api/robot/reporter";
-        if (p.startsWith(prefix + "/")) {
-            String stripped = p.substring(prefix.length());
-            for (RcsApiEnum e : values()) {
-                if (e != UNKNOWN && e.path != null && e.path.equals(stripped)) {
-                    return e;
-                }
+        String suffix = p;
+        while (suffix.startsWith(prefix + "/")) {
+            suffix = suffix.substring(prefix.length());
+        }
+        if (suffix.length() > 1 && suffix.endsWith("/")) {
+            suffix = suffix.substring(0, suffix.length() - 1);
+        }
+        // 3. 按接口后缀匹配（/api/robot/reporter/task 归一化为 /task）
+        for (RcsApiEnum e : values()) {
+            if (e != UNKNOWN && e.path != null && e.path.startsWith(prefix)
+                    && e.path.substring(prefix.length()).equals(suffix)) {
+                return e;
             }
         }
         return UNKNOWN;

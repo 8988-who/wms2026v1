@@ -359,11 +359,16 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
             task.setAgvCode(report.getAgvCode());
         }
         // 库存闭环（事件在事务提交后由 inventory 监听执行）：
-        //   UNBIND → 解绑源点位(fromLocation)；CONFIRM_ARRIVE → 确认目标点位到达(toLocation)
+        //   UNBIND → 解绑源点位(fromLocation)；CONFIRM_ARRIVE → 先解绑当前源点位绑定，再确认目标点位到达(toLocation)
         if (inventoryAction != null) {
-            String locationCode = RcsTaskInventoryEvent.Action.UNBIND.equals(inventoryAction)
-                    ? task.getFromLocation() : task.getToLocation();
-            publishInventoryEvent(inventoryAction, task.getCartCode(), locationCode);
+            if (RcsTaskInventoryEvent.Action.CONFIRM_ARRIVE.equals(inventoryAction)) {
+                // 任务完成：先解绑当前绑定（源点位；幂等——监听器核对料车，未占用或非本车则跳过），再确认目标到达绑定终点
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND,
+                        task.getCartCode(), task.getFromLocation());
+            }
+            publishInventoryEvent(inventoryAction, task.getCartCode(),
+                    RcsTaskInventoryEvent.Action.UNBIND.equals(inventoryAction)
+                            ? task.getFromLocation() : task.getToLocation());
         }
         String remark = buildReportRemark(report, method);
         changeStatus(task, targetStatus, RcsOperatorTypeEnum.EXTERNAL, report.getAgvCode(), remark);
@@ -573,6 +578,13 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         }
         this.updateById(task);
         writeLifecycle(task.getId(), statusFrom, toStatus, opType, opId, remark);
+        // 库存闭环：已下发/执行中的任务流转为"异常"时释放目标点位预占
+        //（异常任务不会送达目标，预占不释放会永久占用点位；覆盖告警异常与 errorTask 回调异常两条路径）
+        if (RcsTaskStatusEnum.EXCEPTION.getValue().equals(toStatus)
+                && (RcsTaskStatusEnum.ASSIGNED.getValue().equals(statusFrom)
+                    || RcsTaskStatusEnum.EXECUTING.getValue().equals(statusFrom))) {
+            publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND, task.getCartCode(), task.getToLocation());
+        }
     }
 
     /**
@@ -719,8 +731,10 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     }
 
     /**
-     * 从 RCS 返回的 data 中提取外部任务ID。
-     * <p>RCS 不同接口返回结构可能不同，这里做兼容提取：优先取 taskId/reqCode，取不到则返回 null。</p>
+     * 从 RCS 返回的 data 中提取外部任务ID（RCS 生成的 robotTaskCode）。
+     * <p>回调(AGV_taskReporter)用同名 {@code robotTaskCode} 反查本地 rcs_task_id，
+     * 入库值必须与回调一致才能匹配上。按常见字段名依次探测：robotTaskCode → taskId → robotTaskId → taskCode。
+     * 注意：不能用 reqCode 兜底——它是 WMS 自己 taskCode 的回显，拿来做反查键永远匹配不上。</p>
      */
     @SuppressWarnings("unchecked")
     private String extractRcsTaskId(Object data) {
@@ -728,11 +742,14 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
             return null;
         }
         if (data instanceof Map<?, ?> map) {
-            Object id = ((Map<String, Object>) map).get("taskId");
-            if (id == null) {
-                id = ((Map<String, Object>) map).get("reqCode");
+            Map<String, Object> m = (Map<String, Object>) map;
+            for (String key : new String[]{"robotTaskCode", "taskId", "robotTaskId", "taskCode"}) {
+                Object id = m.get(key);
+                if (id != null && StrUtil.isNotBlank(id.toString())) {
+                    return id.toString();
+                }
             }
-            return id == null ? null : id.toString();
+            return null;
         }
         // 非结构化返回，直接以字符串形式记录
         return data.toString();

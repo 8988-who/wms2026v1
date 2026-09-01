@@ -1,5 +1,6 @@
 package com.wms.rcs.controller;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wms.common.annotation.Log;
 import com.wms.common.constant.RcsConstants;
@@ -72,10 +73,35 @@ public class RcsReporterController {
     private final RcsTaskService rcsTaskService;
     private final RcsBindService rcsBindService;
     /** 手动创建的 Jackson 转换器（项目以 fastjson2 为默认 JSON 转换器，容器中无 ObjectMapper Bean），
-     *  用于 Map → 回调 DTO 的转换（DTO 使用 Jackson 注解 @JsonProperty/@JsonAlias） */
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+     *  用于 Map → 回调 DTO 的转换（DTO 使用 Jackson 注解 @JsonProperty/@JsonAlias）。
+     *  忽略未知字段：RCS 回调可能携带文档未约定的扩展字段，反序列化时不因未知属性失败 */
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     // TODO 接入生产前补充回调鉴权：校验固定 token（请求头 X-lr-* 或独立密钥）或来源 IP 白名单
+
+    /**
+     * 按 body 特征判断是否为 RCS 任务执行回馈：
+     * 任务回执必带 robotTaskCode，或带 extra.values.method（方法值）。
+     * 用于平台把回调发到裸/双倍裸路径（无接口后缀）时兜底路由，避免误判 FAIL。
+     */
+    private boolean isTaskReportBody(Map<String, Object> body) {
+        if (body == null) {
+            return false;
+        }
+        Object taskCode = body.get("robotTaskCode");
+        if (taskCode != null && !taskCode.toString().isBlank()) {
+            return true;
+        }
+        Object extra = body.get("extra");
+        if (extra instanceof Map<?, ?> extraMap) {
+            Object values = extraMap.get("values");
+            if (values instanceof Map<?, ?> valuesMap) {
+                return valuesMap.get("method") != null;
+            }
+        }
+        return false;
+    }
 
     /**
      * 回调单一入口：按 {@link RcsApiEnum} 按路径路由分发，统一响应/异常兜底/头回显。
@@ -91,8 +117,15 @@ public class RcsReporterController {
                 : uri.substring(request.getContextPath().length());
         RcsApiEnum api = RcsApiEnum.fromPath(path);
         if (api == RcsApiEnum.UNKNOWN) {
-            log.warn("收到未识别的RCS回调：path={}, body={}", path, body);
-            return replyFailure("未识别的回调路径：" + path, response);
+            // 兼容 RCS 平台把任务执行回馈发到裸/双倍裸路径（无 /task 接口后缀）：
+            // 按 body 特征兜底识别为任务执行回馈，避免回 FAIL 触发 RCS 重试且状态永不更新
+            if (isTaskReportBody(body)) {
+                api = RcsApiEnum.TASK_REPORTER;
+                log.info("RCS回调裸路径按任务回馈兜底路由：path={}", path);
+            } else {
+                log.warn("收到未识别的RCS回调：path={}, body={}", path, body);
+                return replyFailure("未识别的回调路径：" + path, response);
+            }
         }
         try {
             switch (api) {

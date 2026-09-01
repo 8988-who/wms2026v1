@@ -1,7 +1,9 @@
 package com.wms.inventory.listener;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wms.inventory.mapper.CartInventoryMapper;
 import com.wms.inventory.model.dto.CartInventoryBindDTO;
+import com.wms.inventory.model.entity.CartInventory;
 import com.wms.inventory.service.CartInventoryService;
 import com.wms.rcs.event.RcsTaskInventoryEvent;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +19,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * <ul>
  *     <li>PRE_BIND：任务下发成功 → 预占目标点位（车未到）；</li>
  *     <li>UNBIND：AGV 取货后解绑源点位，或任务取消/异常终结时释放目标点位预占；</li>
- *     <li>CONFIRM_ARRIVE：任务完成 → 确认目标点位到达（内部同步 RCS 绑定）。</li>
+ *     <li>CONFIRM_ARRIVE：任务完成 → 确认目标点位到达。</li>
  * </ul>
  * <p>
- * 在发布方事务提交后（AFTER_COMMIT）同步执行，保证 RCS 远程调用处于事务外；
- * 库存操作失败仅记录日志不向上抛出，避免影响 RCS 回调主链路（任务状态已正确流转，库存不一致靠日志/对账兜底）。
+ * 在发布方事务提交后（AFTER_COMMIT）同步执行。RCS 回调已代表 RCS 侧完成解绑/绑定，
+ * 本监听器仅镜像本地（零 RCS 调用），避免回环与重复调用失败。
  * 回调线程无登录上下文，updateBy 为 null 属预期（系统驱动）。
  * </p>
  *
@@ -73,6 +75,8 @@ public class RcsInventoryEventListener {
 
     /**
      * 解绑点位（源点位取货后 / 目标点位取消释放预占）
+     * <p>RCS 回调已代表 RCS 侧完成解绑，此处仅镜像本地（零 RCS 调用，避免回环与重复调失败）。
+     * 幂等核对：仅当点位当前占用的是本事件料车时才解绑——已解绑或点位被其他料车预占时跳过，避免误清。</p>
      */
     private void handleUnbind(RcsTaskInventoryEvent event) {
         Long pointId = cartInventoryMapper.selectPointIdByPointCode(event.getLocationCode());
@@ -80,12 +84,27 @@ public class RcsInventoryEventListener {
             log.warn("RCS任务解绑失败：点位编码无法反查ID，locationCode={}", event.getLocationCode());
             return;
         }
-        cartInventoryService.unbind(pointId);
-        log.info("RCS任务解绑成功：pointId={}", pointId);
+        CartInventory inv = cartInventoryMapper.selectOne(
+                new LambdaQueryWrapper<CartInventory>().eq(CartInventory::getPointId, pointId));
+        if (inv == null || inv.getCartId() == null) {
+            // 点位已无料车占用（takeshelf2 已解绑 / RCS 回环已清空）：幂等跳过，不视为异常
+            log.info("RCS任务解绑跳过：点位无料车占用，pointId={}", pointId);
+            return;
+        }
+        String currentCartCode = cartInventoryMapper.selectCartCodeByCartId(inv.getCartId());
+        if (event.getCartCode() != null && !event.getCartCode().equals(currentCartCode)) {
+            // 点位当前被其他料车占用（如下一任务已预占到此点位）：绝不误解绑
+            log.warn("RCS任务解绑跳过：点位被其他料车占用，pointId={}, currentCartCode={}, eventCartCode={}",
+                    pointId, currentCartCode, event.getCartCode());
+            return;
+        }
+        String result = cartInventoryService.syncExternalBind(pointId, inv.getCartId(), false);
+        log.info("RCS任务解绑成功（本地镜像）：pointId={}, result={}", pointId, result);
     }
 
     /**
-     * 确认目标点位到达（同步 RCS 绑定）
+     * 确认目标点位到达（本地镜像，零 RCS 调用）
+     * <p>RCS 回调已代表 RCS 侧完成绑定，此处仅镜像本地补写 arrive_time。</p>
      */
     private void handleConfirmArrive(RcsTaskInventoryEvent event) {
         Long pointId = cartInventoryMapper.selectPointIdByPointCode(event.getLocationCode());
@@ -93,7 +112,19 @@ public class RcsInventoryEventListener {
             log.warn("RCS任务确认到达失败：点位编码无法反查ID，locationCode={}", event.getLocationCode());
             return;
         }
-        cartInventoryService.confirmArrive(pointId);
-        log.info("RCS任务确认到达成功：pointId={}", pointId);
+        CartInventory inv = cartInventoryMapper.selectOne(
+                new LambdaQueryWrapper<CartInventory>().eq(CartInventory::getPointId, pointId));
+        if (inv == null || inv.getCartId() == null) {
+            log.warn("RCS任务确认到达跳过：点位无料车占用，pointId={}", pointId);
+            return;
+        }
+        String currentCartCode = cartInventoryMapper.selectCartCodeByCartId(inv.getCartId());
+        if (event.getCartCode() != null && !event.getCartCode().equals(currentCartCode)) {
+            log.warn("RCS任务确认到达跳过：点位被其他料车占用，pointId={}, currentCartCode={}, eventCartCode={}",
+                    pointId, currentCartCode, event.getCartCode());
+            return;
+        }
+        String result = cartInventoryService.syncExternalBind(pointId, inv.getCartId(), true);
+        log.info("RCS任务确认到达成功（本地镜像）：pointId={}, result={}", pointId, result);
     }
 }

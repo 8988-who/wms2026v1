@@ -3511,7 +3511,7 @@ CREATE TABLE "public"."wms_point" (
   "id" int8 NOT NULL,
   "plant_code" varchar(32) COLLATE "pg_catalog"."default" NOT NULL,
   "location_id" int8 NOT NULL,
-  "aisle_id" int8 NOT NULL,
+  "aisle_id" int8 DEFAULT NULL,
   "floor" varchar(20) COLLATE "pg_catalog"."default" NOT NULL DEFAULT ''::character varying,
   "point_code" varchar(64) COLLATE "pg_catalog"."default" NOT NULL,
   "point_name" varchar(100) COLLATE "pg_catalog"."default" NOT NULL,
@@ -3529,7 +3529,7 @@ CREATE TABLE "public"."wms_point" (
 COMMENT ON COLUMN "public"."wms_point"."id" IS '主键（雪花算法生成）';
 COMMENT ON COLUMN "public"."wms_point"."plant_code" IS '厂区编码（冗余，便于厂区隔离查询）';
 COMMENT ON COLUMN "public"."wms_point"."location_id" IS '所属区域ID，关联 wms_location.id';
-COMMENT ON COLUMN "public"."wms_point"."aisle_id" IS '所属巷道ID，关联 wms_aisle.id';
+COMMENT ON COLUMN "public"."wms_point"."aisle_id" IS '所属巷道ID，关联 wms_aisle.id；NULL 表示离散点位（不挂巷道，直接归属区域）';
 COMMENT ON COLUMN "public"."wms_point"."floor" IS '物理楼层（冗余，便于按楼层筛选点位）';
 COMMENT ON COLUMN "public"."wms_point"."point_code" IS '点位编码（厂区内唯一，如 P-A01-001）';
 COMMENT ON COLUMN "public"."wms_point"."point_name" IS '点位名称（如：A区一号巷入口点）';

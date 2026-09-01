@@ -57,14 +57,10 @@ public interface CartInventoryService extends IService<CartInventory> {
     void unbind(Long pointId);
 
     /**
-     * 预绑定：RCS 任务创建时调用，预占点位（arrive_time 留空，车到后调 confirmArrive）
+     * 预绑定：RCS 任务下发成功时调用，预占目标点位（arrive_time 留空表示在途；
+     * 车到达后由 RCS 任务完成回调经 syncExternalBind 升级为正式绑定）
      */
     void preBind(CartInventoryBindDTO dto);
-
-    /**
-     * 确认到达：RCS 回调/车到达时补写 arrive_time
-     */
-    void confirmArrive(Long pointId);
 
     /**
      * 锁定库存（仅正常状态可锁）

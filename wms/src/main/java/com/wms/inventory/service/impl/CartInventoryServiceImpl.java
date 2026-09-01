@@ -227,58 +227,6 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     }
 
     /**
-     * 确认到达：RCS 回调/车到达时补写 arrive_time（同步 RCS 载具绑定）。
-     * <p>
-     * 强一致方案：RCS 绑定成功才算绑定成功。
-     * 流程：按点位查在途料车（preBind 已写 cart_id、arrive_time 留空）→ RCS carrier/bind →
-     * 本地补写 arrive_time。已确认到达（arrive_time 非空）时幂等返回，不再重复调 RCS。
-     * RCS 调用在数据库事务外（本方法不开启事务），本地更新为单条原子语句。
-     * </p>
-     */
-    @Override
-    public void confirmArrive(Long pointId) {
-        // 1. 读取在途料车信息
-        CartInventory inv = cartInventoryMapper.selectOne(
-                new LambdaQueryWrapper<CartInventory>().eq(CartInventory::getPointId, pointId));
-        if (inv == null || inv.getCartId() == null) {
-            throw new BusinessException("该点位无在途料车");
-        }
-        if (inv.getArriveTime() != null) {
-            return; // 幂等：已确认到达，避免重复调 RCS 绑定
-        }
-        String cartCode = cartInventoryMapper.selectCartCodeByCartId(inv.getCartId());
-        if (cartCode == null) {
-            throw new BusinessException("料车不存在，无法同步绑定");
-        }
-        // RCS 站点编码以地图坐标为准（wms_point.coordinate），而非 wms_cart_inventory.point_code
-        String siteCode = cartInventoryMapper.selectCoordinateByPointId(inv.getPointId());
-
-        // 2. RCS 绑定（事务外）：RCS 绑定成功才算绑定成功
-        rcsBind(cartCode, siteCode);
-
-        // 3. 本地补写 arrive_time（条件仍带 cart_id 非空 + arrive_time 为空，防重复回调覆盖）
-        int rows = cartInventoryMapper.update(null,
-                new LambdaUpdateWrapper<CartInventory>()
-                        .set(CartInventory::getArriveTime, LocalDateTime.now())
-                        .set(CartInventory::getUpdateBy, SecurityUtils.getUserId())
-                        .set(CartInventory::getUpdateTime, LocalDateTime.now())
-                        .eq(CartInventory::getPointId, pointId)
-                        .isNotNull(CartInventory::getCartId)
-                        .isNull(CartInventory::getArriveTime));
-        if (rows == 0) {
-            // 区分"RCS回环已补写arrive_time"和"真正无在途料车"
-            CartInventory current = cartInventoryMapper.selectOne(
-                    new LambdaQueryWrapper<CartInventory>().eq(CartInventory::getPointId, pointId));
-            if (current != null && current.getCartId() != null && current.getArriveTime() != null) {
-                // RCS 回调已先于本地更新补写 arrive_time，幂等返回
-                log.info("RCS回环：到达回调已先写入arrive_time，本地幂等跳过：pointId={}", pointId);
-                return;
-            }
-            throw new BusinessException("该点位无在途料车或已确认到达");
-        }
-    }
-
-    /**
      * 锁定库存：条件带 lock_status=0 比较，防止覆盖别人的操作。
      */
     @Override
@@ -372,7 +320,7 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
      * <p>
      * 与 bind()/unbind() 的区别：本方法由 RCS /bind 回调驱动，RCS 是绑定事实的权威方，
      * 本地无条件服从——因此<b>绝不回环调用 AGV_bindCarrier/unbindCarrier</b>，避免通知死循环。
-     * 写入均带条件天然幂等：主动链路（confirmArrive/unbind）与回调链路先后到达时
+     * 写入均带条件天然幂等：主动链路（bind()/unbind()）与回调链路先后到达时
      * 写同一最终状态，后到者 no-op；迟到的旧事件被条件过滤。
      * lock_status 语义与 unbind() 一致：车走后空位复位为 0；绑定时不触碰人工锁定。
      * 注意：回调线程无登录上下文，不回填 update_by（保留原值），仅刷新 updated_time。

@@ -24,6 +24,10 @@ public enum RcsCallbackMethodEnum {
     NOTIFY_POD_ARR   ("notifyPodArr",    RcsTaskStatusEnum.FINISHED,   RcsTaskInventoryEvent.Action.CONFIRM_ARRIVE),
     /** 货架离开源位 → 执行中 + 解绑源点位 */
     NOTIFY_POD_LEAV  ("notifyPodLeav",   RcsTaskStatusEnum.EXECUTING,  RcsTaskInventoryEvent.Action.UNBIND),
+    /** 机器人取到载具 → 执行中（不解除源点位，等离开起点再解绑） */
+    TAKE_SHELF_1     ("takeshelf1",      RcsTaskStatusEnum.EXECUTING,  null),
+    /** 机器人离开起点 → 执行中 + 解绑源点位 */
+    TAKE_SHELF_2     ("takeshelf2",      RcsTaskStatusEnum.EXECUTING,  RcsTaskInventoryEvent.Action.UNBIND),
     /** 机器人到达途经点 → 执行中 */
     NOTIFY_ROBOT_ARR ("notifyRobotArr",  RcsTaskStatusEnum.EXECUTING,  null),
     /** 机器人离开途经点 → 执行中 */
@@ -70,6 +74,15 @@ public enum RcsCallbackMethodEnum {
         for (RcsCallbackMethodEnum e : values()) {
             if (e != UNKNOWN && e.method != null && e.method.equalsIgnoreCase(m)) {
                 return e;
+            }
+        }
+        // 兼容 RCS 在 method 后追加序号（如 takeshelf1/takeshelf2 → takeshelf）：剥离尾部数字后再次精确匹配
+        String base = m.replaceFirst("\\d+$", "");
+        if (!base.isEmpty() && !base.equals(m)) {
+            for (RcsCallbackMethodEnum e : values()) {
+                if (e != UNKNOWN && e.method != null && e.method.equalsIgnoreCase(base)) {
+                    return e;
+                }
             }
         }
         return UNKNOWN;
