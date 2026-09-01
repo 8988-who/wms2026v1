@@ -11,6 +11,7 @@ import com.wms.common.enums.ApiEnum;
 import com.wms.common.exception.BusinessException;
 import com.wms.common.result.Result;
 import com.wms.common.result.ResultCode;
+import com.wms.rcs.enums.RcsCallbackMethodEnum;
 import com.wms.rcs.enums.RcsOperatorTypeEnum;
 import com.wms.rcs.enums.RcsTaskPriorityEnum;
 import com.wms.rcs.enums.RcsTaskStatusEnum;
@@ -318,26 +319,38 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
             return false;
         }
         RcsTaskEntity task = findTask(report.getTaskCode(), report.getTaskId());
+        String method = report.resolveMethod();
         if (task == null) {
             log.warn("RCS任务回馈：未匹配到本地任务，taskCode={}, taskId={}, method={}, status={}",
-                    report.getTaskCode(), report.getTaskId(), report.getMethod(), report.getStatus());
+                    report.getTaskCode(), report.getTaskId(), method, report.getStatus());
             return false;
         }
 
-        Integer targetStatus = mapReportToStatus(report.getMethod(), report.getStatus());
+        // 1. 优先枚举精确匹配（method → 状态 + 库存动作）
+        RcsCallbackMethodEnum callback = RcsCallbackMethodEnum.fromMethod(method);
+        Integer targetStatus;
+        RcsTaskInventoryEvent.Action inventoryAction;
+
+        if (callback != RcsCallbackMethodEnum.UNKNOWN) {
+            targetStatus = callback.getTargetStatus().getValue();
+            inventoryAction = callback.getInventoryAction();
+        } else {
+            // 2. 枚举未命中 → 兜底走关键词模糊匹配
+            targetStatus = mapReportToStatus(method, report.getStatus());
+            inventoryAction = resolveInventoryAction(targetStatus, method);
+        }
+
         if (targetStatus == null) {
             log.info("RCS任务回馈：无法映射到本地状态（仅记录），taskCode={}, method={}, status={}",
-                    task.getTaskCode(), report.getMethod(), report.getStatus());
+                    task.getTaskCode(), method, report.getStatus());
             return true;
         }
 
         // 【C-09 临时方案，待测试后调整】终态任务对迟到/乱序的执行回馈仅记录、不再流转。
-        // 与 handleTaskWarning 保持一致：异常任务的恢复应由主动重试下发驱动，而非被动回馈激活。
-        // 注：changeStatus 内已有 canTransfer 兜底，此处提前拦截可避免无意义的库写与日志噪音。
         if (RcsTaskStatusEnum.of(task.getStatus()) != null
                 && RcsTaskStatusEnum.of(task.getStatus()).isFinal()) {
             log.info("RCS任务回馈：任务[{}]已处于终态status={}，仅记录回馈不流转：method={}, status={}",
-                    task.getTaskCode(), task.getStatus(), report.getMethod(), report.getStatus());
+                    task.getTaskCode(), task.getStatus(), method, report.getStatus());
             return true;
         }
 
@@ -346,15 +359,13 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
             task.setAgvCode(report.getAgvCode());
         }
         // 库存闭环（事件在事务提交后由 inventory 监听执行）：
-        //   取货(PICK) → 解绑源点位；完成(FINISHED) → 确认目标点位到达
-        if (RcsTaskStatusEnum.EXECUTING.getValue().equals(targetStatus)
-                && StrUtil.isNotBlank(report.getMethod())
-                && report.getMethod().toUpperCase().contains("PICK")) {
-            publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND, task.getCartCode(), task.getFromLocation());
-        } else if (RcsTaskStatusEnum.FINISHED.getValue().equals(targetStatus)) {
-            publishInventoryEvent(RcsTaskInventoryEvent.Action.CONFIRM_ARRIVE, task.getCartCode(), task.getToLocation());
+        //   UNBIND → 解绑源点位(fromLocation)；CONFIRM_ARRIVE → 确认目标点位到达(toLocation)
+        if (inventoryAction != null) {
+            String locationCode = RcsTaskInventoryEvent.Action.UNBIND.equals(inventoryAction)
+                    ? task.getFromLocation() : task.getToLocation();
+            publishInventoryEvent(inventoryAction, task.getCartCode(), locationCode);
         }
-        String remark = buildReportRemark(report);
+        String remark = buildReportRemark(report, method);
         changeStatus(task, targetStatus, RcsOperatorTypeEnum.EXTERNAL, report.getAgvCode(), remark);
         return true;
     }
@@ -422,12 +433,15 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     private Integer mapReportToStatus(String method, Integer status) {
         if (StrUtil.isNotBlank(method)) {
             String m = method.trim().toUpperCase();
-            // 完成：FINISH/END/COMPLETE/DONE
-            if (m.contains("FINISH") || m.contains("END") || m.contains("COMPLETE") || m.contains("DONE")) {
+            // 完成：notifyPodArr(货架到达目标位) / arrivedTarget / FINISH / END / COMPLETE / DONE
+            if (m.contains("PODARR") || m.contains("ARRIVEDTARGET") || m.contains("FINISH")
+                    || m.contains("END") || m.contains("COMPLETE") || m.contains("DONE")) {
                 return RcsTaskStatusEnum.FINISHED.getValue();
             }
-            // 执行中：START/EXECUT/ROBOT_APPLY/PICK/PUT/RUNNING/PROGRESS/MOVING
-            if (m.contains("START") || m.contains("EXECUT") || m.contains("APPLY")
+            // 取货/执行中：notifyPodLeav(货架离开源位) / notifyRobotArr/notifyRobotLeav(机器人到达/离开途经点)
+            //   / START / EXECUT / PICK / PUT / RUNNING / PROGRESS / MOVING
+            if (m.contains("PODLEAV") || m.contains("ROBOTARR") || m.contains("ROBOTLEAV")
+                    || m.contains("START") || m.contains("EXECUT") || m.contains("APPLY")
                     || m.contains("PICK") || m.contains("PUT") || m.contains("RUNNING")
                     || m.contains("PROGRESS") || m.contains("MOVING")) {
                 return RcsTaskStatusEnum.EXECUTING.getValue();
@@ -453,6 +467,26 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     }
 
     /**
+     * 关键词兜底：根据目标状态和 method 推导库存联动动作。
+     * <p>仅在枚举未命中时使用。UNBIND 需额外匹配 PICK/PODLEAV 关键词，
+     * CONFIRM_ARRIVE 直接绑定 FINISHED 状态。</p>
+     */
+    private RcsTaskInventoryEvent.Action resolveInventoryAction(Integer targetStatus, String method) {
+        if (targetStatus == null) {
+            return null;
+        }
+        if (RcsTaskStatusEnum.EXECUTING.getValue().equals(targetStatus)
+                && StrUtil.isNotBlank(method)
+                && (method.toUpperCase().contains("PICK") || method.toUpperCase().contains("PODLEAV"))) {
+            return RcsTaskInventoryEvent.Action.UNBIND;
+        }
+        if (RcsTaskStatusEnum.FINISHED.getValue().equals(targetStatus)) {
+            return RcsTaskInventoryEvent.Action.CONFIRM_ARRIVE;
+        }
+        return null;
+    }
+
+    /**
      * 是否终态（已完成/已取消/异常）。
      * <p>委托给 {@link RcsTaskStatusEnum#isFinal()}，保证终态定义单一来源（C-09）。</p>
      */
@@ -464,10 +498,10 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     /**
      * 组装执行回馈备注
      */
-    private String buildReportRemark(RcsTaskReportDTO report) {
+    private String buildReportRemark(RcsTaskReportDTO report, String resolvedMethod) {
         StringBuilder sb = new StringBuilder("RCS回馈");
-        if (StrUtil.isNotBlank(report.getMethod())) {
-            sb.append("[").append(report.getMethod()).append("]");
+        if (StrUtil.isNotBlank(resolvedMethod)) {
+            sb.append("[").append(resolvedMethod).append("]");
         }
         if (StrUtil.isNotBlank(report.getAgvCode())) {
             sb.append(" AGV=").append(report.getAgvCode());

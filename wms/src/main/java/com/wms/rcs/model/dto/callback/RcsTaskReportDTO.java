@@ -1,5 +1,7 @@
 package com.wms.rcs.model.dto.callback;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -9,13 +11,15 @@ import java.util.Map;
 /**
  * RCS 任务执行过程回馈请求体（入站）
  * <p>
- * 对应 RCS 主动回调 {@code POST /api/v1/rcs/reporter/task}（RCS 侧接口 AGV_taskReporter）。
- * 不同 RCS 版本字段命名存在差异，这里做兼容承接：
+ * 对应 RCS 主动回调 {@code POST /api/robot/reporter/task}（RCS 侧接口 AGV_taskReporter）。
+ * RCS-2000 V4.x 实际回调格式：
  * <ul>
- *     <li>任务标识：优先 {@code taskCode}（与我方下发时 reqCode 一致），取不到用 {@code taskId}（我方回填的 rcsTaskId）兜底；</li>
- *     <li>状态语义：兼容字符串 {@code method}（如 ROBOT_APPLY/START/FINISH）与数值 {@code status} 两种来源；</li>
+ *     <li>任务标识：{@code robotTaskCode}（RCS 下发时返回的任务编号），映射到 {@code taskId}（反查 rcsTaskId）；</li>
+ *     <li>执行AGV：{@code singleRobotCode}，映射到 {@code agvCode}；</li>
+ *     <li>动作/阶段：嵌套在 {@code extra.values.method} 中（如 notifyPodArr/notifyPodLeav），
+ *         通过 {@link #resolveMethod()} 统一提取；</li>
+ *     <li>无顶层 status 字段，状态语义完全由 method 表达。</li>
  * </ul>
- * 最终字段名以对接文档为准，若不一致仅需调整此 DTO 与 Service 的映射逻辑。
  * </p>
  *
  * @author SenyangHe
@@ -31,31 +35,62 @@ public class RcsTaskReportDTO implements Serializable {
     @Schema(description = "请求编号（可空）")
     private String reqCode;
 
-    /** 任务编号（与我方下发时的 taskCode 一致，作为首选反查键） */
-    @Schema(description = "任务编号（首选反查键）")
+    /** WMS任务编号（部分 RCS 版本可能在顶层回传，作为首选反查键） */
+    @Schema(description = "WMS任务编号（部分版本回传）")
     private String taskCode;
 
-    /** RCS 系统任务ID（我方回填的 rcs_task_id，taskCode 缺失时兜底反查键） */
-    @Schema(description = "RCS系统任务ID（兜底反查键）")
+    /** RCS任务编号（robotTaskCode，映射到本地 rcsTaskId 反查） */
+    @JsonProperty("robotTaskCode")
+    @JsonAlias({"taskId"})
+    @Schema(description = "RCS任务编号（robotTaskCode）")
     private String taskId;
 
-    /** 回馈动作/阶段（字符串语义，如 ROBOT_APPLY/ROBOT_START/ROBOT_END/FINISH 等） */
-    @Schema(description = "回馈动作/阶段")
+    /** 顶层 method（部分版本使用，RCS-2000 V4.x 嵌套在 extra.values.method 中） */
+    @Schema(description = "回馈动作/阶段（顶层，部分版本使用）")
     private String method;
 
-    /** 回馈状态（数值语义，与 RCS 任务状态码约定一致） */
-    @Schema(description = "回馈状态码")
+    /** 回馈状态（数值语义，RCS-2000 V4.x 不发送此字段） */
+    @Schema(description = "回馈状态码（部分版本使用）")
     private Integer status;
 
-    /** 执行的AGV编号 */
-    @Schema(description = "执行AGV编号")
+    /** 执行AGV编号（RCS字段名 singleRobotCode） */
+    @JsonProperty("singleRobotCode")
+    @JsonAlias("agvCode")
+    @Schema(description = "执行AGV编号（singleRobotCode）")
     private String agvCode;
 
     /** 附加信息/备注 */
     @Schema(description = "附加信息")
     private String message;
 
-    /** 其余扩展字段（原样承接，便于排查与后续扩展） */
-    @Schema(description = "扩展字段")
+    /** 扩展字段（含 async、values，method 嵌套在 values 中） */
+    @Schema(description = "扩展字段（含async、values，method嵌套在values中）")
     private Map<String, Object> extra;
+
+    /**
+     * 从 extra.values 中提取指定字段值。
+     */
+    @Schema(hidden = true)
+    public String getExtraValue(String key) {
+        if (extra == null) {
+            return null;
+        }
+        Object values = extra.get("values");
+        if (values instanceof Map) {
+            Object val = ((Map<?, ?>) values).get(key);
+            return val != null ? val.toString() : null;
+        }
+        return null;
+    }
+
+    /**
+     * 获取 method：优先顶层 method，其次 extra.values.method。
+     */
+    @Schema(hidden = true)
+    public String resolveMethod() {
+        if (method != null && !method.isBlank()) {
+            return method;
+        }
+        return getExtraValue("method");
+    }
 }
