@@ -197,10 +197,16 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     }
 
     /**
-     * 预绑定：RCS 任务创建时调用，预占点位。
+     * 预绑定：RCS 任务创建时调用，预占目标点位。
      * <p>
      * 与 bind() 的区别：不写 arrive_time（车还没到），留空表示在途。
      * 容量判断 cart_id IS NOT NULL 天然包含预占，防止在途车辆被漏算。
+     * </p>
+     * <p>
+     * 一车一位（uk_inventory_cart 唯一索引）前提：预占前先清该车在源点位等处的旧绑定，
+     * 否则料车仍停在源点时预占目标点会撞唯一索引（DuplicateKeyException）。
+     * 清源点后车转为"在途"：目标点被预占（arrive_time 留空），源点空出；
+     * 取消/异常由任务侧发布 UNBIND 释放目标点预占，到达后由 CONFIRM_ARRIVE 补写 arrive_time。
      * </p>
      */
     @Override
@@ -208,6 +214,17 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     public void preBind(CartInventoryBindDTO dto) {
         Long userId = SecurityUtils.getUserId();
         try {
+            // 1. 清该车在其他点位的旧绑定（一车一位：任务下发即视为车离源，进入在途状态）
+            cartInventoryMapper.update(null,
+                    new LambdaUpdateWrapper<CartInventory>()
+                            .set(CartInventory::getCartId, null)
+                            .set(CartInventory::getArriveTime, null)
+                            .set(CartInventory::getLockStatus, 0)
+                            .set(CartInventory::getUpdateTime, LocalDateTime.now())
+                            .eq(CartInventory::getCartId, dto.getCartId())
+                            .ne(CartInventory::getPointId, dto.getPointId()));
+
+            // 2. 目标点位预占（仅空位可预占，防两点一任务互撞；此时 cart_id 已从源点清空，不再冲突）
             int rows = cartInventoryMapper.update(null,
                     new LambdaUpdateWrapper<CartInventory>()
                             .set(CartInventory::getCartId, dto.getCartId())

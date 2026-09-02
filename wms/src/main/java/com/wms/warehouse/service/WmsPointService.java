@@ -1,6 +1,6 @@
 package com.wms.warehouse.service;
 
-import com.wms.warehouse.model.entity.WmsPoint;
+import com.wms.common.model.entity.WmsPoint;
 import com.wms.common.model.BatchStatusForm;
 import com.wms.warehouse.model.dto.WmsPointDTO;
 import com.wms.warehouse.model.dto.WmsPointQueryDTO;

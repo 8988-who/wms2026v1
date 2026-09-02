@@ -1,7 +1,7 @@
 package com.wms.warehouse.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.wms.warehouse.model.entity.WmsLocation;
+import com.wms.common.model.entity.WmsLocation;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wms.warehouse.model.dto.WmsLocationQueryDTO;
 import com.wms.warehouse.model.vo.WmsLocationVO;

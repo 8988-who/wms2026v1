@@ -1,7 +1,7 @@
 package com.wms.warehouse.utils;
 
 import org.mapstruct.Mapper;
-import com.wms.warehouse.model.entity.WmsAisle;
+import com.wms.common.model.entity.WmsAisle;
 import com.wms.warehouse.model.dto.WmsAisleDTO;
 
 /**

@@ -1,4 +1,4 @@
-package com.wms.warehouse.model.entity;
+package com.wms.common.model.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -12,88 +12,44 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 /**
- * 库位/区域实体对象
- * 对应数据库表 wms_location
+ * 点位实体对象
+ * <p>
+ * 对应数据库表 wms_point，表示巷道下的具体作业点位（AGV停靠/操作点）。
+ * </p>
  *
  * @author SenyangHe
- * @since 2026-07-20 12:44
+ * @since 2026-07-20
  */
-@TableName("wms_location")
+@TableName("wms_point")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class WmsLocation extends WmsBaseEntity {
+public class WmsPoint extends WmsBaseEntity {
 
-    /**
-     * 创建时间（覆盖父类，映射数据库 created_time）
-     */
     @TableField(value = "created_time", fill = FieldFill.INSERT)
     @JsonInclude(value = JsonInclude.Include.NON_NULL)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
-    /**
-     * 更新时间（覆盖父类，映射数据库 updated_time）
-     */
     @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
     @JsonInclude(value = JsonInclude.Include.NON_NULL)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
-    /**
-     * 厂区编码，关联 sys_dept.plant_code，用于数据权限隔离
-     */
     private String plantCode;
-
-    /**
-     * 库位/区域编码
-     */
-    private String locationCode;
-
-    /**
-     * 库位/区域名称
-     */
-    private String locationName;
-
-    /**
-     * 区域用途类型（枚举值：湿坯下线/防干/干燥/立浇交接/检修交接/成型立浇交接/木板上线/木板下线/上线点/青坯上线/青坯下线/施釉上线/施釉下线，当前不参与业务逻辑）
-     */
-    private String locationType;
-
-    /**
-     * 父节点ID
-     */
-    private Long parentId;
-
-    /**
-     * 物理楼层标识（如：1F, 2F, B1）
-     */
+    private Long locationId;
+    private Long aisleId;
     private String floor;
-
-    /**
-     * 排序号
-     */
+    private String pointCode;
+    private String pointName;
+    private String barcode;
+    private String coordinate;
     private Integer sortOrder;
-
-    /**
-     * 状态(1-正常 0-禁用)
-     */
     private Integer status;
-
-    /**
-     * 备注
-     */
     private String remark;
 
-    /**
-     * 创建人ID
-     */
     @TableField(value = "created_by", fill = FieldFill.INSERT)
     private Long createBy;
 
-    /**
-     * 更新人ID
-     */
     @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
-
 }

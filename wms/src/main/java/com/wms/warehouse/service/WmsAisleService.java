@@ -1,7 +1,7 @@
 package com.wms.warehouse.service;
 
 import com.wms.common.model.BatchStatusForm;
-import com.wms.warehouse.model.entity.WmsAisle;
+import com.wms.common.model.entity.WmsAisle;
 import com.wms.warehouse.model.dto.WmsAisleDTO;
 import com.wms.warehouse.model.dto.WmsAisleQueryDTO;
 import com.wms.warehouse.model.vo.WmsAisleVO;
