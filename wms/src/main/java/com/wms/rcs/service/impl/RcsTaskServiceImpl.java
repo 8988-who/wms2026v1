@@ -23,6 +23,7 @@ import com.wms.rcs.model.dto.RcsTaskDTO;
 import com.wms.rcs.model.dto.RcsTaskQueryDTO;
 import com.wms.rcs.model.dto.callback.RcsTaskReportDTO;
 import com.wms.rcs.model.dto.callback.RcsTaskWarningDTO;
+import com.wms.rcs.model.dto.request.AgvCancelTaskDTO;
 import com.wms.rcs.model.dto.request.AgvSubmitTaskDTO;
 import com.wms.rcs.model.entity.RcsTaskEntity;
 import com.wms.rcs.model.entity.RcsTaskLifecycleEntity;
@@ -81,6 +82,9 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     private RcsTaskServiceImpl self;
 
     private static final DateTimeFormatter CODE_DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
+    /** 执行中任务超时兜底默认阈值（分钟），可用 sys_config: wms.rcs.executing.timeout-minutes 覆盖 */
+    private static final int DEFAULT_EXECUTING_TIMEOUT_MINUTES = 120;
 
     @Override
     public IPage<RcsTaskVO> getRcsTaskPage(RcsTaskQueryDTO queryParams) {
@@ -189,10 +193,13 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         if (StrUtil.isNotBlank(rcsTaskId)) {
             task.setRcsTaskId(rcsTaskId);
         }
+        // 下发成功仅流转"已下发"，不做点位预占（remark 锁）：
+        // 料车保持绑定在起点，待 RCS 回馈 notifyRobotLeav01（料车随 AGV 离开）时再锁定起点/终点（remark=1）
         changeStatus(task, RcsTaskStatusEnum.ASSIGNED.getValue(),
                 RcsOperatorTypeEnum.SYSTEM, null, "任务已下发至RCS");
-        // 库存闭环：下发成功 → 预占目标点位（事件在事务提交后由 inventory 监听执行）
-        publishInventoryEvent(RcsTaskInventoryEvent.Action.PRE_BIND, task.getCartCode(), task.getToLocation());
+        // 库存闭环：任务下发即把料车所在起点标记为该任务的"预定任务"（写 last_task_code，供库存页展示）
+        publishInventoryEvent(RcsTaskInventoryEvent.Action.MARK_TASK,
+                task.getCartCode(), task.getFromLocation(), task.getTaskCode());
     }
 
     /**
@@ -206,6 +213,53 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         }
         changeStatus(task, RcsTaskStatusEnum.EXCEPTION.getValue(),
                 RcsOperatorTypeEnum.SYSTEM, null, errorMsg);
+    }
+
+    /**
+     * 执行超时兜底：把进入"执行中"超过阈值仍无完成/取消回馈的任务置为"异常"（定时任务驱动）。
+     * <p>RCS 失联、回调中断、AGV 卡死不完成也不取消时，任务不会自行进入终态，
+     * 预占（remark=1）与预定任务标记（last_task_code）将永久占用起/终点点位；
+     * 本方法逐任务经 {@link #applyException} 置异常——复用 changeStatus 的 EXCEPTION 分支，
+     * 自动对起/终点 RELEASE + CLEAR（幂等）。阈值取自 sys_config: wms.rcs.executing.timeout-minutes，默认 120 分钟。</p>
+     *
+     * @return 本轮置异常的任务数
+     */
+    @Override
+    public int timeoutExecutingRcsTasks() {
+        int timeoutMinutes = resolveExecutingTimeoutMinutes();
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(timeoutMinutes);
+        List<RcsTaskEntity> timeoutTasks = this.list(new LambdaQueryWrapper<RcsTaskEntity>()
+                .eq(RcsTaskEntity::getStatus, RcsTaskStatusEnum.EXECUTING.getValue())
+                .isNotNull(RcsTaskEntity::getStartTime)
+                .lt(RcsTaskEntity::getStartTime, cutoff));
+        int count = 0;
+        for (RcsTaskEntity task : timeoutTasks) {
+            self.applyException(task.getId(),
+                    String.format("执行超时自动置异常：进入执行中已超过 %d 分钟仍无完成/取消回馈（定时兜底）", timeoutMinutes));
+            count++;
+        }
+        if (count > 0) {
+            log.warn("RCS执行超时兜底：{} 个执行中任务超过 {} 分钟无终态回馈，已置异常并释放点位预占", count, timeoutMinutes);
+        }
+        return count;
+    }
+
+    /**
+     * 解析执行超时阈值（分钟）：优先 sys_config: wms.rcs.executing.timeout-minutes，非法/缺失回退默认 120
+     */
+    private int resolveExecutingTimeoutMinutes() {
+        String value = sysConfigService.selectConfigByKey("wms.rcs.executing.timeout-minutes");
+        if (StrUtil.isNotBlank(value)) {
+            try {
+                int minutes = Integer.parseInt(value.trim());
+                if (minutes > 0) {
+                    return minutes;
+                }
+            } catch (NumberFormatException ignored) {
+                log.warn("RCS执行超时阈值配置非法，回退默认 {} 分钟：{}", DEFAULT_EXECUTING_TIMEOUT_MINUTES, value);
+            }
+        }
+        return DEFAULT_EXECUTING_TIMEOUT_MINUTES;
     }
 
     /**
@@ -234,7 +288,8 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
 
         // 已派发/执行中、或已到达 RCS 后异常（有外部任务号）：先联动 RCS 取消，成功后再落库
         try {
-            Result<Object> result = agvService.commonRequest(RcsApiEnum.CANCEL_TASK, buildCancelParams(task));
+            Result<Object> result = agvService.commonRequest(RcsApiEnum.CANCEL_TASK,
+                    buildCancelParams(task, reason));
             if (result == null || !ResultCode.SUCCESS.getCode().equals(result.getCode())) {
                 String msg = result == null ? "RCS返回空结果" : result.getMsg();
                 throw new BusinessException("RCS任务取消失败：" + msg);
@@ -259,14 +314,18 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         if (task == null) {
             return;
         }
-        Integer fromStatus = task.getStatus();
         changeStatus(task, RcsTaskStatusEnum.CANCELLED.getValue(),
                 RcsOperatorTypeEnum.ADMIN, null, remark);
-        // 库存闭环：已下发/执行中（目标点位已预占）的任务取消后释放预占
-        if (RcsTaskStatusEnum.ASSIGNED.getValue().equals(fromStatus)
-                || RcsTaskStatusEnum.EXECUTING.getValue().equals(fromStatus)) {
-            publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND, task.getCartCode(), task.getToLocation());
-        }
+        // 库存闭环：解除本任务起点与终点的占用锁 remark=1 并清除预定任务标记 last_task_code
+        //（幂等——未锁/未标记的点 no-op；仅动 remark 与预定标记，绝不动料车绑定：任务若未出发，料车仍正确停在起点）
+        publishInventoryEvent(RcsTaskInventoryEvent.Action.RELEASE,
+                task.getCartCode(), task.getFromLocation());
+        publishInventoryEvent(RcsTaskInventoryEvent.Action.RELEASE,
+                task.getCartCode(), task.getToLocation());
+        publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                task.getCartCode(), task.getFromLocation(), task.getTaskCode());
+        publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                task.getCartCode(), task.getToLocation(), task.getTaskCode());
     }
 
     @Override
@@ -308,7 +367,13 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     }
 
     /**
-     * 处理 RCS 任务执行过程回馈：反查本地任务并驱动状态流转。
+     * 处理 RCS 任务执行过程回馈：反查本地任务，按 {@code extra.values.method} 分发驱动状态流转。
+     * <p>
+     * 分发采用"枚举字典 + switch"：每个 case 自由编排状态流转与库存联动事件
+     * （如"到达 = 解绑源点 + 确认目标到达"）。新增 method 只需在
+     * {@code RcsCallbackMethodEnum} 加常量并在下方 switch 加对应 case；
+     * 未登记的 method 走 {@link #fallbackKeyword} 关键词兜底。
+     * </p>
      * <p>回调可能重复投递，changeStatus 内部对相同目标状态幂等（相等直接跳过）。</p>
      */
     @Override
@@ -326,43 +391,111 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
             return false;
         }
 
-        // 1. 优先枚举精确匹配（method → 状态 + 库存动作）
-        RcsCallbackMethodEnum callback = RcsCallbackMethodEnum.fromMethod(method);
-        Integer targetStatus;
-        RcsTaskInventoryEvent.Action inventoryAction;
-
-        if (callback != RcsCallbackMethodEnum.UNKNOWN) {
-            targetStatus = callback.getTargetStatus().getValue();
-            inventoryAction = callback.getInventoryAction();
-        } else {
-            // 2. 枚举未命中 → 兜底走关键词模糊匹配
-            targetStatus = mapReportToStatus(method, report.getStatus());
-            inventoryAction = resolveInventoryAction(targetStatus, method);
-        }
-
-        if (targetStatus == null) {
-            log.info("RCS任务回馈：无法映射到本地状态（仅记录），taskCode={}, method={}, status={}",
-                    task.getTaskCode(), method, report.getStatus());
-            return true;
-        }
-
         // 【C-09 临时方案，待测试后调整】终态任务对迟到/乱序的执行回馈仅记录、不再流转。
-        if (RcsTaskStatusEnum.of(task.getStatus()) != null
-                && RcsTaskStatusEnum.of(task.getStatus()).isFinal()) {
+        if (isFinalStatus(task.getStatus())) {
             log.info("RCS任务回馈：任务[{}]已处于终态status={}，仅记录回馈不流转：method={}, status={}",
                     task.getTaskCode(), task.getStatus(), method, report.getStatus());
             return true;
         }
-
         // 回填执行AGV编号（若回馈带上）
         if (StrUtil.isNotBlank(report.getAgvCode())) {
             task.setAgvCode(report.getAgvCode());
         }
-        // 库存闭环（事件在事务提交后由 inventory 监听执行）：
-        //   UNBIND → 解绑源点位(fromLocation)；CONFIRM_ARRIVE → 先解绑当前源点位绑定，再确认目标点位到达(toLocation)
+
+        // 库存闭环：事件在事务提交后由 inventory 监听执行——
+        //   UNBIND(fromLocation) 解绑源点位；CONFIRM_ARRIVE(toLocation) 确认目标点位到达绑定终点
+        RcsCallbackMethodEnum callback = RcsCallbackMethodEnum.fromMethod(method);
+        switch (callback) {
+            // 货架到达目标位/任务完成：转已完成；先解绑当前源点位（幂等——监听器核对料车，未占用或非本车则跳过），再确认目标到达
+            case NOTIFY_POD_ARR, ARRIVED_TARGET, FINISH_TASK -> {
+                transitTo(task, report, RcsTaskStatusEnum.FINISHED, method);
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND,
+                        task.getCartCode(), task.getFromLocation());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.CONFIRM_ARRIVE,
+                        task.getCartCode(), task.getToLocation());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                        task.getCartCode(), task.getFromLocation(), task.getTaskCode());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                        task.getCartCode(), task.getToLocation(), task.getTaskCode());
+            }
+            // 货架离开源位/机器人离开起点：转执行中 + 解绑源点位
+            case NOTIFY_POD_LEAV, TAKE_SHELF_2 -> {
+                transitTo(task, report, RcsTaskStatusEnum.EXECUTING, method);
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND,
+                        task.getCartCode(), task.getFromLocation());
+            }
+            // 取到载具/任务开始/途经点到达离开：仅推进执行中状态，无库存联动
+            case TAKE_SHELF_1, START_TASK, NOTIFY_ROBOT_ARR, NOTIFY_ROBOT_LEAV ->
+                    transitTo(task, report, RcsTaskStatusEnum.EXECUTING, method);
+            // 机器人离开起点（料车随行，01 系列）：执行中；起点料车解绑（随车在途），起点与终点打任务占用锁 remark=1
+            case NOTIFY_ROBOT_LEAV_01 -> {
+                transitTo(task, report, RcsTaskStatusEnum.EXECUTING, method);
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND,
+                        task.getCartCode(), task.getFromLocation());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.PRE_BIND,
+                        task.getCartCode(), task.getFromLocation());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.PRE_BIND,
+                        task.getCartCode(), task.getToLocation());
+            }
+            // 任务完成（01 系列）：已完成；终点终绑料车到达，解除起点占用锁并清除起/终点预定任务标记
+            case FINISH_TASK_01 -> {
+                transitTo(task, report, RcsTaskStatusEnum.FINISHED, method);
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.CONFIRM_ARRIVE,
+                        task.getCartCode(), task.getToLocation());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.RELEASE,
+                        task.getCartCode(), task.getFromLocation());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                        task.getCartCode(), task.getFromLocation(), task.getTaskCode());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                        task.getCartCode(), task.getToLocation(), task.getTaskCode());
+            }
+            // RCS 侧主动取消：转已取消；解除本任务起点与终点的占用锁（幂等，绝不动料车绑定），并清除预定任务标记
+            case CANCEL_TASK -> {
+                transitTo(task, report, RcsTaskStatusEnum.CANCELLED, method);
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.RELEASE,
+                        task.getCartCode(), task.getFromLocation());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.RELEASE,
+                        task.getCartCode(), task.getToLocation());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                        task.getCartCode(), task.getFromLocation(), task.getTaskCode());
+                publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                        task.getCartCode(), task.getToLocation(), task.getTaskCode());
+            }
+            // RCS 侧主动异常：转异常（释放目标点位预占在 changeStatus 内统一处理）
+            case ERROR_TASK -> transitTo(task, report, RcsTaskStatusEnum.EXCEPTION, method);
+            // 未登记 method：关键词兜底映射，无法识别仅记录
+            default -> fallbackKeyword(task, report, method);
+        }
+        return true;
+    }
+
+    /**
+     * 按 RCS 外部回馈统一流转本地状态：拼接回馈备注并写状态/生命周期。
+     * <p>流转合法性/幂等（同状态跳过）在 {@link #changeStatus} 内部处理，不抛异常。</p>
+     */
+    private void transitTo(RcsTaskEntity task, RcsTaskReportDTO report,
+                           RcsTaskStatusEnum toStatus, String method) {
+        String remark = buildReportRemark(report, method);
+        changeStatus(task, toStatus.getValue(), RcsOperatorTypeEnum.EXTERNAL,
+                report.getAgvCode(), remark);
+    }
+
+    /**
+     * 未在方法表登记的 method 兜底处理（历史关键词兼容逻辑）：
+     * 按 method/status 关键词映射本地状态与库存动作，仍无法识别时仅记录不流转。
+     */
+    private void fallbackKeyword(RcsTaskEntity task, RcsTaskReportDTO report, String method) {
+        Integer targetStatus = mapReportToStatus(method, report.getStatus());
+        if (targetStatus == null) {
+            log.info("RCS任务回馈：method[{}] 无法映射到本地状态（仅记录），taskCode={}, status={}",
+                    method, task.getTaskCode(), report.getStatus());
+            return;
+        }
+        log.warn("RCS任务回馈：method[{}] 未在方法表登记，按关键词兜底流转为状态[{}]，taskCode={}",
+                method, targetStatus, task.getTaskCode());
+        RcsTaskInventoryEvent.Action inventoryAction = resolveInventoryAction(targetStatus, method);
         if (inventoryAction != null) {
             if (RcsTaskInventoryEvent.Action.CONFIRM_ARRIVE.equals(inventoryAction)) {
-                // 任务完成：先解绑当前绑定（源点位；幂等——监听器核对料车，未占用或非本车则跳过），再确认目标到达绑定终点
                 publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND,
                         task.getCartCode(), task.getFromLocation());
             }
@@ -372,7 +505,6 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         }
         String remark = buildReportRemark(report, method);
         changeStatus(task, targetStatus, RcsOperatorTypeEnum.EXTERNAL, report.getAgvCode(), remark);
-        return true;
     }
 
     /**
@@ -578,12 +710,20 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
         }
         this.updateById(task);
         writeLifecycle(task.getId(), statusFrom, toStatus, opType, opId, remark);
-        // 库存闭环：已下发/执行中的任务流转为"异常"时释放目标点位预占
-        //（异常任务不会送达目标，预占不释放会永久占用点位；覆盖告警异常与 errorTask 回调异常两条路径）
+        // 库存闭环：已下发/执行中的任务流转为"异常"时解除起点与终点的占用锁 remark=1 并清除预定任务标记
+        //（异常任务不会送达目标，锁不释放会永久占用点位；覆盖告警异常与 errorTask 回调异常两条路径。
+        //  仅动 remark 与预定标记，绝不动料车绑定）
         if (RcsTaskStatusEnum.EXCEPTION.getValue().equals(toStatus)
                 && (RcsTaskStatusEnum.ASSIGNED.getValue().equals(statusFrom)
                     || RcsTaskStatusEnum.EXECUTING.getValue().equals(statusFrom))) {
-            publishInventoryEvent(RcsTaskInventoryEvent.Action.UNBIND, task.getCartCode(), task.getToLocation());
+            publishInventoryEvent(RcsTaskInventoryEvent.Action.RELEASE,
+                    task.getCartCode(), task.getFromLocation());
+            publishInventoryEvent(RcsTaskInventoryEvent.Action.RELEASE,
+                    task.getCartCode(), task.getToLocation());
+            publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                    task.getCartCode(), task.getFromLocation(), task.getTaskCode());
+            publishInventoryEvent(RcsTaskInventoryEvent.Action.CLEAR_TASK,
+                    task.getCartCode(), task.getToLocation(), task.getTaskCode());
         }
     }
 
@@ -607,10 +747,15 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
      * 仅当关联料车与点位编码均存在时发布（有料车搬运才涉及绑定关系）。
      */
     private void publishInventoryEvent(RcsTaskInventoryEvent.Action action, String cartCode, String locationCode) {
+        publishInventoryEvent(action, cartCode, locationCode, null);
+    }
+
+    private void publishInventoryEvent(RcsTaskInventoryEvent.Action action, String cartCode, String locationCode,
+                                       String taskCode) {
         if (StrUtil.isBlank(cartCode) || StrUtil.isBlank(locationCode)) {
             return;
         }
-        eventPublisher.publishEvent(RcsTaskInventoryEvent.of(action, cartCode, locationCode));
+        eventPublisher.publishEvent(RcsTaskInventoryEvent.of(action, cartCode, locationCode, taskCode));
     }
 
     /**
@@ -675,25 +820,13 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     }
 
     /**
-     * 本地任务类型(1-搬运 2-充电 3-调度 4-巡检) → RCS 协议 taskType 字符串
-     * <p>
-     * 从系统配置表(sys_config)读取配置键 {@code wms.rcs.template.{taskType}}，如：
-     * <ul>
-     *     <li>wms.rcs.template.1 = PF-LMR-COMMON（搬运-潜伏车）</li>
-     *     <li>wms.rcs.template.2 = PF-LMR-CHARGE（充电）</li>
-     *     <li>wms.rcs.template.3 = PF-LMR-DISPATCH（调度）</li>
-     *     <li>wms.rcs.template.4 = PF-LMR-INSPECT（巡检）</li>
-     * </ul>
-     * 未配置时统一兜底返回 {@code PF-LMR-COMMON}。
-     * </p>
+     * 本地任务类型(1-搬运 2-充电 3-调度 4-巡检) → RCS 协议 taskType（任务模板编码）
+     * <p>模板编码与任务类型一一对应且跨环境固定，与回调 method 一致走代码枚举
+     * {@link RcsTaskTypeEnum#rcsTemplate}，不再读 sys_config；未知类型统一兜底返回 {@code PF-LMR-COMMON}。</p>
      */
     private String mapTaskType(Integer taskType) {
-        if (taskType == null) {
-            return "PF-LMR-COMMON";
-        }
-        String configKey = "wms.rcs.template." + taskType;
-        String template = sysConfigService.selectConfigByKey(configKey);
-        return StrUtil.isNotBlank(template) ? template : "PF-LMR-COMMON";
+        String rcsTemplate = RcsTaskTypeEnum.getRcsTemplateByValue(taskType);
+        return StrUtil.isNotBlank(rcsTemplate) ? rcsTemplate : "PF-LMR-COMMON";
     }
 
     /**
@@ -712,22 +845,25 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     }
 
     /**
-     * 组装取消给 RCS 的请求参数。
+     * 组装取消给 RCS 的请求参数（强类型 DTO，与 RCS 任务取消接口契约对齐）。
      * <p>
-     * reqCode 使用本地任务编号，与下发时保持一致，保证 RCS 侧能定位到同一请求；
-     * taskCode 一并传递以便 RCS 明确取消的目标任务。若已回填外部任务号则附带 rcsTaskId。
+     * 业务约定「统一 DROP 硬取消」：RCS 侧直接终止任务、机器人原地待命，不安排料车回库，
+     * 故不携带 targetRoute/returnTaskType/extra 等回库相关字段。
+     * reqCode 沿用本地任务编号（与下发一致，RCS 按请求号幂等定位）；
+     * robotTaskCode 用 RCS 外部任务号（下发返回、上报回调同名，本地以 rcs_task_id 冗余存储），
+     * 不能误用本地 taskCode——它是 WMS 业务单号，RCS 侧匹配不上。
      * </p>
      */
-    private Map<String, Object> buildCancelParams(RcsTaskEntity task) {
-        Map<String, Object> params = new HashMap<>();
-        // 请求编号（唯一，与下发时同一编号，便于 RCS 幂等定位）
-        params.put("reqCode", task.getTaskCode());
-        params.put("taskCode", task.getTaskCode());
-        // 外部任务号存在时一并传递，提升 RCS 侧匹配成功率
-        if (StrUtil.isNotBlank(task.getRcsTaskId())) {
-            params.put("rcsTaskId", task.getRcsTaskId());
-        }
-        return params;
+    private AgvCancelTaskDTO buildCancelParams(RcsTaskEntity task, String reason) {
+        AgvCancelTaskDTO dto = new AgvCancelTaskDTO();
+        // 请求编号（唯一，与下发时同一 reqCode，便于 RCS 幂等定位）
+        dto.setReqCode(task.getTaskCode());
+        // RCS 外部任务号（下发成功时回填；为空时本方法不应被调用——cancelRcsTask 已分流本地取消）
+        dto.setRobotTaskCode(task.getRcsTaskId());
+        // 取消类型：统一 DROP（硬取消，RCS 不生成回库任务）；如后续需软取消回库可传 CANCEL 并补 targetRoute/returnTaskType
+        dto.setCancelType("DROP");
+        dto.setReason(reason);
+        return dto;
     }
 
     /**

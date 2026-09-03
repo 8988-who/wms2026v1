@@ -90,9 +90,10 @@
               <span>{{ scope.row.arriveTime || '-' }}</span>
             </template>
           </el-table-column>
-          <el-table-column key="lastTaskCode" label="最近任务" min-width="150" align="center" show-overflow-tooltip>
+          <el-table-column key="lastTaskCode" label="预定任务" min-width="150" align="center" show-overflow-tooltip>
             <template #default="scope">
-              <span>{{ scope.row.lastTaskCode || '-' }}</span>
+              <el-tag v-if="scope.row.lastTaskCode" type="primary" effect="plain">{{ scope.row.lastTaskCode }}</el-tag>
+              <span v-else>-</span>
             </template>
           </el-table-column>
           <el-table-column key="lockStatus" label="库存锁定" min-width="90" align="center">
@@ -102,9 +103,10 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column key="remark" label="备注" prop="remark" min-width="150" align="center" show-overflow-tooltip>
+          <el-table-column key="remark" label="预占" prop="remark" min-width="100" align="center">
             <template #default="scope">
-              <span>{{ scope.row.remark || '-' }}</span>
+              <el-tag v-if="Number(scope.row.remark) === 1" type="warning">预占中</el-tag>
+              <el-tag v-else type="success" effect="plain">未预占</el-tag>
             </template>
           </el-table-column>
           <el-table-column key="updatedByName" label="最后更新者" prop="updatedByName" min-width="110" align="center">

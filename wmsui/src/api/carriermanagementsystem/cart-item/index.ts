@@ -84,6 +84,13 @@ const CartItemAPI = {
       method: "get",
     });
   },
+  /** 获取料车编号筛选选项（有货料车列表） */
+  getFilterCartOptions() {
+    return request<unknown, AvailableCart[]>({
+      url: `${CART_ITEM_BASE_URL}/filter-cart-options`,
+      method: "get",
+    });
+  },
   /** 获取筛选选项 */
   getFilterOptions() {
     return request<string[]>({

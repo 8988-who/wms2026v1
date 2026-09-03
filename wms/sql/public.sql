@@ -722,9 +722,9 @@ COMMENT ON COLUMN "public"."wms_cart_inventory"."location_id" IS '点位所属�
 COMMENT ON COLUMN "public"."wms_cart_inventory"."aisle_id" IS '点位所属巷道ID（冗余自 wms_point.aisle_id，点位属性，搬运不变，按巷道筛选/调度用）';
 COMMENT ON COLUMN "public"."wms_cart_inventory"."arrive_time" IS '料车进入当前点位的时刻（cart_id 为空时为空）';
 COMMENT ON COLUMN "public"."wms_cart_inventory"."arrive_quantity" IS '落位时装载量快照：料车绑定/落到该点位的时刻，实时统计 wms_cart_item(status=1) 的在车货品数写入，之后不随装/取货变化';
-COMMENT ON COLUMN "public"."wms_cart_inventory"."last_task_code" IS '最近一次搬运任务编号（溯源用）';
+COMMENT ON COLUMN "public"."wms_cart_inventory"."last_task_code" IS '预定任务编号：任务下发（ASSIGNED）写入料车所在起点，任务终态（完成/取消/异常）清空';
 COMMENT ON COLUMN "public"."wms_cart_inventory"."lock_status" IS '库存锁定：0-正常 1-锁定（锁定期不参与任务分配/定时搬运；料车故障时先锁库存再解绑料车维修，解除后重新绑定再解锁）';
-COMMENT ON COLUMN "public"."wms_cart_inventory"."remark" IS '备注';
+COMMENT ON COLUMN "public"."wms_cart_inventory"."remark" IS '点位任务占用标记：0-默认（空位或料车正常停靠） 1-任务锁定中（预占/料车在途未到）';
 COMMENT ON COLUMN "public"."wms_cart_inventory"."created_time" IS '创建时间';
 COMMENT ON COLUMN "public"."wms_cart_inventory"."updated_time" IS '更新时间';
 COMMENT ON COLUMN "public"."wms_cart_inventory"."created_by" IS '创建者ID';

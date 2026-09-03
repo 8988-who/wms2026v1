@@ -106,4 +106,14 @@ public interface RcsTaskService extends IService<RcsTaskEntity> {
      * @return 是否成功匹配并处理（未匹配到本地任务返回 false）
      */
     boolean handleTaskWarning(RcsTaskWarningDTO warning);
+
+    /**
+     * 执行超时兜底（定时任务驱动）：把进入"执行中"超过阈值仍无完成/取消回馈的任务置为"异常"。
+     * <p>RCS 失联/回调中断/AGV 卡死时预占（remark=1）与预定任务标记会永久占用起/终点点位；
+     * 置异常复用 changeStatus 的 EXCEPTION 分支，自动 RELEASE + CLEAR 起/终点。
+     * 阈值读取 sys_config: wms.rcs.executing.timeout-minutes，默认 120 分钟。</p>
+     *
+     * @return 本轮置异常的任务数
+     */
+    int timeoutExecutingRcsTasks();
 }

@@ -88,6 +88,7 @@
         LEFT JOIN wms_aisle    a ON a.id = i.aisle_id
         WHERE i.cart_id IS NULL
           AND i.lock_status = 0
+          AND COALESCE(i.remark, '0') &lt;&gt; '1'   <!-- 排除任务锁定（预绑定）点位 -->
         <if test="locationId != null">
             AND i.location_id = #{locationId}
         </if>

@@ -129,6 +129,13 @@ public class CartItemController {
         return Result.success(cartItemService.getFormOptions());
     }
 
+    @Operation(summary = "获取料车编号筛选下拉选项（有货料车列表）")
+    @GetMapping("/filter-cart-options")
+    @PreAuthorize("@ss.hasPerm('carriermanagementsystem:cart-item:list')")
+    public Result<List<Cart>> getFilterCartOptions() {
+        return Result.success(cartItemService.getFilterCartOptions());
+    }
+
     @Operation(summary = "获取筛选下拉选项（货品型号列表）")
     @GetMapping("/filter-options")
     @PreAuthorize("@ss.hasPerm('carriermanagementsystem:cart-item:list')")

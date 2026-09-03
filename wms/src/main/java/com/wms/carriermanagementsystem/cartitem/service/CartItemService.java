@@ -67,6 +67,11 @@ public interface CartItemService {
     List<Cart> getFormOptions();
 
     /**
+     * 筛选选项（有货料车列表：车下存在在车物品，含使用中/满载，排除维修与空车）
+     */
+    List<Cart> getFilterCartOptions();
+
+    /**
      * 筛选选项（货品型号、批次号）
      */
     List<String> getFilterOptions();

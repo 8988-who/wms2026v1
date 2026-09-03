@@ -54,6 +54,11 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
 
     private final AgvService agvService;
 
+    /** 点位任务占用锁：默认/正常（空位或料车已正常停靠） */
+    private static final String REMARK_NORMAL = "0";
+    /** 点位任务占用锁：任务锁定中（预绑定/料车在途未到） */
+    private static final String REMARK_RESERVE = "1";
+
     @Override
     public IPage<CartInventoryVO> page(CartInventoryQueryDTO queryParams) {
         Page<CartInventoryVO> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
@@ -105,6 +110,10 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
             }
             throw new BusinessException("点位已被占用，请刷新后重试");
         }
+        if (REMARK_RESERVE.equals(inv.getRemark())) {
+            // 点位正被 RCS 任务锁定（料车在途，预绑定中），不允许手动绑入
+            throw new BusinessException("点位已被任务锁定（预绑定中），请刷新后重试");
+        }
         String cartCode = cartInventoryMapper.selectCartCodeByCartId(dto.getCartId());
         if (cartCode == null) {
             throw new BusinessException("料车不存在");
@@ -126,7 +135,8 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
                             .set(CartInventory::getUpdateBy, userId)
                             .set(CartInventory::getUpdateTime, LocalDateTime.now())
                             .eq(CartInventory::getPointId, dto.getPointId())
-                            .isNull(CartInventory::getCartId));
+                            .isNull(CartInventory::getCartId)
+                            .ne(CartInventory::getRemark, REMARK_RESERVE));
             if (rows == 0) {
                 // 区分"RCS回环先写了同一料车"和"真正被别的车占了"
                 CartInventory current = cartInventoryMapper.selectOne(
@@ -197,50 +207,69 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
     }
 
     /**
-     * 预绑定：RCS 任务创建时调用，预占目标点位。
-     * <p>
-     * 与 bind() 的区别：不写 arrive_time（车还没到），留空表示在途。
-     * 容量判断 cart_id IS NOT NULL 天然包含预占，防止在途车辆被漏算。
-     * </p>
-     * <p>
-     * 一车一位（uk_inventory_cart 唯一索引）前提：预占前先清该车在源点位等处的旧绑定，
-     * 否则料车仍停在源点时预占目标点会撞唯一索引（DuplicateKeyException）。
-     * 清源点后车转为"在途"：目标点被预占（arrive_time 留空），源点空出；
-     * 取消/异常由任务侧发布 UNBIND 释放目标点预占，到达后由 CONFIRM_ARRIVE 补写 arrive_time。
-     * </p>
+     * 任务锁定点位（remark='1'）：机器人离开起点后锁起点/终点（任务占用预绑定）。
+     * <p>与旧"预占写 cart_id"模型不同：remark 仅是任务占用锁，料车到达后才由
+     * CONFIRM_ARRIVE 经 syncExternalBind 终绑 cart_id/arrive_time。
+     * 条件要求空车未锁（cart_id IS NULL AND remark='0'），并发下第二个任务锁同一点位时 rows=0 直接失败。</p>
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void preBind(CartInventoryBindDTO dto) {
-        Long userId = SecurityUtils.getUserId();
-        try {
-            // 1. 清该车在其他点位的旧绑定（一车一位：任务下发即视为车离源，进入在途状态）
-            cartInventoryMapper.update(null,
-                    new LambdaUpdateWrapper<CartInventory>()
-                            .set(CartInventory::getCartId, null)
-                            .set(CartInventory::getArriveTime, null)
-                            .set(CartInventory::getLockStatus, 0)
-                            .set(CartInventory::getUpdateTime, LocalDateTime.now())
-                            .eq(CartInventory::getCartId, dto.getCartId())
-                            .ne(CartInventory::getPointId, dto.getPointId()));
-
-            // 2. 目标点位预占（仅空位可预占，防两点一任务互撞；此时 cart_id 已从源点清空，不再冲突）
-            int rows = cartInventoryMapper.update(null,
-                    new LambdaUpdateWrapper<CartInventory>()
-                            .set(CartInventory::getCartId, dto.getCartId())
-                            .set(CartInventory::getArriveTime, null)
-                            .set(CartInventory::getLockStatus, 0)
-                            .set(CartInventory::getUpdateBy, userId)
-                            .set(CartInventory::getUpdateTime, LocalDateTime.now())
-                            .eq(CartInventory::getPointId, dto.getPointId())
-                            .isNull(CartInventory::getCartId));
-            if (rows == 0) {
-                throw new BusinessException("点位已被占用或不存在，请刷新后重试");
-            }
-        } catch (DuplicateKeyException e) {
-            log.warn("并发预绑定料车冲突，cartId={}, pointId={}", dto.getCartId(), dto.getPointId(), e);
-            throw new BusinessException("该料车已停在其他点位，请先解绑");
+    public void reservePoint(Long pointId) {
+        int rows = cartInventoryMapper.update(null,
+                new LambdaUpdateWrapper<CartInventory>()
+                        .set(CartInventory::getRemark, REMARK_RESERVE)
+                        .set(CartInventory::getUpdateTime, LocalDateTime.now())
+                        .eq(CartInventory::getPointId, pointId)
+                        .isNull(CartInventory::getCartId)
+                        .eq(CartInventory::getRemark, REMARK_NORMAL));
+        if (rows == 0) {
+            throw new BusinessException("点位已被占用或已在任务锁定中，无法预绑定");
         }
+    }
+
+    /**
+     * 解除点位任务占用锁（remark='0'）：任务完成/取消/异常终结时释放。
+     * <p>幂等（未锁 no-op）；绝不动料车绑定——任务若未出发，料车仍停在起点。</p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void releasePoint(Long pointId) {
+        cartInventoryMapper.update(null,
+                new LambdaUpdateWrapper<CartInventory>()
+                        .set(CartInventory::getRemark, REMARK_NORMAL)
+                        .set(CartInventory::getUpdateTime, LocalDateTime.now())
+                        .eq(CartInventory::getPointId, pointId)
+                        .eq(CartInventory::getRemark, REMARK_RESERVE));
+    }
+
+    /**
+     * 标记点位预定任务（写 last_task_code=taskCode）：任务下发成功（ASSIGNED）时由监听器调用。
+     * <p>单条原子覆盖（同点同一料车只能存在一个任务，异常重试沿用同 taskCode，覆盖安全）；
+     * RCS 回调线程无登录上下文，不写 updateBy。</p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void markPointTask(Long pointId, String taskCode) {
+        cartInventoryMapper.update(null,
+                new LambdaUpdateWrapper<CartInventory>()
+                        .set(CartInventory::getLastTaskCode, taskCode)
+                        .set(CartInventory::getUpdateTime, LocalDateTime.now())
+                        .eq(CartInventory::getPointId, pointId));
+    }
+
+    /**
+     * 清除点位预定任务（last_task_code=NULL）：任务终结（完成/取消/异常）时由监听器调用。
+     * <p>以 taskCode 守卫：仅当该点当前标记正是本任务才清空，幂等且绝不误清新任务的标记。</p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void clearPointTask(Long pointId, String taskCode) {
+        cartInventoryMapper.update(null,
+                new LambdaUpdateWrapper<CartInventory>()
+                        .set(CartInventory::getLastTaskCode, null)
+                        .set(CartInventory::getUpdateTime, LocalDateTime.now())
+                        .eq(CartInventory::getPointId, pointId)
+                        .eq(CartInventory::getLastTaskCode, taskCode));
     }
 
     /**
@@ -373,6 +402,7 @@ public class CartInventoryServiceImpl extends ServiceImpl<CartInventoryMapper, C
                     new LambdaUpdateWrapper<CartInventory>()
                             .set(CartInventory::getCartId, cartId)
                             .set(CartInventory::getArriveTime, now)
+                            .set(CartInventory::getRemark, REMARK_NORMAL)  // 到达终绑，任务占用锁兑现为正式绑定
                             .set(CartInventory::getUpdateTime, now)
                             .eq(CartInventory::getPointId, pointId));
             return "绑定已同步" + warnMsg;

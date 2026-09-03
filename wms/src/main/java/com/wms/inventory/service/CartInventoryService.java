@@ -57,11 +57,29 @@ public interface CartInventoryService extends IService<CartInventory> {
     void unbind(Long pointId);
 
     /**
-     * 预绑定：RCS 任务下发成功时调用，预占目标点位（arrive_time 留空表示在途；
-     * 预占前先清该车源点位旧绑定，车转为在途状态；
-     * 车到达后由 RCS 任务完成回调经 syncExternalBind 升级为正式绑定）
+     * 任务锁定点位（remark='1'）：机器人离开起点后锁起点/终点（任务占用预绑定，料车在途未到）。
+     * 仅空车未锁的点位可锁（防两点一任务/双任务互撞），绝不动料车绑定；
+     * 料车到达后由 RCS 任务完成回调经 syncExternalBind 终绑。
      */
-    void preBind(CartInventoryBindDTO dto);
+    void reservePoint(Long pointId);
+
+    /**
+     * 解除点位任务占用锁（remark='0'）：任务完成/取消/异常终结时释放；幂等（未锁 no-op），绝不动料车绑定。
+     */
+    void releasePoint(Long pointId);
+
+    /**
+     * 标记点位预定任务（写 last_task_code=taskCode）：任务下发成功（ASSIGNED）时，
+     * 把料车所在起点标记为所属任务，供库存页展示"预定任务"。
+     * 幂等覆盖：同点新任务重发（异常重试）会覆盖为同一任务编码。
+     */
+    void markPointTask(Long pointId, String taskCode);
+
+    /**
+     * 清除点位预定任务（last_task_code=NULL）：任务终结（完成/取消/异常）时释放；
+     * 按 taskCode 守卫（仅当该点当前标记为本任务才清），幂等且绝不误清新任务的标记。
+     */
+    void clearPointTask(Long pointId, String taskCode);
 
     /**
      * 锁定库存（仅正常状态可锁）

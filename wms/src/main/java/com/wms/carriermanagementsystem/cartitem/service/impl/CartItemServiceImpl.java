@@ -325,6 +325,24 @@ public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> i
     }
 
     @Override
+    public List<Cart> getFilterCartOptions() {
+        // 有货料车 = 车下存在状态=在车(1)的装载明细，实时统计不受 cart.current_quantity 漂移影响；
+        // 满载(3)也纳入（筛料车内物料用），仅排除维修(4)（正常流程维修车已强制空车，防御过滤）
+        List<Long> cartIds = cartItemMapper.selectList(new LambdaQueryWrapper<CartItem>()
+                        .select(CartItem::getCartId)
+                        .eq(CartItem::getStatus, 1)
+                        .isNotNull(CartItem::getCartId))
+                .stream().map(CartItem::getCartId).distinct().collect(Collectors.toList());
+        if (cartIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return cartMapper.selectList(new LambdaQueryWrapper<Cart>()
+                .in(Cart::getId, cartIds)
+                .ne(Cart::getStatus, 4)
+                .orderByAsc(Cart::getCartCode));
+    }
+
+    @Override
     public List<String> getFilterOptions() {
         return cartItemMapper.selectList(
                 new LambdaQueryWrapper<CartItem>()

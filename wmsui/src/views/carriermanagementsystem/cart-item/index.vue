@@ -5,7 +5,7 @@
       <el-form ref="queryFormRef" :model="params" :inline="true">
         <el-form-item label="料车编号" prop="cartCode">
           <el-select v-model="params.cartCode" placeholder="选择料车" clearable filterable style="width: 150px">
-            <el-option v-for="item in carts" :key="item.id" :label="item.cartCode" :value="item.cartCode" />
+            <el-option v-for="item in filterCarts" :key="item.id" :label="item.cartCode" :value="item.cartCode" />
           </el-select>
         </el-form-item>
         <el-form-item label="批次号" prop="batchNo">
@@ -264,6 +264,8 @@
 
   // 下拉选项
   const carts = ref<AvailableCart[]>([]);
+  // 顶部「料车编号」筛选选项（有货料车，来自独立接口 filter-cart-options；装车弹窗仍用 carts）
+  const filterCarts = ref<AvailableCart[]>([]);
   const dateRange = ref<string[]>([]);
 
   // 表格数据
@@ -316,9 +318,16 @@
 
   async function loadOptions(): Promise<void> {
     try {
-      carts.value = await CartItemAPI.getFormOptions();
+      // 并行加载：装车弹窗用 form-options（可装空车），筛选下拉用 filter-cart-options（有货料车）
+      const [formCarts, inStockCarts] = await Promise.all([
+        CartItemAPI.getFormOptions(),
+        CartItemAPI.getFilterCartOptions(),
+      ]);
+      carts.value = formCarts || [];
+      filterCarts.value = inStockCarts || [];
     } catch {
       carts.value = [];
+      filterCarts.value = [];
     }
   }
 
