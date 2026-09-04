@@ -110,6 +110,15 @@ public class WmsAisleServiceImpl extends ServiceImpl<WmsAisleMapper, WmsAisle> i
         entity.setId(id);
         boolean result = this.updateById(entity);
 
+        // R-3 修复：货架型号支持清空——updateById 默认忽略 null 字段，
+        // 编辑时清空 modelCode 不会落库，需在保存后显式将该字段置 NULL
+        if (result && StrUtil.isBlank(dto.getModelCode())) {
+            this.lambdaUpdate()
+                    .eq(WmsAisle::getId, id)
+                    .set(WmsAisle::getModelCode, null)
+                    .update();
+        }
+
         // R-1 修复：单条编辑停用时级联停用其下点位（与 updateWmsLocation 行为对齐）
         if (result && dto.getStatus() != null && dto.getStatus() == 0) {
             wmsCascadeService.cascadeDisableAisles(List.of(id));
