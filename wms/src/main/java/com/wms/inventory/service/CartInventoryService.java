@@ -4,12 +4,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.wms.inventory.model.dto.CartInventoryBindDTO;
 import com.wms.inventory.model.dto.CartInventoryQueryDTO;
-import com.wms.inventory.model.entity.CartInventory;
-import com.wms.inventory.model.vo.AisleOptionVO;
+import com.wms.common.model.entity.CartInventory;
 import com.wms.inventory.model.vo.AvailableCartVO;
 import com.wms.inventory.model.vo.AvailablePointVO;
 import com.wms.inventory.model.vo.CartInventoryVO;
-import com.wms.inventory.model.vo.LocationOptionVO;
 
 import java.util.List;
 import java.util.Map;

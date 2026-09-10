@@ -3,7 +3,7 @@ package com.wms.inventory.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wms.inventory.model.dto.CartInventoryQueryDTO;
-import com.wms.inventory.model.entity.CartInventory;
+import com.wms.common.model.entity.CartInventory;
 import com.wms.inventory.model.vo.AisleOptionVO;
 import com.wms.inventory.model.vo.AvailableCartVO;
 import com.wms.inventory.model.vo.AvailablePointVO;

@@ -14,7 +14,7 @@ import com.wms.framework.security.util.SecurityUtils;
 import com.wms.inventory.mapper.CartInventoryMapper;
 import com.wms.inventory.model.dto.CartInventoryBindDTO;
 import com.wms.inventory.model.dto.CartInventoryQueryDTO;
-import com.wms.inventory.model.entity.CartInventory;
+import com.wms.common.model.entity.CartInventory;
 import com.wms.inventory.model.vo.AvailableCartVO;
 import com.wms.inventory.model.vo.AvailablePointVO;
 import com.wms.inventory.model.vo.CartInventoryVO;

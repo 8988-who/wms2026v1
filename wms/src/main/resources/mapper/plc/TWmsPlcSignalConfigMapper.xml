@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wms.plc.mapper.TWmsPlcSignalConfigMapper">
+
+    <resultMap id="TWmsPlcSignalConfigVOResultMap" type="com.wms.plc.model.vo.TWmsPlcSignalConfigVO">
+        <id property="id" column="id"/>
+        <result property="plcId" column="plc_id"/>
+        <result property="plcAddress" column="plc_address"/>
+        <result property="description" column="description"/>
+        <result property="pointId" column="point_id"/>
+        <result property="enabled" column="enabled"/>
+    </resultMap>
+
+    <select id="getTWmsPlcSignalConfigPage" resultMap="TWmsPlcSignalConfigVOResultMap">
+        SELECT
+            c.id,
+            c.plc_id,
+            c.plc_address,
+            c.description,
+            c.point_id,
+            c.enabled
+        FROM t_plc_signal_config c
+        <where>
+            <if test="queryParams.id != null and queryParams.id != ''">
+                AND c.id = #{queryParams.id}
+            </if>
+            <if test="queryParams.plcId != null and queryParams.plcId != ''">
+                AND c.plc_id = #{queryParams.plcId}
+            </if>
+            <if test="queryParams.plcAddress != null and queryParams.plcAddress != ''">
+                AND c.plc_address LIKE '%' || #{queryParams.plcAddress} || '%'
+            </if>
+            <if test="queryParams.description != null and queryParams.description != ''">
+                AND c.description LIKE '%' || #{queryParams.description} || '%'
+            </if>
+            <if test="queryParams.enabled != null">
+                AND c.enabled = #{queryParams.enabled}
+            </if>
+        </where>
+        ORDER BY c.id ASC
+    </select>
+
+</mapper>

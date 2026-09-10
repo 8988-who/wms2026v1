@@ -3,7 +3,7 @@ package com.wms.inventory.listener;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wms.inventory.mapper.CartInventoryMapper;
-import com.wms.inventory.model.entity.CartInventory;
+import com.wms.common.model.entity.CartInventory;
 import com.wms.inventory.service.CartInventoryService;
 import com.wms.rcs.event.RcsTaskInventoryEvent;
 import lombok.RequiredArgsConstructor;

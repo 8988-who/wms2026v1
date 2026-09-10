@@ -34,7 +34,12 @@ public enum LogModuleEnum implements IBaseEnum<Integer> {
     API_REQUEST_LOG(87, "接口请求日志"),
     RCS_AGV(88, "AGV调度管理"),
     RCS_TASK(89, "RCS本地任务管理"),
-    CART_INVENTORY(90, "库存管理");
+    CART_INVENTORY(90, "库存管理"),
+    PLC_CONNECTION(91, "PLC连接配置"),
+    PLC_SIGNAL_CONFIG(92, "PLC信号块配置"),
+    PLC_SECTOR_SIGNALS(93, "PLC信号块读写信号配置"),
+    PLC_TASK_METHOD_NAME(94, "方法名配置"),
+    PLC_SIGNAL_METHOD_CONFIG(95, "信号值方法配置");
 
     @EnumValue
     private final Integer value;

@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.wms.inventory.model.entity.CartInventory;
+import com.wms.common.model.entity.CartInventory;
 import com.wms.inventory.service.CartInventoryService;
 import com.wms.warehouse.utils.WmsPointConverter;
 import com.wms.warehouse.mapper.WmsPointMapper;

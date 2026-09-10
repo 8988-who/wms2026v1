@@ -822,7 +822,7 @@ public class RcsTaskServiceImpl extends ServiceImpl<RcsTaskMapper, RcsTaskEntity
     /**
      * 本地任务类型(1-搬运 2-充电 3-调度 4-巡检) → RCS 协议 taskType（任务模板编码）
      * <p>模板编码与任务类型一一对应且跨环境固定，与回调 method 一致走代码枚举
-     * {@link RcsTaskTypeEnum#rcsTemplate}，不再读 sys_config；未知类型统一兜底返回 {@code PF-LMR-COMMON}。</p>
+     * {@link RcsTaskTypeEnum#}，不再读 sys_config；未知类型统一兜底返回 {@code PF-LMR-COMMON}。</p>
      */
     private String mapTaskType(Integer taskType) {
         String rcsTemplate = RcsTaskTypeEnum.getRcsTemplateByValue(taskType);

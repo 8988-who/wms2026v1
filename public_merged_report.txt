@@ -1,0 +1,11 @@
+基准表数: 29  来源表数: 28
+来源独有、需补充的业务表: wms_dispatch_process, wms_dispatch_session, wms_rcs_bind_record, wms_task_template
+sys_menu: 基准 105 条, 来源 92 条, 需导入 0 条
+sys_role_menu: 基准 254 条, 需补 0 条
+api_request_log: 追加前自动加宽列: ALTER TABLE "public"."api_request_log" ALTER COLUMN "http_code" TYPE varchar(500); | ALTER TABLE "public"."api_request_log" ALTER COLUMN "res_code" TYPE varchar(500);
+sys_log: 基准 4312 条, 并入来源 6571 条 (id 重排从 4368 开始)
+api_request_log: 基准 38 条, 并入来源 179 条 (id 重排从 2093255568503369730 开始)
+----------------------------------------------------
+输出文件: D:/gitWork/wms2026v1/public_merged.sql
+总行数: 14335
+新增表数据行(估算): 114

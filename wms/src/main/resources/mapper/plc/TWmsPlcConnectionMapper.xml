@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wms.plc.mapper.TWmsPlcConnectionMapper">
+
+    <resultMap id="TWmsPlcConnectionVOResultMap" type="com.wms.plc.model.vo.TWmsPlcConnectionVO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="host" column="host"/>
+        <result property="plcType" column="plc_type"/>
+        <result property="enabled" column="enabled"/>
+        <result property="heartbeatAddr" column="heartbeat_addr"/>
+    </resultMap>
+
+    <select id="getTWmsPlcConnectionPage" resultMap="TWmsPlcConnectionVOResultMap">
+        SELECT
+            c.id,
+            c.name,
+            c.host,
+            c.plc_type,
+            c.enabled,
+            c.heartbeat_addr
+        FROM t_plc_connection c
+        <where>
+            <if test="queryParams.id != null and queryParams.id != ''">
+                AND c.id = #{queryParams.id}
+            </if>
+            <if test="queryParams.name != null and queryParams.name != ''">
+                AND c.name LIKE '%' || #{queryParams.name} || '%'
+            </if>
+            <if test="queryParams.host != null and queryParams.host != ''">
+                AND c.host LIKE '%' || #{queryParams.host} || '%'
+            </if>
+            <if test="queryParams.plcType != null and queryParams.plcType != ''">
+                AND c.plc_type LIKE '%' || #{queryParams.plcType} || '%'
+            </if>
+            <if test="queryParams.enabled != null">
+                AND c.enabled = #{queryParams.enabled}
+            </if>
+            <if test="queryParams.heartbeatAddr != null and queryParams.heartbeatAddr != ''">
+                AND c.heartbeat_addr LIKE '%' || #{queryParams.heartbeatAddr} || '%'
+            </if>
+        </where>
+        ORDER BY c.id ASC
+    </select>
+
+</mapper>

@@ -1,40 +1,31 @@
 package com.wms.common.model.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.wms.common.base.WmsBaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.time.LocalDateTime;
+import java.io.Serializable;
 
 /**
- * 点位实体对象
- * <p>
- * 对应数据库表 wms_point，表示巷道下的具体作业点位（AGV停靠/操作点）。
- * </p>
- *
- * @author SenyangHe
- * @since 2026-07-20
+ * @BelongsProject: wms
+ * @BelongsPackage: com.wms.common.model.entity
+ * @Author: 邵煜晨
+ * @CreateTime: 2026-09-01 11:24
+ * @Description: 点位表
+ * @Version: 1.0
  */
-@TableName("wms_point")
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class WmsPoint extends WmsBaseEntity {
+@EqualsAndHashCode(callSuper = false)
+@TableName("wms_point")
+public class WmsPoint implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    @TableField(value = "created_time", fill = FieldFill.INSERT)
-    @JsonInclude(value = JsonInclude.Include.NON_NULL)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createTime;
-
-    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
-    @JsonInclude(value = JsonInclude.Include.NON_NULL)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updateTime;
-
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    @TableId(type = IdType.ASSIGN_ID)
+    private Long id;
     private String plantCode;
     private Long locationId;
     private Long aisleId;
@@ -46,10 +37,8 @@ public class WmsPoint extends WmsBaseEntity {
     private Integer sortOrder;
     private Integer status;
     private String remark;
+    private Long createdBy;
+    private Long updatedBy;
 
-    @TableField(value = "created_by", fill = FieldFill.INSERT)
-    private Long createBy;
 
-    @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
-    private Long updateBy;
 }
